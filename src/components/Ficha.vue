@@ -50,6 +50,8 @@
     v-if="vidaCritica"
   ></div>
 
+  <div v-if="efeitoCuraTela" class="efeito-cura-tela"></div>
+
     <!-- VIDA -->
 <div class="barra">
 <div
@@ -120,10 +122,10 @@
 
     <!-- INFO EXTRA -->
     <div class="stats">
-      <span>NEX 50%</span>
-      <span>DT 17</span>
+      <span>Nivel: 10</span>
+      <span>Iniciativa: 1+1d6</span>
       <span>DEF 19</span>
-      <span>PE 3</span>
+      <span>P.Van: 00</span>
     </div>
 
   </div>
@@ -291,13 +293,14 @@ let ultimaVida = vidaAtual.value
 
 watch(vidaAtual, (novo) => {
   if (novo < ultimaVida) {
-    // 💥 DANO
     animacaoDano.value = true
     setTimeout(() => animacaoDano.value = false, 200)
   } else if (novo > ultimaVida) {
-    // 💚 CURA
     animacaoCura.value = true
+    efeitoCuraTela.value = true
+
     setTimeout(() => animacaoCura.value = false, 300)
+    setTimeout(() => efeitoCuraTela.value = false, 400)
   }
 
   ultimaVida = novo
@@ -315,6 +318,8 @@ function ativarEdicaoNome() {
     inputNome.value?.select()
   })
 }
+
+const efeitoCuraTela = ref(false)
 
 </script>
 
@@ -961,4 +966,56 @@ function ativarEdicaoNome() {
   text-align: left;
     font-family: "Aubrey", system-ui;
 }
+
+.efeito-cura-tela {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  pointer-events: none;
+  z-index: 999;
+
+  background:
+    radial-gradient(circle at top left, rgba(0, 255, 119, 0.044), transparent 40%),
+    radial-gradient(circle at top right, rgba(0, 255, 119, 0.044), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(0, 255, 119, 0.044), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(0, 255, 119, 0.044), transparent 40%);
+
+  animation: pulseCuraTela 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes pulseCuraTela {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+
+  40% {
+    opacity: 0.85;
+    transform: scale(1.01);
+  }
+
+  60% {
+    opacity: 0.60;
+    transform: scale(1);
+  }
+
+  80% {
+    opacity: 0.40;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
 </style>
