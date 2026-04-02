@@ -130,8 +130,15 @@ export default {
       }
     })
 
-    const insanidadeAtual = ref(3)
-    const insanidadeMax = ref(20)
+
+const insanidadeAtual = ref(3)
+const insanidadeMax = ref(22)
+const cargasAtual_1 = ref(2)
+const cargasMax_1 = ref(5)
+const cargasAtual_2 = ref(2)
+const cargasMax_2 = ref(5)
+
+    
 
     return {
       vidaAtual,
@@ -162,7 +169,14 @@ export default {
       carregarImagem,
 
       atributos,
-      audio
+      audio,
+
+      insanidadeAtual,
+      insanidadeMax,
+      cargasAtual_1,
+      cargasMax_1,
+      cargasAtual_2,
+      cargasMax_2
     }
   }
 }

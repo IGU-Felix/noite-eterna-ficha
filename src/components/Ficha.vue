@@ -26,7 +26,7 @@
           <div class="info">
 
             <div class="classe">
-              Bárbaro • Vagabundo
+              Anão - Bárbaro - Vaporário 
             </div>
 
             <!-- NOME -->
@@ -56,7 +56,7 @@
             <div v-if="vidaCritica" class="efeito-critico"></div>
             <div v-if="efeitoCuraTela" class="efeito-cura-tela"></div>
 
-            <!-- 🔥 PAINEL DE RECURSOS -->
+            <!-- PAINEL DE RECURSOS -->
             <div class="painel-recursos">
 
               <!-- VIDA + MANA -->
@@ -102,32 +102,7 @@
 
               </div>
 
-              <!-- INSANIDADE + CARGAS -->
-              <div class="recursos-secundarios">
 
-                <!-- INSANIDADE -->
-                <div class="insanidade-grid">
-                  <div
-                    v-for="i in insanidadeMax"
-                    :key="'ins-' + i"
-                    class="insanidade-slot"
-                    :class="{ ativo: i <= insanidadeAtual }"
-                    @click="insanidadeAtual = i"
-                  ></div>
-                </div>
-
-                <!-- CARGAS -->
-                <div class="cargas-grid">
-                  <div
-                    v-for="i in cargasMax"
-                    :key="'car-' + i"
-                    class="carga-slot"
-                    :class="{ ativa: i <= cargasAtual }"
-                    @click="cargasAtual = i"
-                  ></div>
-                </div>
-
-              </div>
 
             </div>
 
@@ -140,6 +115,45 @@
             </div>
 
           </div> <!-- FECHA info -->
+                  <!-- 🔥 PAINEL DE INSANIDADE (SEPARADO DE VERDADE) -->
+        <div class="painel-insanidade">
+
+          <!-- INSANIDADE -->
+          <div class="titulo">INSANIDADE</div>
+          <div class="insanidade-grid">
+            <div
+              v-for="i in insanidadeMax"
+              :key="'ins-' + i"
+              class="insanidade-slot"
+              :class="{ ativo: i <= insanidadeAtual }"
+              @click="insanidadeAtual = i"
+            ></div>
+          </div>
+
+          <!-- CARGAS -->
+          <div class="titulo">Cargas de</div>
+          <div class="cargas-grid">
+            <div
+              v-for="i in cargasMax_1"
+              :key="'car-' + i"
+              class="carga-slot"
+              :class="{ ativa: i <= cargasAtual_1 }"
+              @click="cargasAtual_1 = i"
+            ></div>
+          </div>
+
+          <div class="titulo">Cargas de</div>
+          <div class="cargas-grid">
+            <div
+              v-for="i in cargasMax_2"
+              :key="'car-' + i"
+              class="carga-slot"
+              :class="{ ativa: i <= cargasAtual_2 }"
+              @click="cargasAtual_2 = i"
+            ></div>
+          </div>
+
+        </div>
         </div> <!-- FECHA top -->
 
         <!-- STATUS -->

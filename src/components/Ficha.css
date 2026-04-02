@@ -54,6 +54,7 @@
 /* INFO */
 .info {
   flex: 1;
+  min-width: 0;
 }
 
 .info h2 {
@@ -73,6 +74,8 @@
   border: 1px solid #333;
   margin-top: 6px;
   position: relative;
+  width: 100%;
+
 }
 
 .fill {
@@ -80,7 +83,7 @@
 }
 
 .vida .fill {
-  background: #7a1c1c;
+  background: #7a1c2c;
 }
 
 .sanidade .fill {
@@ -520,7 +523,7 @@
   background: #0e0e0e;
   border: 1px solid #2a2a2a;
   overflow: hidden;
-  width: 35%;
+  width: 68%;
 }
 
 /* PREENCHIMENTO */
@@ -755,12 +758,91 @@
 .insanidade-slot {
   height: 10px;
   border: 1px solid #444;
-  background: #0a0a0a;
+  background: #111111;
   cursor: pointer;
 }
 
 /* ATIVO */
 .insanidade-slot.ativo {
   background: linear-gradient(to bottom, #5c0a0a, #a31515);
+}
+
+
+.insanidade-grid,
+.cargas-grid {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.top {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.info {
+  flex: 1;
+}
+
+.painel-insanidade {
+  width: 240px; 
+  height: 150px;
+  padding: 10px;
+  border-left: 1px solid #444;
+  background: #111111;
+  flex-shrink: 0;
+  padding-left: 15px;
+}
+
+.insanidade-grid,
+.cargas-grid {
+  display: grid;
+  grid-template-columns: repeat(11, 15px);
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.insanidade-slot,
+.carga-slot {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #888;
+  cursor: pointer;
+  font-size: 16px;   
+  line-height: 0000.91;    
+}
+
+.insanidade-slot.ativo {
+  background: #111111;
+}
+
+.insanidade-slot.ativo::after {
+  content: "✖";
+  color: #550606;
+  margin-bottom: 5px;
+}
+
+.carga-slot.ativa {
+  background: #111111;
+}
+
+.carga-slot.ativa::after {
+  content: "✖";
+  color: #bd9204;
+  margin-bottom: 5px;
+}
+
+.titulo {
+  font-size: 11px;
+  text-align: left;
+  margin-bottom: -4px;
+  margin-top: -7px;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.recursos-principais {
+  width: 100%;
 }
 
