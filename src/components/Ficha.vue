@@ -126,30 +126,52 @@
               :key="'ins-' + i"
               class="insanidade-slot"
               :class="{ ativo: i <= insanidadeAtual }"
-              @click="insanidadeAtual = i"
+              @click="insanidadeAtual = (insanidadeAtual === i) ? 0 : i"
             ></div>
           </div>
 
           <!-- CARGAS -->
-          <div class="titulo">Cargas de</div>
+          <div class="titulo">
+            Cargas de
+            <select v-model="tipoSelecionado_1" class="select-carga">
+              <option
+                v-for="tipo in tiposCarga"
+                :key="tipo.nome"
+                :value="tipo.nome"
+              >
+                {{ tipo.nome }}
+              </option>
+            </select>
+          </div>
           <div class="cargas-grid">
             <div
               v-for="i in cargasMax_1"
               :key="'car-' + i"
               class="carga-slot"
               :class="{ ativa: i <= cargasAtual_1 }"
-              @click="cargasAtual_1 = i"
+              @click="cargasAtual_1 = (cargasAtual_1 === i) ? 0 : i"
             ></div>
           </div>
 
-          <div class="titulo">Cargas de</div>
+                  <div class="titulo">
+          Cargas de
+          <select v-model="tipoSelecionado_2" class="select-carga">
+            <option
+              v-for="tipo in tiposCarga"
+              :key="tipo.nome"
+              :value="tipo.nome"
+            >
+              {{ tipo.nome }}
+            </option>
+          </select> 
+        </div>
           <div class="cargas-grid">
             <div
               v-for="i in cargasMax_2"
               :key="'car-' + i"
               class="carga-slot"
               :class="{ ativa: i <= cargasAtual_2 }"
-              @click="cargasAtual_2 = i"
+              @click="cargasAtual_2 = (cargasAtual_2 === i) ? 0 : i"
             ></div>
           </div>
 

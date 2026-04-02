@@ -788,7 +788,7 @@
 .painel-insanidade {
   width: 240px; 
   height: 150px;
-  padding: 10px;
+  padding: 2px;
   border-left: 1px solid #444;
   background: #111111;
   flex-shrink: 0;
@@ -801,6 +801,7 @@
   grid-template-columns: repeat(11, 15px);
   gap: 5px;
   margin-bottom: 2px;
+  padding-bottom: 5px;
 }
 
 .insanidade-slot,
@@ -828,9 +829,10 @@
 }
 
 .carga-slot.ativa::after {
-  content: "✖";
+  content: "■";
   color: #bd9204;
   margin-bottom: 5px;
+  
 }
 
 .titulo {
@@ -846,3 +848,11 @@
   width: 100%;
 }
 
+.select-carga {
+  margin-left: 1px;
+  background: #111111;
+  color: #ccc;
+  border: 1px solid #555;
+  font-size: 11px;
+  font-family: "Aubrey", system-ui;
+}

@@ -130,15 +130,50 @@ export default {
       }
     })
 
+const tiposCarga = [
+  { nome: "Absurdo", max: 10 },
+  { nome: "Cadavéricas", max: 4 },
+  { nome: "Constelação", max: 4 },
+  { nome: "Eclesiástica", max: 4 },
+  { nome: "Essência", max: 4 },
+  { nome: "Êxodo Ígneo", max: 3 },
+  { nome: "Fúria", max: 6 },
+  { nome: "KI", max: 4 },
+  { nome: "Munição", max: 4 },
+  { nome: "Pacto", max: 4 },
+  { nome: "Rancor", max: 4 },
+  { nome: "Reação em Cadeia", max: 4 },
+  { nome: "Trovão", max: 4 },
+  { nome: "Ventania", max: 4 },
+  { nome: "Veneno", max: 4 }
+]
+
+const tipoSelecionado_1 = ref("Fúria")
+const tipoSelecionado_2 = ref("Fúria")
 
 const insanidadeAtual = ref(3)
 const insanidadeMax = ref(22)
 const cargasAtual_1 = ref(2)
-const cargasMax_1 = ref(5)
-const cargasAtual_2 = ref(2)
-const cargasMax_2 = ref(5)
 
-    
+const cargasMax_1 = computed(() => {
+  const tipo = tiposCarga.find(t => t.nome === tipoSelecionado_1.value)
+  return tipo ? tipo.max : 0
+})
+
+const cargasAtual_2 = ref(2)
+
+const cargasMax_2 = computed(() => {
+  const tipo = tiposCarga.find(t => t.nome === tipoSelecionado_2.value)
+  return tipo ? tipo.max : 0
+})
+
+watch(tipoSelecionado_1, () => {
+  cargasAtual_1.value = 0
+})
+
+watch(tipoSelecionado_2, () => {
+  cargasAtual_2.value = 0
+})
 
     return {
       vidaAtual,
@@ -176,7 +211,11 @@ const cargasMax_2 = ref(5)
       cargasAtual_1,
       cargasMax_1,
       cargasAtual_2,
-      cargasMax_2
+      cargasMax_2,
+
+      tiposCarga,
+      tipoSelecionado_1,
+      tipoSelecionado_2
     }
   }
 }
