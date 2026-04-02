@@ -118,7 +118,7 @@ export default {
 
     onMounted(() => {
       audio.loop = true
-      audio.volume = 0.7
+      audio.volume = 0.5
     })
 
     watch(vidaCritica, (critico) => {
