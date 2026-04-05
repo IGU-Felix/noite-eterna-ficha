@@ -3,16 +3,17 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  
 }
 
 /* FUNDO */
 .ficha-container {
   min-height: 100vh;
-  background: #0a0a0a;
+  background: #111;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial, sans-serif;
+  font-family: "Aubrey", system-ui;
 }
 
 /* CARD PRINCIPAL */
@@ -20,8 +21,7 @@
   width: 1150px;
   height: 650px;
   background: #111;
-  border: 1px solid #2a2a2a;
-
+  border: 1px solid #333;
   display: grid;
   grid-template-columns: 2.2fr 1fr;
   gap: 10px;
@@ -103,8 +103,15 @@
   flex: 1;
   border: 1px solid #2f2f2f;
   background: #141414;
-  padding: 6px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
 }
+
 
 .box h3 {
   font-size: 12px;
@@ -331,19 +338,19 @@
   transition: width 0.3s ease, background 0.3s ease;
 }
 
-/* 🟢 VIDA ALTA */
+/*VIDA ALTA */
 .vida-alta {
-  background: linear-gradient(to right, #380306, #7c1a1f);
+  background: linear-gradient(to right, #601E1E, #922e2e);
 }
 
-/* 🟡 VIDA MÉDIA */
+/*VIDA MÉDIA */
 .vida-media {
-  background: linear-gradient(to right, #380b0e, #581216);
+  background: linear-gradient(to right, #331010, #601E1E);
 }
 
-/* 🔴 VIDA BAIXA */
+/*VIDA BAIXA */
 .vida-baixa {
-  background: linear-gradient(to right, #140404, #270808);
+  background: linear-gradient(to right, #140404, #331010);
 }
 
 
@@ -440,17 +447,17 @@
 
 /* 🔮 MANA ALTA */
 .mana-alta {
-  background: linear-gradient(to right, #403686, #2873a5);
+  background: linear-gradient(to right, #253341, #57799b);
 }
 
 /* 🔮 MANA MÉDIA */
 .mana-media {
-  background: linear-gradient(to right, #1c1c3a, #403686);
+  background: linear-gradient(to right, #121920, #253341); 
 }
 
 /* 🔮 MANA BAIXA */
 .mana-baixa {
-  background: linear-gradient(to right, #0d0d1a, #1c1c3a);
+  background: linear-gradient(to right, #131920, #121920);
 }
 
 
@@ -764,7 +771,7 @@
 
 /* ATIVO */
 .insanidade-slot.ativo {
-  background: linear-gradient(to bottom, #5c0a0a, #a31515);
+  background: linear-gradient(to bottom, #601E1E, #a31515);
 }
 
 
@@ -820,7 +827,7 @@
 
 .insanidade-slot.ativo::after {
   content: "✖";
-  color: #550606;
+  color: #601E1E;
   margin-bottom: 5px;
 }
 
@@ -844,6 +851,7 @@
   letter-spacing: 1px;
 }
 
+
 .recursos-principais {
   width: 100%;
 }
@@ -856,3 +864,54 @@
   font-size: 11px;
   font-family: "Aubrey", system-ui;
 }
+
+.atributos-container {
+  color: white;
+  font-family: "Aubrey", system-ui;
+  border-left: 1px solid #444;
+  padding-left: 15px;
+  height: 150px;
+}
+
+/* GRID PRINCIPAL */
+.grid-atributos {
+  display: grid;
+  grid-template-columns: repeat(3, 45px);
+  grid-template-rows: repeat(2, 45px);
+  gap: 6px;
+  padding-bottom: 5px;
+
+}
+/* NÚMERO */
+.box input {
+  position: absolute;
+  top: 85%;
+  transform: translateY(-120%);
+
+  width: 100%;
+  background: transparent;
+  border: none;
+
+  color: #601E1E;
+  text-align: center;
+  font-size: 25px;
+  font-weight: bold;
+  font-family: "Aubrey", system-ui;
+}
+
+
+/* LABEL */
+.box span {
+  position: absolute;
+  bottom: -4px;
+
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+.box input::-webkit-outer-spin-button,
+.box input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+

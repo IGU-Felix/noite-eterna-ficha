@@ -115,7 +115,7 @@
             </div>
 
           </div> <!-- FECHA info -->
-                  <!-- 🔥 PAINEL DE INSANIDADE (SEPARADO DE VERDADE) -->
+                  <!-- PAINEL DE INSANIDADE (SEPARADO DE VERDADE) -->
         <div class="painel-insanidade">
 
           <!-- INSANIDADE -->
@@ -193,23 +193,34 @@
       <!-- LADO DIREITO -->
       <div class="right">
 
-        <!-- ATRIBUTOS -->
-        <div class="atributos">
-          <div class="attr" v-for="a in atributos" :key="a">
-            <span>{{ a }}</span>
-            <strong>0</strong>
-          </div>
-        </div>
+<div class="atributos-container">
 
-        <!-- COMBATE -->
-        <div class="box">
-          <h3>Combate</h3>
-        </div>
+    <div class="titulo">Atributos</div>
 
-        <!-- INVENTÁRIO -->
-        <div class="box">
-          <h3>Inventário</h3>
-        </div>
+<div class="grid-atributos">
+  <div v-for="attr in atributos" :key="attr.nome" class="box">
+
+    <input class="titulo-atributos"
+      type="number"
+      :value="attr.valor === '?' ? '' : attr.valor"
+      @input="atualizarAtributo(attr, $event.target.value)"
+    />
+
+    <span>{{ attr.nome }}</span>
+
+  </div>
+</div>
+
+  <div class="titulo">Patrimônio</div>
+
+  <div class="grid-patrimonio">
+    <div v-for="item in patrimonio" :key="item.nome" class="mini-box">
+      <input type="number" v-model="item.valor" />
+      <span>{{ item.nome }}</span>
+    </div>
+  </div>
+
+</div>
 
       </div> <!-- FECHA right -->
 

@@ -111,7 +111,31 @@ export default {
     }
 
     // ===== ATRIBUTOS =====
-    const atributos = ["FOR", "DES", "CON", "INT", "SAB", "CAR"]
+    const atributos = ref([
+  { nome: "ROB", valor: 2 },
+  { nome: "POD", valor: 4 },
+  { nome: "PRE", valor: 1 },
+  { nome: "MEN", valor: 0 },
+  { nome: "CAR", valor: 1 },
+  { nome: "SOR", valor: "?" }
+])
+
+function atualizarAtributo(attr, valor) {
+  if (valor === "") {
+    if (attr.nome === "SOR") {
+      attr.valor = "?"
+      return
+    }
+    valor = 0
+  }
+
+  valor = Number(valor)
+
+  if (valor < 0) valor = 0
+  if (valor > 6) valor = 6
+
+  attr.valor = valor
+}
 
     // ===== AUDIO (AGORA CERTO) =====
     const audio = new Audio("/sounds/heartbeat.mp3")
@@ -151,16 +175,16 @@ const tiposCarga = [
 const tipoSelecionado_1 = ref("Fúria")
 const tipoSelecionado_2 = ref("Fúria")
 
-const insanidadeAtual = ref(3)
+const insanidadeAtual = ref(0)
 const insanidadeMax = ref(22)
-const cargasAtual_1 = ref(2)
+const cargasAtual_1 = ref(0)
 
 const cargasMax_1 = computed(() => {
   const tipo = tiposCarga.find(t => t.nome === tipoSelecionado_1.value)
   return tipo ? tipo.max : 0
 })
 
-const cargasAtual_2 = ref(2)
+const cargasAtual_2 = ref(0)
 
 const cargasMax_2 = computed(() => {
   const tipo = tiposCarga.find(t => t.nome === tipoSelecionado_2.value)
@@ -174,6 +198,9 @@ watch(tipoSelecionado_1, () => {
 watch(tipoSelecionado_2, () => {
   cargasAtual_2.value = 0
 })
+
+  
+
 
     return {
       vidaAtual,
@@ -204,6 +231,7 @@ watch(tipoSelecionado_2, () => {
       carregarImagem,
 
       atributos,
+      atualizarAtributo,
       audio,
 
       insanidadeAtual,
@@ -216,6 +244,8 @@ watch(tipoSelecionado_2, () => {
       tiposCarga,
       tipoSelecionado_1,
       tipoSelecionado_2
+
+      
     }
   }
 }
