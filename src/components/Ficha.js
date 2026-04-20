@@ -117,25 +117,39 @@ export default {
   { nome: "PRE", valor: 1 },
   { nome: "MEN", valor: 0 },
   { nome: "CAR", valor: 1 },
-  { nome: "SOR", valor: "?" }
+  { nome: "SOR", valor: "" }
 ])
 
 function atualizarAtributo(attr, valor) {
-  if (valor === "") {
-    if (attr.nome === "SOR") {
+  // permite ?
+  if (attr.nome === "SOR") {
+    if (valor === "" || valor === "?") {
       attr.valor = "?"
       return
     }
-    valor = 0
   }
 
-  valor = Number(valor)
+  // números normais
+  let num = Number(valor)
 
-  if (valor < 0) valor = 0
-  if (valor > 6) valor = 6
-
-  attr.valor = valor
+  if (!isNaN(num)) {
+    if (num < 0) num = 0
+    if (num > 10) num = 10
+    attr.valor = num
+  }
 }
+
+
+const patrimonio = ref([
+  { nome: "TRI", valor: 0 },
+  { nome: "QUADR", valor: 0 },
+  { nome: "PENTA", valor: 0 },
+  { nome: "HEXA", valor: 0 },
+  { nome: "HEPTA", valor: 0 },
+  { nome: "OCTA", valor: 0 },
+  { nome: "ENNEA", valor: 0 },
+  { nome: "DECA", valor: 0 }
+])
 
     // ===== AUDIO (AGORA CERTO) =====
     const audio = new Audio("/sounds/heartbeat.mp3")
@@ -243,9 +257,9 @@ watch(tipoSelecionado_2, () => {
 
       tiposCarga,
       tipoSelecionado_1,
-      tipoSelecionado_2
+      tipoSelecionado_2,
 
-      
+      patrimonio
     }
   }
 }

@@ -201,7 +201,7 @@
   <div v-for="attr in atributos" :key="attr.nome" class="box">
 
     <input class="titulo-atributos"
-      type="number"
+      type="text"
       :value="attr.valor === '?' ? '' : attr.valor"
       @input="atualizarAtributo(attr, $event.target.value)"
     />
