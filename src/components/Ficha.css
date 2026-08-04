@@ -205,6 +205,65 @@ input, select, textarea, button {
   flex: 1.5;
 }
 
+.linha-raca-classe {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.select-rcs {
+  flex: 1;
+  min-width: 0;
+  background: #0e0e0e;
+  border: 1px solid #333;
+  color: #ccc;
+  font-size: 10px;
+  padding: 2px 3px;
+}
+
+.select-rcs:disabled {
+  color: #444;
+  border-color: #262626;
+}
+
+.progressao-linha {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid #1e1e1e;
+  opacity: 0.45;
+}
+
+.progressao-linha.alcancado {
+  opacity: 1;
+}
+
+.progressao-nivel {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #d9a441;
+  border: 1px solid #333;
+}
+
+.progressao-linha.alcancado .progressao-nivel {
+  color: #111;
+  background: #d9a441;
+  border-color: #d9a441;
+}
+
+.progressao-habilidade {
+  font-size: 11px;
+  color: #ccc;
+}
+
+.progressao-linha.alcancado .progressao-habilidade {
+  color: #fff;
+}
+
 /* =====================================================
    BARRAS (nome / vida / mana) — base compartilhada
 ===================================================== */
@@ -420,6 +479,43 @@ input, select, textarea, button {
   outline: none;
 }
 
+.stat-valor-calc {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  color: #d9a441;
+}
+
+.stat-sub {
+  display: block;
+  text-align: center;
+  font-size: 7px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+.stat-sub-input {
+  width: 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  color: #ccc;
+  text-align: center;
+  font-size: 9px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.stat-sub-input::-webkit-outer-spin-button,
+.stat-sub-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* =====================================================
    INSANIDADE + CARGAS
 ===================================================== */
@@ -478,6 +574,28 @@ input, select, textarea, button {
   font-size: 10px;
   padding: 1px 2px;
   margin-left: 2px;
+}
+
+.carga-max-label {
+  margin-left: 6px;
+  color: #666;
+}
+
+.carga-max-input-inline {
+  width: 26px;
+  background: #111;
+  border: 1px solid #444;
+  color: #ccc;
+  font-size: 10px;
+  text-align: center;
+  margin-left: 2px;
+  -moz-appearance: textfield;
+}
+
+.carga-max-input-inline::-webkit-outer-spin-button,
+.carga-max-input-inline::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* =====================================================
@@ -656,14 +774,13 @@ input, select, textarea, button {
 }
 
 .pericia-mod {
+  display: block;
   width: 100%;
-  background: transparent;
-  border: none;
   border-top: 1px solid #262626;
   color: #888;
   text-align: center;
   font-size: 8px;
-  outline: none;
+  line-height: 1.6;
 }
 
 .pericia-nome {

@@ -29,7 +29,21 @@
             <div class="linha-cabecalho">
               <span class="rotulo-leve">Jogador:</span>
               <input class="campo-leve" v-model="jogador" placeholder="nome do jogador" />
-              <input class="campo-leve campo-classe" v-model="classe" />
+            </div>
+
+            <div class="linha-raca-classe">
+              <select v-model="racaSelecionada" class="select-rcs" :title="racas.find(r => r.nome === racaSelecionada)?.resumo || ''">
+                <option value="" disabled>Raça</option>
+                <option v-for="r in racas" :key="r.nome" :value="r.nome">{{ r.nome }}</option>
+              </select>
+              <select v-model="classeSelecionada" class="select-rcs" :title="classeInfo ? 'Dado de Vida: ' + classeInfo.dadoVida : ''">
+                <option value="" disabled>Classe</option>
+                <option v-for="c in classes" :key="c.nome" :value="c.nome">{{ c.nome }}</option>
+              </select>
+              <select v-model="subclasseSelecionada" class="select-rcs" :disabled="!subclassesDisponiveis.length">
+                <option value="" disabled>{{ subclassesDisponiveis.length ? 'Subclasse' : '—' }}</option>
+                <option v-for="s in subclassesDisponiveis" :key="s" :value="s">{{ s }}</option>
+              </select>
             </div>
 
             <!-- NOME -->
@@ -106,19 +120,23 @@
             <div class="stats-grid">
               <div class="stat-box">
                 <span class="stat-label">Nível</span>
-                <input class="stat-valor" v-model="nivel" />
+                <input class="stat-valor" v-model.number="nivel" />
               </div>
-              <div class="stat-box">
+              <div class="stat-box" title="Calculado: PRE + MEN, mais 1d6 na hora de rolar">
                 <span class="stat-label">Iniciativa</span>
-                <input class="stat-valor" v-model="iniciativa" />
+                <span class="stat-valor-calc">{{ iniciativa }}</span>
               </div>
-              <div class="stat-box">
+              <div class="stat-box" title="Calculado: 5 + ROB + (Nível ÷ 2) + Armadura">
                 <span class="stat-label">Defesa</span>
-                <input class="stat-valor" v-model="defesa" />
+                <span class="stat-valor-calc">{{ defesa }}</span>
+                <span class="stat-sub">
+                  <input type="number" class="stat-sub-input" v-model.number="armadura" />
+                  armadura
+                </span>
               </div>
-              <div class="stat-box">
+              <div class="stat-box" title="Calculado: 3 pontos a cada 5 níveis">
                 <span class="stat-label">P. Van</span>
-                <input class="stat-valor" v-model="pVan" />
+                <span class="stat-valor-calc">{{ pVan }}</span>
               </div>
             </div>
 
@@ -152,19 +170,14 @@
           <div class="pericias-grid">
             <div class="pericia-linha" v-for="p in pericias" :key="p.id">
 
-              <div class="pericia-caixa">
+              <div class="pericia-caixa" title="Cada 2 pontos aumentam 1 dado em +1 (regra do livro)">
                 <input
                   type="text"
                   class="pericia-valor"
                   :value="p.valor"
-                  @input="atualizarPericia(p, 'valor', $event.target.value)"
+                  @input="atualizarPericia(p, $event.target.value)"
                 />
-                <input
-                  type="text"
-                  class="pericia-mod"
-                  :value="p.mod"
-                  @input="atualizarPericia(p, 'mod', $event.target.value)"
-                />
+                <span class="pericia-mod">+{{ p.mod }}</span>
               </div>
 
               <div class="pericia-nome">
@@ -212,6 +225,8 @@
                 {{ tipo.nome }}
               </option>
             </select>
+            <span class="carga-max-label">máx.</span>
+            <input type="number" min="0" class="carga-max-input-inline" v-model.number="cargasMax_1" />
           </div>
           <div class="cargas-grid">
             <div
@@ -231,6 +246,8 @@
                 {{ tipo.nome }}
               </option>
             </select>
+            <span class="carga-max-label">máx.</span>
+            <input type="number" min="0" class="carga-max-input-inline" v-model.number="cargasMax_2" />
           </div>
           <div class="cargas-grid">
             <div
@@ -250,6 +267,8 @@
                 {{ tipo.nome }}
               </option>
             </select>
+            <span class="carga-max-label">máx.</span>
+            <input type="number" min="0" class="carga-max-input-inline" v-model.number="cargasMax_3" />
           </div>
           <div class="cargas-grid">
             <div
@@ -277,20 +296,40 @@
           </div>
 
           <div class="combate-lista">
-            <div class="combate-item" v-for="item in itensCombate[abaCombateAtiva]" :key="item.id">
-              <div class="combate-item-topo">
-                <input class="combate-nome" v-model="item.nome" placeholder="nome" />
-                <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
-              </div>
-              <input class="combate-detalhe" v-model="item.detalhe" placeholder="dano, custo, efeito..." />
-            </div>
 
-            <p v-if="itensCombate[abaCombateAtiva].length === 0" class="lista-vazia">
-              Nada por aqui ainda.
-            </p>
+            <!-- aba Progressão: tabela calculada a partir da classe + nível, não é editável na mão -->
+            <template v-if="abaCombateAtiva === 'Progressão'">
+              <p v-if="!classeInfo" class="lista-vazia">Escolha uma classe acima para ver a progressão.</p>
+              <div
+                v-else
+                class="progressao-linha"
+                v-for="p in progressaoClasse"
+                :key="p.nivel"
+                :class="{ alcancado: p.alcancado }"
+              >
+                <span class="progressao-nivel">{{ p.nivel }}</span>
+                <span class="progressao-habilidade">{{ p.habilidade }}</span>
+              </div>
+            </template>
+
+            <!-- demais abas: listas livres editáveis -->
+            <template v-else>
+              <div class="combate-item" v-for="item in itensCombate[abaCombateAtiva]" :key="item.id">
+                <div class="combate-item-topo">
+                  <input class="combate-nome" v-model="item.nome" placeholder="nome" />
+                  <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                </div>
+                <input class="combate-detalhe" v-model="item.detalhe" placeholder="dano, custo, efeito..." />
+              </div>
+
+              <p v-if="itensCombate[abaCombateAtiva].length === 0" class="lista-vazia">
+                Nada por aqui ainda.
+              </p>
+            </template>
+
           </div>
 
-          <button class="btn-add" @click="adicionarItemCombate">+ adicionar em {{ abaCombateAtiva }}</button>
+          <button v-if="abaCombateAtiva !== 'Progressão'" class="btn-add" @click="adicionarItemCombate">+ adicionar em {{ abaCombateAtiva }}</button>
         </div>
 
       </div> <!-- FECHA col-meio -->
