@@ -567,7 +567,7 @@ export default {
     })
 
     // ===== NOME =====
-    const nome = ref("Otto Vaenerys")
+    const nome = ref("Nome do Personagem")
     const editandoNome = ref(false)
     const inputNome = ref(null)
 
@@ -629,7 +629,7 @@ export default {
       { nome: "PRE", valor: 1 },
       { nome: "MEN", valor: 0 },
       { nome: "CAR", valor: 1 },
-      { nome: "SOR", valor: "" }
+      { nome: "SOR", valor: "X" }
     ])
 
     function atualizarAtributo(attr, valor) {
@@ -701,6 +701,7 @@ export default {
       { nome: "Pacto", max: 4 },
       { nome: "Rancor", max: 4 },
       { nome: "Reação em Cadeia", max: 4 },
+      { nome: "Sobrevivência", max: 4 },
       { nome: "Trovão", max: 4 },
       { nome: "Ventania", max: 4 },
       { nome: "Veneno", max: 4 }
