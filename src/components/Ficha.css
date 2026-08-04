@@ -1,912 +1,521 @@
-/* RESET BASE */
+/* =====================================================
+   RESET BASE
+===================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  
 }
 
-/* FUNDO */
+input, select, textarea, button {
+  font-family: "Aubrey", system-ui;
+  color: inherit;
+}
+
+/* =====================================================
+   FUNDO / CARD PRINCIPAL
+===================================================== */
 .ficha-container {
   min-height: 100vh;
   background: #111;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px 12px;
   font-family: "Aubrey", system-ui;
 }
 
-/* CARD PRINCIPAL */
 .ficha {
-  width: 1150px;
-  height: 650px;
+  width: 1180px;
+  max-width: 100%;
   background: #111;
   border: 1px solid #333;
   display: grid;
-  grid-template-columns: 2.2fr 1fr;
-  gap: 10px;
-  font-family: "Aubrey", system-ui;
-
-  padding: 10px;
+  grid-template-columns: 2.35fr 1.05fr 1fr;
+  gap: 14px;
+  padding: 14px;
 }
 
-/* COLUNAS */
-.left, .right {
+.coluna {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
 }
 
-/* TOPO */
-.top {
+/* =====================================================
+   PAINÉIS (bloco genérico usado por quase toda seção)
+===================================================== */
+.painel,
+.painel-insanidade,
+.atributos-container {
+  border: 1px solid #2a2a2a;
+  background: #141414;
+  padding: 10px 12px;
+}
+
+.titulo-secao {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #fff;
+  text-transform: uppercase;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 5px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #2a2a2a;
 }
 
-/* RETRATO */
-.portrait {
-  width: 110px;
-  height: 140px;
-  background: #1a1a1a;
-  border: 1px solid #444;
+.icone-secao {
+  color: #888;
+  font-size: 11px;
 }
 
-/* INFO */
+/* sub-título leve, usado dentro do painel de insanidade ("Cargas de ...") */
+.titulo,
+.titulo-secao.carga-titulo {
+  font-size: 10px;
+  color: #999;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 3px;
+  margin-top: 8px;
+}
+
+/* =====================================================
+   MOTIVO DE CANTOS (usado nas caixas de atributo e perícia)
+===================================================== */
+.box,
+.pericia-caixa {
+  position: relative;
+}
+
+.box::before,
+.box::after,
+.pericia-caixa::before,
+.pericia-caixa::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  pointer-events: none;
+}
+
+.box::before,
+.pericia-caixa::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid #555;
+  border-left: 1px solid #555;
+}
+
+.box::after,
+.pericia-caixa::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1px solid #555;
+  border-right: 1px solid #555;
+}
+
+/* =====================================================
+   TOPO — RETRATO + INFO
+===================================================== */
+.topo {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
 .info {
   flex: 1;
   min-width: 0;
 }
 
-.info h2 {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.info span {
-  font-size: 11px;
-  color: #aaa;
-}
-
-/* BARRAS */
-.barra {
-  height: 16px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  margin-top: 6px;
-  position: relative;
-  width: 100%;
-
-}
-
-.fill {
-  height: 100%;
-}
-
-.vida .fill {
-  background: #7a1c2c;
-}
-
-.sanidade .fill {
-  background: #2e4f7a;
-}
-
-/* STATS */
-.stats {
+/* RETRATO estilo "polaroid" */
+.status-imagem {
+  width: 104px;
+  height: 144px;
+  flex-shrink: 0;
+  background: #201d1d;
+  border: 4px solid #d8d3c4;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+  transform: rotate(-3deg);
   display: flex;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 11px;
-}
-
-/* CAIXAS */
-.box {
-  flex: 1;
-  border: 1px solid #2f2f2f;
-  background: #141414;
-
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  position: relative;
-}
-
-
-.box h3 {
-  font-size: 12px;
-  margin-bottom: 5px;
-  border-bottom: 1px solid #333;
-}
-
-/* ATRIBUTOS */
-.atributos {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.attr {
-  border: 1px solid #3a3a3a;
-  background: #181818;
-  text-align: center;
-  padding: 6px;
-  font-size: 11px;
-}
-
-.attr strong {
-  display: block;
-  font-size: 16px;
-}
-
-/* LINHA NOME */
-.nome-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nome-linha h2 {
-  font-size: 16px;
-}
-
-.raca {
-  font-size: 11px;
-  color: #bbb;
-}
-
-/* CLASSE */
-.classe {
-  font-size: 11px;
-  color: #ffffff;
-  margin-bottom: 1px;
-  text-align: left;
-}
-
-/* BARRA WRAPPER */
-.barra-wrapper {
-  margin-top: 4px;
-}
-
-.barra-wrapper span {
-  font-size: 10px;
-  color: #aaa;
-}
-
-.barra-wrapper small {
-  font-size: 10px;
-  color: #777;
-}
-
-/* BARRAS MAIS FIÉIS */
-.barra {
-  height: 14px;
-  background: #0f0f0f;
-  border: 1px solid #2a2a2a;
-  margin: 2px 0;
-  position: relative;
-}
-
-.vida .fill {
-  background: linear-gradient(to right, #5a0f0f, #a83232);
-}
-
-.sanidade .fill {
-  background: linear-gradient(to right, #1f3f5a, #3a7aa8);
-}
-
-/* STATS */
-.stats {
-  margin-top: 6px;
-  display: flex;
-  gap: 6px;
-  font-size: 10px;
-}
-
-.stats span {
-  background: #1a1a1a;
-  padding: 2px 6px;
-  border: 1px solid #333;
-}
-
-
-/* BARRA SEGMENTADA */
-.segmentada {
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-}
-
-/* CADA BLOCO */
-.segmento {
-  flex: 1;
-  height: 12px;
-  background: #111;
-  border: 1px solid #2a2a2a;
-}
-
-/* VIDA ATIVA */
-.segmento.ativo {
-  background: linear-gradient(to top, #5a0f0f, #a83232);
-}
-
-/* SANIDADE */
-.segmento.sanidade.ativo {
-  background: linear-gradient(to top, #1f3f5a, #3a7aa8);
-}
-
-
-.barra {
-  width: 100%;
-  height: 14px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  position: relative;
-  overflow: hidden;
-}
-
-/* preenchimento base */
-.barra-preenchimento {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-/* VIDA */
-.barra-preenchimento.vida {
-  background: linear-gradient(to top, #5a0f0f, #a83232);
-}
-
-/* SANIDADE */
-.barra-preenchimento.sanidade {
-  background: linear-gradient(to top, #1f3f5a, #3a7aa8);
-}
-
-.barra {
-  width: 100%;
-  height: 22px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  position: relative;
-  overflow: hidden;
-}
-
-/* preenchimento */
-.barra-preenchimento {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-/* VIDA */
-.barra-preenchimento.vida {
-  background: linear-gradient(to right, #6e1a1a, #8f2323);
-}
-
-/* TEXTO CENTRAL */
-.barra {
-  position: relative;
-  height: 22px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  overflow: hidden;
-}
-
-/* camada da UI por cima */
-.barra-ui {
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 6px;
-}
-
-/* TEXTO CENTRAL */
-.barra-texto {
-  flex: 1;
-  text-align: center;
-  color: white;
-  font-weight: bold;
-}
-
-/* BOTÕES */
-.btn-barra {
-  background: rgba(0,0,0,0.6);
-  border: 1px solid #333;
-  color: white;
-  font-size: 11px;
-  padding: 2px 6px;
   cursor: pointer;
-}
-
-.btn-barra:hover {
-  background: rgba(255,255,255,0.1);
-}
-
-.barra {
-  width: 100%;
-  height: 22px;
-  background: #0e0e0e;
-  border: 1px solid #2a2a2a;
-  position: relative;
   overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.barra-preenchimento {
-  height: 100%;
-  transition: width 0.3s ease, background 0.3s ease;
+.status-imagem:hover {
+  transform: rotate(0deg) scale(1.03);
+  border-color: #fff;
 }
 
-/*VIDA ALTA */
-.vida-alta {
-  background: linear-gradient(to right, #601E1E, #922e2e);
-}
-
-/*VIDA MÉDIA */
-.vida-media {
-  background: linear-gradient(to right, #331010, #601E1E);
-}
-
-/*VIDA BAIXA */
-.vida-baixa {
-  background: linear-gradient(to right, #140404, #331010);
-}
-
-
-
-/* TEXTO */
-.barra-texto {
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  transform: translateY(-50%);
-  
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  
-  pointer-events: auto; /* ✅ agora funciona */
-}
-
-/* 💀 ESTADO CRÍTICO */
-.barra-preenchimento.critica {
-  animation: pulseCritico 1s infinite;
-}
-
-/* 💥 TREMER */
-.barra-preenchimento.critica::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  animation: shakeCritico 0.2s infinite;
-}
-
-/* PULSAR (respiração tensa) */
-@keyframes pulseCritico {
-  0% {
-    filter: brightness(1);
-  }
-  20% {
-    filter: brightness(1.3);
-  }
-  100% {
-    filter: brightness(1);
-  }
-}
-
-/* TREMER (AGORA FUNCIONA) */
-@keyframes shakeCritico {
-  0% { transform: translate(0px, 0px); }
-  25% { transform: translate(-1px, 1px); }
-  50% { transform: translate(1px, -1px); }
-  75% { transform: translate(-1px, -1px); }
-  100% { transform: translate(1px, 1px); }
-}
-
-/* 💀 CAMADA DA TELA */
-.efeito-critico {
-  position: fixed;
-  top: 0;
-  left: 0;
+.status-imagem img {
   width: 100%;
   height: 100%;
-  
-  pointer-events: none;
-  z-index: 999;
-
-  /* VINHETA + VERMELHO */
-  background: radial-gradient(
-    circle,
-    rgba(0,0,0,0) 40%,
-    rgba(0,0,0,0.6) 100%
-  ),
-  radial-gradient(
-    circle,
-    rgba(255,0,0,0) 60%,
-    rgba(190, 1, 1, 0.35) 100%
-  );
-
-  animation: pulseTela 1.5s infinite;
+  object-fit: cover;
 }
 
-/* 💓 BATIMENTO */
-@keyframes pulseTela {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
+.placeholder {
+  color: #555;
+  font-size: 26px;
+  font-weight: bold;
 }
 
-
-/* 🔮 MANA ALTA */
-.mana-alta {
-  background: linear-gradient(to right, #253341, #57799b);
+/* Jogador / classe */
+.linha-cabecalho {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
 }
 
-/* 🔮 MANA MÉDIA */
-.mana-media {
-  background: linear-gradient(to right, #121920, #253341); 
+.rotulo-leve {
+  color: #777;
+  flex-shrink: 0;
 }
 
-/* 🔮 MANA BAIXA */
-.mana-baixa {
-  background: linear-gradient(to right, #131920, #121920);
-}
-
-
-.controle {
-  margin-top: 5px;
-}
-
-.controle input {
-  width: 60px;
-  padding: 4px;
-  background: #111;
-  border: 1px solid #333;
-  color: white;
-  text-align: center;
-}
-
-.input-barra {
-  width: 60px;
+.campo-leve {
   background: transparent;
   border: none;
-  color: white;
-  text-align: left;
-  font-weight: bold;
-  outline: none;
-}
-
-/* CONTEÚDO DA BARRA (flex interno) */
-.barra-conteudo {
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 6px;
-}
-
-/* BOTÕES */
-.btn-barra {
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid #333;
-  color: white;
-
+  border-bottom: 1px solid transparent;
   font-size: 11px;
-  padding: 2px 6px;
-
-  cursor: pointer;
-  transition: 0.2s;
-  
+  padding: 0 2px;
+  outline: none;
+  min-width: 0;
+  flex: 1;
 }
 
-.btn-barra:hover {
-  background: rgba(255, 255, 255, 0.1);
+.campo-leve:hover,
+.campo-leve:focus {
+  border-bottom-color: #444;
 }
 
-/* TEXTO CENTRAL */
-.barra-texto {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: auto;
-  
+.campo-classe {
+  text-align: right;
+  color: #fff;
+  flex: 1.5;
 }
 
-/* 🔥 GARANTE BASE LIMPA */
+/* =====================================================
+   BARRAS (nome / vida / mana) — base compartilhada
+===================================================== */
 .barra {
   position: relative;
+  width: 100%;
   height: 22px;
   background: #0e0e0e;
   border: 1px solid #2a2a2a;
   overflow: hidden;
-  width: 68%;
+  margin-top: 6px;
 }
 
-/* PREENCHIMENTO */
+.nome-barra {
+  height: 26px;
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
 .barra-preenchimento {
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
+  transition: width 0.3s ease, background 0.3s ease;
   z-index: 1;
 }
 
-/* 🔥 CAMADA SUPERIOR */
 .barra-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
-
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 👈 tudo pra esquerda */
-
+  justify-content: flex-start;
   gap: 6px;
   padding-left: 6px;
+  pointer-events: none;
 }
 
-/* BOTÕES */
+.btn-esq,
+.btn-dir,
+.centro,
+.nome-barra .centro span {
+  pointer-events: auto;
+}
+
 .btn-esq,
 .btn-dir {
-  background: rgba(0, 0, 0, 0);
+  background: transparent;
   border: none;
-  color: white;
   font-size: 10px;
   padding: 1px 6px;
   cursor: pointer;
   height: 100%;
-  font-family: "Aubrey", system-ui;
-  
 }
 
 .btn-esq:hover,
 .btn-dir:hover {
-  background: rgba(255, 255, 255, 0.027);
-  font-family: "Aubrey", system-ui;
+  background: rgba(255, 255, 255, 0.07);
 }
 
-/* CENTRO */
 .centro {
-  color: white;
-  font-weight: normal;
-  pointer-events: auto;
+  color: #fff;
   font-size: 10px;
-  z-index: 3; /* 👈 garante que fica clicável */
+}
+
+.nome-barra .centro {
+  font-size: 20px;
+  letter-spacing: 1px;
+  cursor: pointer;
 }
 
 .input-barra {
   width: 70px;
   background: transparent;
   border: none;
-  color: white;
   font-weight: bold;
   outline: none;
-
-  pointer-events: auto; /* 👈 ESSENCIAL */
 }
 
-.barra-overlay {
-  pointer-events: none;
-}
-
-.btn-esq,
-.btn-dir,
-.centro {
-  pointer-events: auto;
-}
-
-
-/* 💚 CURA (brilho suave) */
-.barra-preenchimento.cura {
-  animation: curaGlow 0.4s;
-}
-
-@keyframes curaGlow {
-  15% {
-    box-shadow: 15px 0 30px rgba(0, 255, 102, 0.452);
-    filter: brightness(2);
-  }
-  100% {
-    box-shadow: 0 0 10px rgba(0, 255, 85, 0.514);
-    filter: brightness(1);
-  }
-}
-
-.barra-overlay {
-  pointer-events: none;
-}
-
-.btn-esq,
-.btn-dir,
-.centro {
-  pointer-events: auto;
-}
-
-
-/* BARRA DO NOME */
-.nome-barra {
-  height: 26px;
-  margin-bottom: 1px;
-}
-
-/* TEXTO */
-.nome-barra .centro {
-  font-family: "Aubrey", system-ui;
-  font-size: 20px;
-  font-weight: normal;
-  letter-spacing: 1px;
-}
-
-/* INPUT */
 .nome-input {
-  width: 200px;
+  width: 220px;
   text-align: left;
-    font-family: "Aubrey", system-ui;
+  font-size: 20px;
 }
-
-.efeito-cura-tela {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-
-  pointer-events: none;
-  z-index: 999;
-
-  background:
-    radial-gradient(circle at top left, rgba(0, 255, 119, 0.044), transparent 40%),
-    radial-gradient(circle at top right, rgba(0, 255, 119, 0.044), transparent 40%),
-    radial-gradient(circle at bottom left, rgba(0, 255, 119, 0.044), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(0, 255, 119, 0.044), transparent 40%);
-
-  animation: pulseCuraTela 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes pulseCuraTela {
-  0% {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-
-  25% {
-    opacity: 1;
-    transform: scale(1.015);
-  }
-
-  40% {
-    opacity: 0.85;
-    transform: scale(1.01);
-  }
-
-  60% {
-    opacity: 0.60;
-    transform: scale(1);
-  }
-
-  80% {
-    opacity: 0.40;
-    transform: scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-
-.status-imagem {
-  width: 100px;
-  height: 140px;
-
-  background: #2a2a2a;
-  border: 2px solid #444;
-  
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-  overflow: hidden;
-
-  transition: 0.2s;
-}
-
-.status-imagem:hover {
-  border-color: #777;
-  background: #33333300;
-}
-
-.status-imagem img {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
-
-.placeholder {
-  color: #888;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.insanidade-linha {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.titulo-insanidade {
-  font-size: 12px;
-  color: #aaa;
-}
-
-/* GRID HORIZONTAL */
-.insanidade-grid {
-  display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  gap: 2px;
-  width: 100%;
-}
-
-/* QUADRADOS */
-.insanidade-slot {
-  height: 10px;
-  border: 1px solid #444;
-  background: #111111;
-  cursor: pointer;
-}
-
-/* ATIVO */
-.insanidade-slot.ativo {
-  background: linear-gradient(to bottom, #601E1E, #a31515);
-}
-
-
-.insanidade-grid,
-.cargas-grid {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.top {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.info {
-  flex: 1;
-}
-
-.painel-insanidade {
-  width: 240px; 
-  height: 150px;
-  padding: 2px;
-  border-left: 1px solid #444;
-  background: #111111;
-  flex-shrink: 0;
-  padding-left: 15px;
-}
-
-.insanidade-grid,
-.cargas-grid {
-  display: grid;
-  grid-template-columns: repeat(11, 15px);
-  gap: 5px;
-  margin-bottom: 2px;
-  padding-bottom: 5px;
-}
-
-.insanidade-slot,
-.carga-slot {
-  width: 15px;
-  height: 15px;
-  border: 1px solid #888;
-  cursor: pointer;
-  font-size: 16px;   
-  line-height: 0000.91;    
-}
-
-.insanidade-slot.ativo {
-  background: #111111;
-}
-
-.insanidade-slot.ativo::after {
-  content: "✖";
-  color: #601E1E;
-  margin-bottom: 5px;
-}
-
-.carga-slot.ativa {
-  background: #111111;
-}
-
-.carga-slot.ativa::after {
-  content: "■";
-  color: #bd9204;
-  margin-bottom: 5px;
-  
-}
-
-.titulo {
-  font-size: 11px;
-  text-align: left;
-  margin-bottom: -4px;
-  margin-top: -7px;
-  color: #ffffff;
-  letter-spacing: 1px;
-}
-
 
 .recursos-principais {
   width: 100%;
 }
 
-.select-carga {
-  margin-left: 1px;
-  background: #111111;
-  color: #ccc;
-  border: 1px solid #555;
-  font-size: 11px;
-  font-family: "Aubrey", system-ui;
-}
+/* estados de vida */
+.vida-alta { background: linear-gradient(to right, #601E1E, #922e2e); }
+.vida-media { background: linear-gradient(to right, #331010, #601E1E); }
+.vida-baixa { background: linear-gradient(to right, #140404, #331010); }
 
-.atributos-container {
-  color: white;
-  font-family: "Aubrey", system-ui;
-  border-left: 1px solid #444;
-  padding-left: 15px;
-  height: 150px;
-}
+/* estados de mana */
+.mana-alta { background: linear-gradient(to right, #253341, #57799b); }
+.mana-media { background: linear-gradient(to right, #121920, #253341); }
+.mana-baixa { background: linear-gradient(to right, #131920, #121920); }
 
-/* GRID PRINCIPAL */
-.grid-atributos {
-  display: grid;
-  grid-template-columns: repeat(3, 30px);
-  grid-template-rows: repeat(2, 30px);
-  gap: 6px;
-  padding-bottom: 5px;
-
+/* pulso quando a vida está crítica */
+.barra-preenchimento.critica {
+  animation: pulseCritico 1s infinite;
 }
-/* NÚMERO */
-.box input {
+.barra-preenchimento.critica::before {
+  content: "";
   position: absolute;
-  top: 85%;
-  transform: translateY(-123%);
+  inset: 0;
+  animation: shakeCritico 0.2s infinite;
+}
+@keyframes pulseCritico {
+  0% { filter: brightness(1); }
+  20% { filter: brightness(1.3); }
+  100% { filter: brightness(1); }
+}
+@keyframes shakeCritico {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+  100% { transform: translate(1px, 1px); }
+}
 
+/* brilho ao curar */
+.barra-preenchimento.cura {
+  animation: curaGlow 0.4s;
+}
+@keyframes curaGlow {
+  15% {
+    box-shadow: 15px 0 30px rgba(0, 255, 102, 0.45);
+    filter: brightness(2);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(0, 255, 85, 0.5);
+    filter: brightness(1);
+  }
+}
+
+/* vinheta de tela cheia — vida crítica */
+.efeito-critico {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  background:
+    radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%),
+    radial-gradient(circle, rgba(255,0,0,0) 60%, rgba(190,1,1,0.35) 100%);
+  animation: pulseTela 1.5s infinite;
+}
+@keyframes pulseTela {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* vinheta de tela cheia — cura */
+.efeito-cura-tela {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  background:
+    radial-gradient(circle at top left, rgba(0,255,119,0.044), transparent 40%),
+    radial-gradient(circle at top right, rgba(0,255,119,0.044), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(0,255,119,0.044), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(0,255,119,0.044), transparent 40%);
+  animation: pulseCuraTela 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes pulseCuraTela {
+  0% { opacity: 0; transform: scale(0.98); }
+  25% { opacity: 1; transform: scale(1.015); }
+  40% { opacity: 0.85; transform: scale(1.01); }
+  60% { opacity: 0.6; transform: scale(1); }
+  80% { opacity: 0.4; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* =====================================================
+   STATS SECUNDÁRIOS (Nível / Iniciativa / Defesa / P.Van)
+===================================================== */
+.stats-grid {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.stat-box {
+  flex: 1;
+  border: 1px solid #2a2a2a;
+  background: #0e0e0e;
+  padding: 4px 4px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 8px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.stat-valor {
   width: 100%;
   background: transparent;
   border: none;
-
-  color: #601E1E;
+  color: #fff;
   text-align: center;
-  font-size: 20px;
+  font-size: 13px;
   font-weight: bold;
-  font-family: "Aubrey", system-ui;
+  outline: none;
 }
 
+/* =====================================================
+   INSANIDADE + CARGAS
+===================================================== */
+.insanidade-grid {
+  display: grid;
+  grid-template-columns: repeat(11, 15px);
+  gap: 4px;
+  margin-bottom: 8px;
+}
 
-/* LABEL */
-.box span {
+.insanidade-slot {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #666;
+  background: #111;
+  cursor: pointer;
+  position: relative;
+}
+
+.insanidade-slot.ativo::after {
+  content: "✖";
   position: absolute;
-  bottom: -8px;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a31515;
+  font-size: 11px;
+}
 
+.cargas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 4px;
+}
+
+.carga-slot {
+  width: 13px;
+  height: 13px;
+  border: 1px solid #888;
+  transform: rotate(45deg);
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.carga-slot.ativa {
+  background: linear-gradient(135deg, #8a6a05, #d9a441);
+  border-color: #d9a441;
+}
+
+.select-carga {
+  background: #111;
+  border: 1px solid #444;
+  font-size: 10px;
+  padding: 1px 2px;
+  margin-left: 2px;
+}
+
+/* =====================================================
+   ATRIBUTOS + PATRIMÔNIO
+===================================================== */
+.grid-atributos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 44px);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.box {
+  border: 1px solid #2f2f2f;
+  background: #0e0e0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.box input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #922e2e;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  outline: none;
+}
+
+.box span {
   font-size: 9px;
-  opacity: 0.8;
+  color: #ccc;
+  letter-spacing: 0.5px;
+  margin-top: -2px;
 }
 
 .box input::-webkit-outer-spin-button,
@@ -917,22 +526,20 @@
 
 .grid-patrimonio {
   display: grid;
-  grid-template-columns: repeat(9, 1fr); 
-  gap: 4px;
-  margin-top: 5px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
+  margin-top: 6px;
 }
 
-
 .mini-box {
-  border: 0.5px solid rgba(255, 255, 255, 0.27);
-  height: 35px; 
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  height: 40px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 4px 0; 
-  box-sizing: border-box;
-  opacity: 0.8;
+  gap: 2px;
+  padding: 4px 1px;
 }
 
 .mini-box input {
@@ -941,10 +548,8 @@
   border: none;
   color: #bd9204;
   text-align: center;
-  font-size: 16px;
-  font-family: "Aubrey", system-ui;
+  font-size: 14px;
   outline: none;
-  appearance: textfield;
   -moz-appearance: textfield;
 }
 
@@ -955,11 +560,369 @@
 }
 
 .mini-box span {
-  font-size: 8px;
-  opacity: 0.8;
-  color: white;
+  font-size: 7.5px;
+  color: #ccc;
   text-align: center;
-  width: 100%;
-  display: block;
   line-height: 1;
+}
+
+/* =====================================================
+   STATUS
+===================================================== */
+.status-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.status-linha {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid #232323;
+  padding-bottom: 3px;
+}
+
+.status-tipo {
+  width: 40%;
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 12px;
+  outline: none;
+}
+
+.separador-status {
+  color: #555;
+}
+
+.status-valor {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #d9a441;
+  font-size: 12px;
+  outline: none;
+}
+
+.status-tipo::placeholder,
+.status-valor::placeholder,
+.inventario-nome::placeholder,
+.combate-nome::placeholder,
+.combate-detalhe::placeholder {
+  color: #444;
+}
+
+/* =====================================================
+   PERÍCIAS
+===================================================== */
+.pericias-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(9, auto);
+  grid-auto-flow: column;
+  column-gap: 14px;
+  row-gap: 6px;
+}
+
+.pericia-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pericia-caixa {
+  flex-shrink: 0;
+  width: 26px;
+  border: 1px solid #333;
+  background: #0e0e0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.pericia-valor {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #eee;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  outline: none;
+}
+
+.pericia-mod {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #262626;
+  color: #888;
+  text-align: center;
+  font-size: 8px;
+  outline: none;
+}
+
+.pericia-nome {
+  font-size: 10px;
+  color: #ddd;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pericia-atributo {
+  color: #666;
+  font-size: 9px;
+  text-transform: none;
+  margin-left: 1px;
+}
+
+.pericia-especializacao {
+  width: 48px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  font-size: 10px;
+  outline: none;
+}
+
+/* =====================================================
+   COMBATE / HABILIDADES / MAGIAS / VANTAGENS / DESVANTAGENS
+===================================================== */
+.combate-painel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.abas-combate {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+
+.aba-btn {
+  background: transparent;
+  border: none;
+  border-right: 1px solid #333;
+  color: #777;
+  font-size: 10px;
+  padding: 2px 7px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.aba-btn:last-child {
+  border-right: none;
+}
+
+.aba-btn.ativa {
+  color: #fff;
+  font-weight: bold;
+}
+
+.aba-btn:hover {
+  color: #ccc;
+}
+
+.combate-lista {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 0;
+}
+
+.combate-item {
+  border: 1px solid #232323;
+  background: #0e0e0e;
+  padding: 6px 8px;
+}
+
+.combate-item-topo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.combate-nome {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  outline: none;
+}
+
+.combate-detalhe {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #c9a227;
+  font-size: 10px;
+  outline: none;
+  margin-top: 2px;
+}
+
+.lista-vazia {
+  color: #555;
+  font-size: 11px;
+  text-align: center;
+  padding: 12px 0;
+  font-style: italic;
+}
+
+/* =====================================================
+   INVENTÁRIO
+===================================================== */
+.inventario-painel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.inventario-lista {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+  min-height: 0;
+}
+
+.inventario-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid #232323;
+  padding-bottom: 3px;
+}
+
+.inventario-nome {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 11px;
+  outline: none;
+  min-width: 0;
+}
+
+.inventario-peso {
+  width: 38px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-left: 1px solid #262626;
+  color: #bd9204;
+  text-align: center;
+  font-size: 11px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.inventario-peso::-webkit-outer-spin-button,
+.inventario-peso::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.carga-limite {
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: 1px solid #2a2a2a;
+  padding-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.carga-numero {
+  color: #fff;
+  font-weight: bold;
+}
+
+.carga-max-input {
+  width: 30px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  font-size: 10px;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.carga-max-input::-webkit-outer-spin-button,
+.carga-max-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* =====================================================
+   BOTÕES GENÉRICOS (adicionar / remover linhas)
+===================================================== */
+.btn-remover {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.btn-remover:hover {
+  color: #a83232;
+}
+
+.btn-add {
+  background: transparent;
+  border: 1px dashed #333;
+  color: #888;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.5px;
+}
+
+.btn-add:hover {
+  border-color: #666;
+  color: #ccc;
+}
+
+/* =====================================================
+   SCROLLBAR FINA (painéis com overflow)
+===================================================== */
+.combate-lista::-webkit-scrollbar,
+.inventario-lista::-webkit-scrollbar {
+  width: 5px;
+}
+
+.combate-lista::-webkit-scrollbar-thumb,
+.inventario-lista::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+.combate-lista::-webkit-scrollbar-track,
+.inventario-lista::-webkit-scrollbar-track {
+  background: transparent;
 }
