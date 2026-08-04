@@ -226,6 +226,41 @@ input, select, textarea, button {
   border-color: #262626;
 }
 
+.racial-bloco {
+  margin-bottom: 4px;
+}
+
+.racial-titulo {
+  font-size: 9px;
+  color: #d9a441;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.racial-linha {
+  padding: 3px 6px;
+  border: 1px solid #262626;
+  background: #0e0e0e;
+  margin-bottom: 3px;
+  cursor: default;
+}
+
+.racial-nome {
+  font-size: 11px;
+  color: #ddd;
+}
+
+.divisor-habilidades {
+  font-size: 9px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: 1px solid #262626;
+  padding-top: 6px;
+  margin: 6px 0 4px;
+}
+
 .progressao-linha {
   display: flex;
   align-items: baseline;

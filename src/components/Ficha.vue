@@ -306,14 +306,28 @@
                 v-for="p in progressaoClasse"
                 :key="p.nivel"
                 :class="{ alcancado: p.alcancado }"
+                :title="p.desc"
               >
                 <span class="progressao-nivel">{{ p.nivel }}</span>
                 <span class="progressao-habilidade">{{ p.habilidade }}</span>
               </div>
             </template>
 
-            <!-- demais abas: listas livres editáveis -->
+            <!-- demais abas: listas livres editáveis (a aba Habilidades ainda mostra as
+                 habilidades raciais automaticamente, quando uma raça foi escolhida) -->
             <template v-else>
+
+              <template v-if="abaCombateAtiva === 'Habilidades'">
+                <p v-if="!racaSelecionada" class="lista-vazia">Escolha uma raça acima para ver as habilidades raciais.</p>
+                <div v-else class="racial-bloco">
+                  <div class="racial-titulo">Raça: {{ racaSelecionada }}</div>
+                  <div class="racial-linha" v-for="h in (racas.find(r => r.nome === racaSelecionada)?.habilidades || [])" :key="h.nome" :title="h.desc">
+                    <span class="racial-nome">{{ h.nome }}</span>
+                  </div>
+                </div>
+                <div class="divisor-habilidades" v-if="racaSelecionada">Outras habilidades</div>
+              </template>
+
               <div class="combate-item" v-for="item in itensCombate[abaCombateAtiva]" :key="item.id">
                 <div class="combate-item-topo">
                   <input class="combate-nome" v-model="item.nome" placeholder="nome" />
