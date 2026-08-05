@@ -14,13 +14,7 @@
             <img v-if="imagemStatus" :src="imagemStatus" />
             <span v-else class="placeholder">+</span>
 
-            <input
-              type="file"
-              ref="inputFile"
-              @change="carregarImagem"
-              accept="image/*"
-              hidden
-            />
+            <input type="file" ref="inputFile" @change="carregarImagem" accept="image/*" hidden />
           </div>
 
           <!-- INFO -->
@@ -32,11 +26,13 @@
             </div>
 
             <div class="linha-raca-classe">
-              <select v-model="racaSelecionada" class="select-rcs" :title="racas.find(r => r.nome === racaSelecionada)?.resumo || ''">
+              <select v-model="racaSelecionada" class="select-rcs"
+                :title="racas.find(r => r.nome === racaSelecionada)?.resumo || ''">
                 <option value="" disabled>Raça</option>
                 <option v-for="r in racas" :key="r.nome" :value="r.nome">{{ r.nome }}</option>
               </select>
-              <select v-model="classeSelecionada" class="select-rcs" :title="classeInfo ? 'Dado de Vida: ' + classeInfo.dadoVida : ''">
+              <select v-model="classeSelecionada" class="select-rcs"
+                :title="classeInfo ? 'Dado de Vida: ' + classeInfo.dadoVida : ''">
                 <option value="" disabled>Classe</option>
                 <option v-for="c in classes" :key="c.nome" :value="c.nome">{{ c.nome }}</option>
               </select>
@@ -55,15 +51,8 @@
                     {{ nome }}
                   </span>
 
-                  <input
-                    v-show="editandoNome"
-                    ref="inputNome"
-                    type="text"
-                    v-model="nome"
-                    @blur="editandoNome = false"
-                    @keyup.enter="editandoNome = false"
-                    class="input-barra nome-input"
-                  />
+                  <input v-show="editandoNome" ref="inputNome" type="text" v-model="nome" @blur="editandoNome = false"
+                    @keyup.enter="editandoNome = false" class="input-barra nome-input" />
 
                 </div>
               </div>
@@ -78,11 +67,9 @@
 
               <!-- VIDA -->
               <div class="barra">
-                <div
-                  class="barra-preenchimento"
+                <div class="barra-preenchimento"
                   :class="[classeVida, { dano: animacaoDano, cura: animacaoCura, critica: vidaCritica }]"
-                  :style="{ width: vidaPercent + '%' }"
-                ></div>
+                  :style="{ width: vidaPercent + '%' }"></div>
 
                 <div class="barra-overlay">
                   <button class="btn-esq" @click="alterarVida(-5)">-5</button>
@@ -97,11 +84,7 @@
 
               <!-- MANA -->
               <div class="barra">
-                <div
-                  class="barra-preenchimento"
-                  :class="classeMana"
-                  :style="{ width: manaPercent + '%' }"
-                ></div>
+                <div class="barra-preenchimento" :class="classeMana" :style="{ width: manaPercent + '%' }"></div>
 
                 <div class="barra-overlay">
                   <button class="btn-esq" @click="alterarMana(-5)">-5</button>
@@ -150,13 +133,57 @@
           </div>
 
           <div class="status-lista">
-            <div class="status-linha" v-for="s in status" :key="s.id">
-              <input class="status-tipo" v-model="s.tipo" placeholder="condição" />
-              <span class="separador-status">:</span>
-              <input class="status-valor" v-model="s.valor" placeholder="—" />
-              <button class="btn-remover" @click="removerStatus(s.id)" title="remover">×</button>
+            <div class="ataque-item" v-for="s in status" :key="s.id">
+
+              <!-- MODO EDIÇÃO -->
+              <div v-if="s.editando" class="ataque-editor">
+                <div class="ataque-caixa">
+                  <input class="ataque-nome-input" v-model="s.nome" placeholder="Nome da Condição"
+                    list="lista-condicoes" />
+                </div>
+
+                <div class="ataque-form-linha">
+                  <div class="ataque-caixa ataque-caixa-tipo">
+                    <span class="ataque-caixa-label">Duração</span>
+                    <input class="ataque-select ataque-select-tipo status-duracao-input" v-model="s.duracao"
+                      placeholder="ex: 1 rodada, Até Descanso" list="lista-duracoes" />
+                  </div>
+                </div>
+
+                <textarea class="ataque-efeito" v-model="s.efeito" placeholder="efeito da condição..."></textarea>
+
+                <div class="ataque-editor-acoes">
+                  <button class="btn-remover" @click="removerStatus(s.id)" title="remover">×</button>
+                  <button class="btn-salvar-ataque" @click="salvarStatus(s)">Salvar</button>
+                </div>
+              </div>
+
+              <!-- MODO RESUMO -->
+              <div v-else class="ataque-resumo">
+                <div class="ataque-resumo-topo">
+                  <span class="ataque-resumo-nome">{{ s.nome || 'Condição sem nome' }}</span>
+                  <div class="ataque-resumo-acoes">
+                    <button class="btn-editar" @click="editarStatus(s)" title="editar">✎</button>
+                    <button class="btn-remover" @click="removerStatus(s.id)" title="remover">×</button>
+                  </div>
+                </div>
+                <div class="ataque-resumo-linha" v-if="s.duracao">
+                  <span class="ataque-badge ataque-badge-tipo">{{ s.duracao }}</span>
+                </div>
+                <p v-if="s.efeito" class="ataque-resumo-efeito">{{ s.efeito }}</p>
+              </div>
+
             </div>
+
+            <p v-if="status.length === 0" class="lista-vazia">Nenhuma condição ativa.</p>
           </div>
+
+          <datalist id="lista-condicoes">
+            <option v-for="c in condicoesComuns" :key="c" :value="c" />
+          </datalist>
+          <datalist id="lista-duracoes">
+            <option v-for="d in duracoesComuns" :key="d" :value="d" />
+          </datalist>
 
           <button class="btn-add" @click="adicionarStatus">+ adicionar condição</button>
         </div>
@@ -171,22 +198,15 @@
             <div class="pericia-linha" v-for="p in pericias" :key="p.id">
 
               <div class="pericia-caixa" title="Cada 2 pontos aumentam 1 dado em +1 (regra do livro)">
-                <input
-                  type="text"
-                  class="pericia-valor"
-                  :value="p.valor"
-                  @input="atualizarPericia(p, $event.target.value)"
-                />
+                <input type="text" class="pericia-valor" :value="p.valor"
+                  @input="atualizarPericia(p, $event.target.value)" />
                 <span class="pericia-mod">+{{ p.mod }}</span>
               </div>
 
               <div class="pericia-nome">
                 {{ p.nome }}
-                <input
-                  v-if="p.especializacao !== undefined"
-                  class="pericia-especializacao"
-                  v-model="p.especializacao"
-                />
+                <input v-if="p.especializacao !== undefined" class="pericia-especializacao"
+                  v-model="p.especializacao" />
                 <span class="pericia-atributo">({{ p.atributo }})</span>
               </div>
 
@@ -208,13 +228,8 @@
             <span class="icone-secao">☾</span> Insanidade
           </div>
           <div class="insanidade-grid">
-            <div
-              v-for="i in insanidadeMax"
-              :key="'ins-' + i"
-              class="insanidade-slot"
-              :class="{ ativo: i <= insanidadeAtual }"
-              @click="insanidadeAtual = (insanidadeAtual === i) ? 0 : i"
-            ></div>
+            <div v-for="i in insanidadeMax" :key="'ins-' + i" class="insanidade-slot"
+              :class="{ ativo: i <= insanidadeAtual }" @click="insanidadeAtual = (insanidadeAtual === i) ? 0 : i"></div>
           </div>
 
           <!-- CARGAS 1 -->
@@ -229,13 +244,8 @@
             <input type="number" min="0" class="carga-max-input-inline" v-model.number="cargasMax_1" />
           </div>
           <div class="cargas-grid">
-            <div
-              v-for="i in cargasMax_1"
-              :key="'car1-' + i"
-              class="carga-slot"
-              :class="{ ativa: i <= cargasAtual_1 }"
-              @click="cargasAtual_1 = (cargasAtual_1 === i) ? 0 : i"
-            ></div>
+            <div v-for="i in cargasMax_1" :key="'car1-' + i" class="carga-slot" :class="{ ativa: i <= cargasAtual_1 }"
+              @click="cargasAtual_1 = (cargasAtual_1 === i) ? 0 : i"></div>
           </div>
 
           <!-- CARGAS 2 -->
@@ -250,13 +260,8 @@
             <input type="number" min="0" class="carga-max-input-inline" v-model.number="cargasMax_2" />
           </div>
           <div class="cargas-grid">
-            <div
-              v-for="i in cargasMax_2"
-              :key="'car2-' + i"
-              class="carga-slot"
-              :class="{ ativa: i <= cargasAtual_2 }"
-              @click="cargasAtual_2 = (cargasAtual_2 === i) ? 0 : i"
-            ></div>
+            <div v-for="i in cargasMax_2" :key="'car2-' + i" class="carga-slot" :class="{ ativa: i <= cargasAtual_2 }"
+              @click="cargasAtual_2 = (cargasAtual_2 === i) ? 0 : i"></div>
           </div>
 
           <!-- CARGAS 3 -->
@@ -271,13 +276,8 @@
             <input type="number" min="0" class="carga-max-input-inline" v-model.number="cargasMax_3" />
           </div>
           <div class="cargas-grid">
-            <div
-              v-for="i in cargasMax_3"
-              :key="'car3-' + i"
-              class="carga-slot"
-              :class="{ ativa: i <= cargasAtual_3 }"
-              @click="cargasAtual_3 = (cargasAtual_3 === i) ? 0 : i"
-            ></div>
+            <div v-for="i in cargasMax_3" :key="'car3-' + i" class="carga-slot" :class="{ ativa: i <= cargasAtual_3 }"
+              @click="cargasAtual_3 = (cargasAtual_3 === i) ? 0 : i"></div>
           </div>
 
         </div>
@@ -286,13 +286,8 @@
         <div class="painel combate-painel">
 
           <div class="abas-combate">
-            <button
-              v-for="aba in abasCombate"
-              :key="aba"
-              class="aba-btn"
-              :class="{ ativa: abaCombateAtiva === aba }"
-              @click="abaCombateAtiva = aba"
-            >{{ aba }}</button>
+            <button v-for="aba in abasCombate" :key="aba" class="aba-btn" :class="{ ativa: abaCombateAtiva === aba }"
+              @click="abaCombateAtiva = aba">{{ aba }}</button>
           </div>
 
           <div class="combate-lista">
@@ -300,14 +295,8 @@
             <!-- aba Progressão: tabela calculada a partir da classe + nível, não é editável na mão -->
             <template v-if="abaCombateAtiva === 'Progressão'">
               <p v-if="!classeInfo" class="lista-vazia">Escolha uma classe acima para ver a progressão.</p>
-              <div
-                v-else
-                class="progressao-linha"
-                v-for="p in progressaoClasse"
-                :key="p.nivel"
-                :class="{ alcancado: p.alcancado }"
-                :title="p.desc"
-              >
+              <div v-else class="progressao-linha" v-for="p in progressaoClasse" :key="p.nivel"
+                :class="{ alcancado: p.alcancado }" :title="p.desc">
                 <span class="progressao-nivel">{{ p.nivel }}</span>
                 <span class="progressao-habilidade">{{ p.habilidade }}</span>
               </div>
@@ -315,13 +304,81 @@
 
             <!-- demais abas: listas livres editáveis (a aba Habilidades ainda mostra as
                  habilidades raciais automaticamente, quando uma raça foi escolhida) -->
+            <!-- ABA COMBATE: editor de ataque -->
+            <template v-else-if="abaCombateAtiva === 'Combate'">
+              <div class="ataque-item" v-for="item in itensCombate.Combate" :key="item.id">
+
+                <!-- MODO EDIÇÃO -->
+                <div v-if="item.editando" class="ataque-editor">
+                  <div class="ataque-caixa">
+                    <input class="ataque-nome-input" v-model="item.nome" placeholder="Nome do Ataque" />
+                  </div>
+
+                  <div class="ataque-form-linha">
+                    <div class="ataque-caixa ataque-caixa-dano">
+                      <span class="ataque-caixa-label">Dado de Dano</span>
+                      <div class="ataque-dado-controles">
+                        <select class="ataque-select ataque-select-qtd" v-model.number="item.qtdDados">
+                          <option v-for="n in 6" :key="n" :value="n">{{ n }}</option>
+                        </select>
+                        <span class="ataque-d">d</span>
+                        <select class="ataque-select" v-model.number="item.tipoDado">
+                          <option v-for="d in dadosOptions" :key="d" :value="d">{{ d }}</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="ataque-caixa ataque-caixa-tipo">
+                      <span class="ataque-caixa-label">Tipo de Dano</span>
+                      <select class="ataque-select ataque-select-tipo" v-model="item.tipoDano">
+                        <option v-for="t in tiposDano" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <input class="ataque-modificador" v-model="item.modificador"
+                    placeholder="modificador (ex: + MEN, × ROB)" />
+                  <textarea class="ataque-efeito" v-model="item.efeito"
+                    placeholder="custo, alcance, efeito adicional..."></textarea>
+
+                  <div class="ataque-editor-acoes">
+                    <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                    <button class="btn-salvar-ataque" @click="salvarAtaque(item)">Salvar</button>
+                  </div>
+                </div>
+
+                <!-- MODO RESUMO -->
+                <div v-else class="ataque-resumo">
+                  <div class="ataque-resumo-topo">
+                    <span class="ataque-resumo-nome">{{ item.nome || 'Ataque sem nome' }}</span>
+                    <div class="ataque-resumo-acoes">
+                      <button class="btn-editar" @click="editarAtaque(item)" title="editar">✎</button>
+                      <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                    </div>
+                  </div>
+                  <div class="ataque-resumo-linha">
+                    <span class="ataque-badge">{{ resumoAtaque(item) }}</span>
+                    <span class="ataque-badge ataque-badge-tipo">{{ item.tipoDano }}</span>
+                  </div>
+                  <p v-if="item.efeito" class="ataque-resumo-efeito">{{ item.efeito }}</p>
+                </div>
+
+              </div>
+
+              <p v-if="itensCombate.Combate.length === 0" class="lista-vazia">Nenhum ataque cadastrado ainda.</p>
+            </template>
+
+            <!-- DEMAIS ABAS: continuam como listas livres -->
             <template v-else>
 
               <template v-if="abaCombateAtiva === 'Habilidades'">
-                <p v-if="!racaSelecionada" class="lista-vazia">Escolha uma raça acima para ver as habilidades raciais.</p>
+                <p v-if="!racaSelecionada" class="lista-vazia">Escolha uma raça acima para ver as habilidades raciais.
+                </p>
                 <div v-else class="racial-bloco">
                   <div class="racial-titulo">Raça: {{ racaSelecionada }}</div>
-                  <div class="racial-linha" v-for="h in (racas.find(r => r.nome === racaSelecionada)?.habilidades || [])" :key="h.nome" :title="h.desc">
+                  <div class="racial-linha"
+                    v-for="h in (racas.find(r => r.nome === racaSelecionada)?.habilidades || [])" :key="h.nome"
+                    :title="h.desc">
                     <span class="racial-nome">{{ h.nome }}</span>
                   </div>
                 </div>
@@ -343,7 +400,9 @@
 
           </div>
 
-          <button v-if="abaCombateAtiva !== 'Progressão'" class="btn-add" @click="adicionarItemCombate">+ adicionar em {{ abaCombateAtiva }}</button>
+          <button v-if="abaCombateAtiva !== 'Progressão'" class="btn-add" @click="adicionarItemCombate">+ adicionar em
+            {{
+              abaCombateAtiva }}</button>
         </div>
 
       </div> <!-- FECHA col-meio -->
@@ -361,11 +420,8 @@
 
           <div class="grid-atributos">
             <div v-for="attr in atributos" :key="attr.nome" class="box">
-              <input class="titulo-atributos"
-                type="text"
-                :value="attr.valor === '?' ? '' : attr.valor"
-                @input="atualizarAtributo(attr, $event.target.value)"
-              />
+              <input class="titulo-atributos" type="text" :value="attr.valor === '?' ? '' : attr.valor"
+                @input="atualizarAtributo(attr, $event.target.value)" />
               <span>{{ attr.nome }}</span>
             </div>
           </div>
