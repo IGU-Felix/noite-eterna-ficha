@@ -269,6 +269,27 @@ export default {
       return isNaN(num) ? 0 : num
     }
 
+    // calcula um valor a partir de uma expressão textual usando os atributos atuais.
+    // exemplos válidos: "CAR", "ROB + 2", "(PRE + MEN) * 2"
+    const calcularValorComAtributos = (expressao) => {
+      if (expressao === null || expressao === undefined) return 0
+
+      const texto = String(expressao).trim()
+      if (!texto) return 0
+
+      const expressaoSegura = texto.replace(/\b([A-Z]{3})\b/g, (match) => {
+        const valor = valorAtributo(match)
+        return Number.isFinite(valor) ? String(valor) : "0"
+      })
+
+      try {
+        const resultado = Function(`"use strict"; return (${expressaoSegura})`)()
+        return Number.isFinite(resultado) ? Math.round(resultado) : 0
+      } catch {
+        return 0
+      }
+    }
+
     const patrimonio = ref([
       { nome: "TRI", valor: 0 },
       { nome: "QUADR", valor: 0 },
@@ -298,24 +319,24 @@ export default {
     })
 
     // ===== INSANIDADE E CARGAS =====
-    const tiposCarga = [
-      { nome: "Absurdo", max: 10 },
-      { nome: "Cadavéricas", max: 4 },
-      { nome: "Constelação", max: 4 },
-      { nome: "Eclesiástica", max: 4 },
+    const tiposCarga = computed(() => [
+      { nome: "Absurdo", max: calcularValorComAtributos("CAR") },
+      { nome: "Adaptação", max: 10 },  // o livro não define um máximo fixo, mas 10 é o valor sugerido
+      { nome: "Cadavéricas", max: calcularValorComAtributos("MEN") },
+      { nome: "Constelação", max: 6 },
+      { nome: "Eclesiástica", max: 10 }, // o livro não define um máximo fixo, mas 10 é o valor sugerido
       { nome: "Essência", max: 4 },
       { nome: "Êxodo Ígneo", max: 3 },
-      { nome: "Fúria", max: 6 },
-      { nome: "KI", max: 4 },
-      { nome: "Munição", max: 4 },
-      { nome: "Pacto", max: 4 },
-      { nome: "Rancor", max: 4 },
-      { nome: "Reação em Cadeia", max: 4 },
-      { nome: "Sobrevivência", max: 4 },
-      { nome: "Trovão", max: 4 },
-      { nome: "Ventania", max: 4 },
-      { nome: "Veneno", max: 4 }
-    ]
+      { nome: "Fúria", max: calcularValorComAtributos("ROB") },
+      { nome: "KI", max: nivel.value + 4},
+      { nome: "Munição", max: 4 }, // o livro não define um máximo fixo, mas 4 é o valor sugerido
+      { nome: "Pacto", max: Math.round(nivel.value / 2) + calcularValorComAtributos("MEN") },
+      { nome: "Rancor", max: (nivel.value < 17) ? 2 : 4 },
+      { nome: "Reação em Cadeia", max: 3 + calcularValorComAtributos("MEN") },
+      { nome: "Trovão", max: 3 },
+      { nome: "Ventania", max: 3 },
+      { nome: "Veneno", max: 5 }
+    ])
 
     const tipoSelecionado_1 = ref("Fúria")
     const tipoSelecionado_2 = ref("Fúria")
@@ -338,9 +359,22 @@ export default {
     const cargasMax_3 = ref(6)
 
     function definirMaxSugerido(tipoNome, maxRef) {
-      const tipo = tiposCarga.find(t => t.nome === tipoNome)
+      const tipo = tiposCarga.value.find(t => t.nome === tipoNome)
       maxRef.value = tipo ? tipo.max : 0
     }
+
+    const atualizarMaximosCargas = () => {
+      definirMaxSugerido(tipoSelecionado_1.value, cargasMax_1)
+      definirMaxSugerido(tipoSelecionado_2.value, cargasMax_2)
+      definirMaxSugerido(tipoSelecionado_3.value, cargasMax_3)
+    }
+
+    watch(() => valorAtributo("ROB"), atualizarMaximosCargas)
+    watch(() => valorAtributo("POD"), atualizarMaximosCargas)
+    watch(() => valorAtributo("PRE"), atualizarMaximosCargas)
+    watch(() => valorAtributo("MEN"), atualizarMaximosCargas)
+    watch(() => valorAtributo("CAR"), atualizarMaximosCargas)
+    watch(nivel, atualizarMaximosCargas)
 
     watch(tipoSelecionado_1, (novo) => { cargasAtual_1.value = 0; definirMaxSugerido(novo, cargasMax_1) })
     watch(tipoSelecionado_2, (novo) => { cargasAtual_2.value = 0; definirMaxSugerido(novo, cargasMax_2) })
@@ -570,6 +604,7 @@ export default {
       atributos,
       atualizarAtributo,
       valorAtributo,
+      calcularValorComAtributos,
       audio,
 
       insanidadeAtual,
