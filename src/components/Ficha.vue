@@ -368,6 +368,71 @@
               <p v-if="itensCombate.Combate.length === 0" class="lista-vazia">Nenhum ataque cadastrado ainda.</p>
             </template>
 
+            <!-- ABA MAGIAS: editor de magia + seletor de truques (se Feiticeiro) -->
+            <template v-else-if="abaCombateAtiva === 'Magias'">
+
+              <div v-if="classeSelecionada === 'Feiticeiro'" class="seletor-truques">
+                <div class="racial-titulo">Truques do Feiticeiro — clique pra adicionar</div>
+                <select class="select-truque" @change="adicionarTruque($event.target.value); $event.target.value = ''">
+                  <option value="">Escolher um truque...</option>
+                  <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel }})</option>
+                </select>
+              </div>
+
+              <div class="ataque-item" v-for="item in itensCombate.Magias" :key="item.id">
+
+                <div v-if="item.editando" class="ataque-editor">
+                  <div class="ataque-caixa">
+                    <input class="ataque-nome-input" v-model="item.nome" placeholder="Nome da Magia" />
+                  </div>
+
+                  <div class="ataque-form-linha">
+                    <div class="ataque-caixa ataque-caixa-tipo">
+                      <span class="ataque-caixa-label">Nível</span>
+                      <select class="ataque-select" v-model.number="item.nivel">
+                        <option v-for="n in 6" :key="n" :value="n">{{ n }}</option>
+                      </select>
+                    </div>
+                    <div class="ataque-caixa ataque-caixa-tipo">
+                      <span class="ataque-caixa-label">Custo de Mana</span>
+                      <input class="ataque-select" type="number" min="0" v-model.number="item.custoMana" />
+                    </div>
+                    <div class="ataque-caixa ataque-caixa-tipo">
+                      <span class="ataque-caixa-label">Tipo de Dano</span>
+                      <select class="ataque-select ataque-select-tipo" v-model="item.tipoDano">
+                        <option v-for="t in tiposMagia" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <textarea class="ataque-efeito" v-model="item.efeito" placeholder="alcance, tempo de conjuração, efeito..."></textarea>
+
+                  <div class="ataque-editor-acoes">
+                    <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                    <button class="btn-salvar-ataque" @click="salvarMagia(item)">Salvar</button>
+                  </div>
+                </div>
+
+                <div v-else class="ataque-resumo">
+                  <div class="ataque-resumo-topo">
+                    <span class="ataque-resumo-nome">{{ item.nome || 'Magia sem nome' }}</span>
+                    <div class="ataque-resumo-acoes">
+                      <button class="btn-editar" @click="editarMagia(item)" title="editar">✎</button>
+                      <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                    </div>
+                  </div>
+                  <div class="ataque-resumo-linha">
+                    <span class="ataque-badge">Nível {{ item.nivel }} · {{ item.custoMana }} mana</span>
+                    <span class="ataque-badge ataque-badge-tipo">{{ item.tipoDano }}</span>
+                  </div>
+                  <p v-if="item.efeito" class="ataque-resumo-efeito">{{ item.efeito }}</p>
+                </div>
+
+              </div>
+
+              <p v-if="itensCombate.Magias.length === 0" class="lista-vazia">Nenhuma magia cadastrada ainda.</p>
+            </template>
+
             <!-- DEMAIS ABAS: continuam como listas livres -->
             <template v-else>
 
