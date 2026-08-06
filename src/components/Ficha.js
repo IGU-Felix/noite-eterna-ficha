@@ -39,7 +39,7 @@ export default {
     ]
 
     const tiposMagia = [
-      "Nenhum", "Fogo", "Água", "Elétrico", "Vento", "Terra", "Radiante", 
+      "Nenhum", "Fogo", "Água", "Elétrico", "Vento", "Terra", "Radiante",
       "Penumbra", "Psiônico", "Nuclear", "Astral"
     ]
 
@@ -328,7 +328,7 @@ export default {
       { nome: "Essência", max: calcularValorComAtributos("MEN") + 6 },
       { nome: "Êxodo Ígneo", max: 3 },
       { nome: "Fúria", max: calcularValorComAtributos("ROB") },
-      { nome: "KI", max: nivel.value + 4},
+      { nome: "KI", max: nivel.value + 4 },
       { nome: "Munição", max: 4 }, // o livro não define um máximo fixo, mas 4 é o valor sugerido
       { nome: "Pacto", max: Math.round(nivel.value / 2) + calcularValorComAtributos("MEN") },
       { nome: "Rancor", max: (nivel.value < 17) ? 2 : 4 },
@@ -390,7 +390,8 @@ export default {
         nome: "",
         duracao: "",
         efeito: "",
-        editando: true
+        editando: true,
+        expandido: false
       })
     }
 
@@ -476,7 +477,8 @@ export default {
           modificador: "",
           tipoDano: "Físico",
           efeito: "",
-          editando: true // recém-criado já abre em modo de edição
+          editando: true, // recém-criado já abre em modo de edição
+          expandido: false
         })
         return
       }
@@ -489,12 +491,13 @@ export default {
           custoMana: 1,
           tipoDano: "Nenhum",
           efeito: "",
-          editando: true
+          editando: true,
+          expandido: false
         })
         return
       }
 
-      itensCombate[aba].push({ id: gerarId(), nome: "", detalhe: "" })
+      itensCombate[aba].push({ id: gerarId(), nome: "", detalhe: "", expandido: false })
     }
 
     function salvarAtaque(item) {
@@ -503,6 +506,10 @@ export default {
 
     function editarAtaque(item) {
       item.editando = true
+    }
+
+    function toggleExpandido(item) {
+      item.expandido = !item.expandido
     }
 
     function resumoAtaque(item) {
@@ -530,7 +537,8 @@ export default {
         custoMana: 0,
         tipoDano: "Físico",
         efeito: `Alcance: ${truque.alcance} · Dado: ${truque.dado} · ${truque.desc}`,
-        editando: false
+        editando: false,
+        expandido: false
       })
     }
 
@@ -657,6 +665,7 @@ export default {
       truquesFeiticeiro,
       salvarMagia,
       editarMagia,
+      toggleExpandido,
       adicionarTruque
     }
   }

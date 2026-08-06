@@ -1167,7 +1167,6 @@ input, select, textarea, button {
 .ataque-select-qtd { width: 42px; }
 .ataque-d { color: #777; font-size: 11px; }
 .ataque-select-tipo { width: 100%; }
-
 .ataque-modificador,
 .ataque-efeito {
   background: #0e0e0e;
@@ -1176,6 +1175,9 @@ input, select, textarea, button {
   font-size: 11px;
   padding: 4px 6px;
   outline: none;
+  width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .ataque-efeito {
@@ -1253,6 +1255,8 @@ input, select, textarea, button {
   font-size: 11px;
   color: #999;
   line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .status-duracao-input {
@@ -1261,4 +1265,43 @@ input, select, textarea, button {
   border: 1px solid #333;
   color: #ddd;
   outline: none;
+}
+
+.btn-expandir {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-expandir:hover {
+  color: #d9a441;
+}
+
+.btn-expandir.aberto {
+  transform: rotate(180deg);
+  color: #d9a441;
+}
+
+.combate-detalhe {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #232323;
+  color: #c9a227;
+  font-size: 11px;
+  padding-top: 4px;
+  margin-top: 4px;
+  outline: none;
+  resize: vertical;
+  min-height: 44px;
+  font-family: inherit;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }

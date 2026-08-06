@@ -164,13 +164,15 @@
                   <span class="ataque-resumo-nome">{{ s.nome || 'Condição sem nome' }}</span>
                   <div class="ataque-resumo-acoes">
                     <button class="btn-editar" @click="editarStatus(s)" title="editar">✎</button>
+                    <button v-if="s.efeito" class="btn-expandir" :class="{ aberto: s.expandido }"
+                      @click="toggleExpandido(s)" title="mostrar/ocultar efeito">▾</button>
                     <button class="btn-remover" @click="removerStatus(s.id)" title="remover">×</button>
                   </div>
                 </div>
                 <div class="ataque-resumo-linha" v-if="s.duracao">
                   <span class="ataque-badge ataque-badge-tipo">{{ s.duracao }}</span>
                 </div>
-                <p v-if="s.efeito" class="ataque-resumo-efeito">{{ s.efeito }}</p>
+                <p v-if="s.efeito && s.expandido" class="ataque-resumo-efeito">{{ s.efeito }}</p>
               </div>
 
             </div>
@@ -353,6 +355,8 @@
                     <span class="ataque-resumo-nome">{{ item.nome || 'Ataque sem nome' }}</span>
                     <div class="ataque-resumo-acoes">
                       <button class="btn-editar" @click="editarAtaque(item)" title="editar">✎</button>
+                      <button v-if="item.efeito" class="btn-expandir" :class="{ aberto: item.expandido }"
+                        @click="toggleExpandido(item)" title="mostrar/ocultar efeito">▾</button>
                       <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                     </div>
                   </div>
@@ -360,7 +364,7 @@
                     <span class="ataque-badge">{{ resumoAtaque(item) }}</span>
                     <span class="ataque-badge ataque-badge-tipo">{{ item.tipoDano }}</span>
                   </div>
-                  <p v-if="item.efeito" class="ataque-resumo-efeito">{{ item.efeito }}</p>
+                  <p v-if="item.efeito && item.expandido" class="ataque-resumo-efeito">{{ item.efeito }}</p>
                 </div>
 
               </div>
@@ -375,7 +379,8 @@
                 <div class="racial-titulo">Truques do Feiticeiro — clique pra adicionar</div>
                 <select class="select-truque" @change="adicionarTruque($event.target.value); $event.target.value = ''">
                   <option value="">Escolher um truque...</option>
-                  <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel }})</option>
+                  <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel
+                  }})</option>
                 </select>
               </div>
 
@@ -405,7 +410,8 @@
                     </div>
                   </div>
 
-                  <textarea class="ataque-efeito" v-model="item.efeito" placeholder="alcance, tempo de conjuração, efeito..."></textarea>
+                  <textarea class="ataque-efeito" v-model="item.efeito"
+                    placeholder="alcance, tempo de conjuração, efeito..."></textarea>
 
                   <div class="ataque-editor-acoes">
                     <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
@@ -418,6 +424,8 @@
                     <span class="ataque-resumo-nome">{{ item.nome || 'Magia sem nome' }}</span>
                     <div class="ataque-resumo-acoes">
                       <button class="btn-editar" @click="editarMagia(item)" title="editar">✎</button>
+                      <button v-if="item.efeito" class="btn-expandir" :class="{ aberto: item.expandido }"
+                        @click="toggleExpandido(item)" title="mostrar/ocultar efeito">▾</button>
                       <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                     </div>
                   </div>
@@ -425,7 +433,7 @@
                     <span class="ataque-badge">Nível {{ item.nivel }} · {{ item.custoMana }} mana</span>
                     <span class="ataque-badge ataque-badge-tipo">{{ item.tipoDano }}</span>
                   </div>
-                  <p v-if="item.efeito" class="ataque-resumo-efeito">{{ item.efeito }}</p>
+                  <p v-if="item.efeito && item.expandido" class="ataque-resumo-efeito">{{ item.efeito }}</p>
                 </div>
 
               </div>
@@ -453,9 +461,12 @@
               <div class="combate-item" v-for="item in itensCombate[abaCombateAtiva]" :key="item.id">
                 <div class="combate-item-topo">
                   <input class="combate-nome" v-model="item.nome" placeholder="nome" />
+                  <button class="btn-expandir" :class="{ aberto: item.expandido }" @click="toggleExpandido(item)"
+                    title="mostrar/ocultar descrição">▾</button>
                   <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                 </div>
-                <input class="combate-detalhe" v-model="item.detalhe" placeholder="dano, custo, efeito..." />
+                <textarea v-show="item.expandido" class="combate-detalhe" v-model="item.detalhe"
+                  placeholder="dano, custo, efeito, descrição..."></textarea>
               </div>
 
               <p v-if="itensCombate[abaCombateAtiva].length === 0" class="lista-vazia">
