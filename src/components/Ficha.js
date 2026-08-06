@@ -325,7 +325,7 @@ export default {
       { nome: "Cadavéricas", max: calcularValorComAtributos("MEN") },
       { nome: "Constelação", max: 6 },
       { nome: "Eclesiástica", max: 10 }, // o livro não define um máximo fixo, mas 10 é o valor sugerido
-      { nome: "Essência", max: 4 },
+      { nome: "Essência", max: calcularValorComAtributos("MEN") + 6 },
       { nome: "Êxodo Ígneo", max: 3 },
       { nome: "Fúria", max: calcularValorComAtributos("ROB") },
       { nome: "KI", max: nivel.value + 4},
