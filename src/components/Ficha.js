@@ -213,7 +213,7 @@ export default {
     // livro: "Defesa = Base + ⌊Nível / 2⌋ + Armadura" onde "Base = 5 + ROB"
     // livro: "A cada 5 níveis... recebem Pontos de Vantagem" — 3 pontos por marco (confirmado nas
     // tabelas de progressão de todas as classes: níveis 5, 10, 15 e 20 sempre concedem 3 P.Van)
-    const nivel = ref(10)
+    const nivel = ref(1)
     const armadura = ref(0)
 
     const iniciativa = computed(() => {
