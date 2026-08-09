@@ -87,8 +87,8 @@ export default {
     })
 
     // ===== VIDA =====
-    const vidaAtual = ref(85)
-    const vidaMaxBase = ref(100) // usado só enquanto nenhuma classe foi escolhida
+    const vidaAtual = ref(10)
+    const vidaMaxBase = ref(10) // usado só enquanto nenhuma classe foi escolhida
 
     // livro: PV = (Dado Inicial × ROB) + (Dado por Nível × ROB × (Nível - 1))
     // cada classe tem seus próprios multiplicadores (ex: Guerreiro 10/7, Mago 10/4...)
@@ -96,7 +96,7 @@ export default {
       const info = classeInfo.value
       if (!info) return vidaMaxBase.value
       const rob = valorAtributo("ROB")
-      return rob * (info.dadoInicial + info.dadoPorNivel * (nivel.value - 1))
+      return (info.dadoInicial + rob) + (info.dadoPorNivel + rob) * (nivel.value - 1)
     })
 
     const vidaPercent = computed(() =>
@@ -119,8 +119,8 @@ export default {
     }
 
     // ===== MANA =====
-    const manaAtual = ref(50)
-    const manaMax = ref(80)
+    const manaAtual = ref(10)
+    const manaMax = ref(10)
 
     const manaPercent = computed(() =>
       (manaAtual.value / manaMax.value) * 100
@@ -234,10 +234,10 @@ export default {
 
     // ===== ATRIBUTOS =====
     const atributos = ref([
-      { nome: "ROB", valor: 2 },
-      { nome: "POD", valor: 4 },
+      { nome: "ROB", valor: 1 },
+      { nome: "POD", valor: 1 },
       { nome: "PRE", valor: 1 },
-      { nome: "MEN", valor: 0 },
+      { nome: "MEN", valor: 1 },
       { nome: "CAR", valor: 1 },
       { nome: "SOR", valor: "X" }
     ])
@@ -245,8 +245,8 @@ export default {
     function atualizarAtributo(attr, valor) {
       // permite ?
       if (attr.nome === "SOR") {
-        if (valor === "" || valor === "?") {
-          attr.valor = "?"
+        if (valor === "" || valor === "X") {
+          attr.valor = "X"
           return
         }
       }
