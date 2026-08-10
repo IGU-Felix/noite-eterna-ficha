@@ -117,7 +117,6 @@
                   <input type="number" class="stat-sub-input" v-model.number="armadura" />
                   armadura
                 </span>
-                <span class="stat-requisito">{{ linhaAcertoAtiva.requisito.split(',')[0] }}</span>
 
                 <!-- TOOLTIP -->
                 <div class="tabela-acertos-tooltip">
@@ -125,7 +124,6 @@
                   <div class="tabela-acertos-grid">
                     <div class="tabela-acertos-header">Defesa</div>
                     <div class="tabela-acertos-header">Requisito para Acerto</div>
-
                     <template v-for="linha in tabelaAcertos" :key="linha.faixa">
                       <div class="tabela-acertos-cel tabela-acertos-faixa"
                         :class="{ ativa: linha === linhaAcertoAtiva }">
