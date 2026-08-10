@@ -212,8 +212,8 @@ export const classes = [
         dadoVida: "12×ROB inicial, 7×ROB por nível",
         dadoInicial: 10,
         dadoPorNivel: 5,
-        dadoInicial_mn: 4,
-        dadoPorNivel_mn: 2,
+        dadoInicial_mn: 1,
+        dadoPorNivel_mn: 1,
         subclasses: [],
         niveis: [
           "Estilo Assassino + Imortalidade Distorcida + A Presença", "Andar Imparável", "Olhos de Predador", "Aumento de Atributo",

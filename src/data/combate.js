@@ -7,8 +7,8 @@ export const formulasCombate = {
     { defesa: "até 10", requisito: "1 acerto simples" },
     { defesa: "11 – 15", requisito: "2 acertos simples" },
     { defesa: "16 – 18", requisito: "3 acertos simples" },
-    { defesa: "19 – 21", requisito: "1 acerto crítico (um dado com 6)" },
-    { defesa: "22+", requisito: "2 acertos críticos (dois dados com 6)" }
+    { defesa: "19 – 21", requisito: "3 sucessos, sendo ao menos 1 com valor final 6 (natural ou ajustado por perícia)" },
+    { defesa: "22+", requisito: "3 sucessos, sendo ao menos 2 com valor final 6 (natural ou ajustado por perícia)" }
   ],
   grausDeAtaque: [
     { seis: 0, grau: "Normal", efeito: "Resolvido normalmente." },

@@ -7,7 +7,10 @@
   padding: 0;
 }
 
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
   font-family: "Aubrey", system-ui;
   color: inherit;
 }
@@ -408,47 +411,90 @@ input, select, textarea, button {
 }
 
 /* estados de vida */
-.vida-alta { background: linear-gradient(to right, #601E1E, #922e2e); }
-.vida-media { background: linear-gradient(to right, #331010, #601E1E); }
-.vida-baixa { background: linear-gradient(to right, #140404, #331010); }
+.vida-alta {
+  background: linear-gradient(to right, #601E1E, #922e2e);
+}
+
+.vida-media {
+  background: linear-gradient(to right, #331010, #601E1E);
+}
+
+.vida-baixa {
+  background: linear-gradient(to right, #140404, #331010);
+}
 
 /* estados de mana */
-.mana-alta { background: linear-gradient(to right, #253341, #57799b); }
-.mana-media { background: linear-gradient(to right, #121920, #253341); }
-.mana-baixa { background: linear-gradient(to right, #131920, #121920); }
+.mana-alta {
+  background: linear-gradient(to right, #253341, #57799b);
+}
+
+.mana-media {
+  background: linear-gradient(to right, #121920, #253341);
+}
+
+.mana-baixa {
+  background: linear-gradient(to right, #131920, #121920);
+}
 
 /* pulso quando a vida está crítica */
 .barra-preenchimento.critica {
   animation: pulseCritico 1s infinite;
 }
+
 .barra-preenchimento.critica::before {
   content: "";
   position: absolute;
   inset: 0;
   animation: shakeCritico 0.2s infinite;
 }
+
 @keyframes pulseCritico {
-  0% { filter: brightness(1); }
-  20% { filter: brightness(1.3); }
-  100% { filter: brightness(1); }
+  0% {
+    filter: brightness(1);
+  }
+
+  20% {
+    filter: brightness(1.3);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
 }
+
 @keyframes shakeCritico {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(-1px, 1px); }
-  50% { transform: translate(1px, -1px); }
-  75% { transform: translate(-1px, -1px); }
-  100% { transform: translate(1px, 1px); }
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-1px, 1px);
+  }
+
+  50% {
+    transform: translate(1px, -1px);
+  }
+
+  75% {
+    transform: translate(-1px, -1px);
+  }
+
+  100% {
+    transform: translate(1px, 1px);
+  }
 }
 
 /* brilho ao curar */
 .barra-preenchimento.cura {
   animation: curaGlow 0.4s;
 }
+
 @keyframes curaGlow {
   15% {
     box-shadow: 15px 0 30px rgba(0, 255, 102, 0.45);
     filter: brightness(2);
   }
+
   100% {
     box-shadow: 0 0 10px rgba(0, 255, 85, 0.5);
     filter: brightness(1);
@@ -462,14 +508,23 @@ input, select, textarea, button {
   pointer-events: none;
   z-index: 999;
   background:
-    radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%),
-    radial-gradient(circle, rgba(255,0,0,0) 60%, rgba(190,1,1,0.35) 100%);
+    radial-gradient(circle, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.6) 100%),
+    radial-gradient(circle, rgba(255, 0, 0, 0) 60%, rgba(190, 1, 1, 0.35) 100%);
   animation: pulseTela 1.5s infinite;
 }
+
 @keyframes pulseTela {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }
 
 /* vinheta de tela cheia — cura */
@@ -479,19 +534,43 @@ input, select, textarea, button {
   pointer-events: none;
   z-index: 999;
   background:
-    radial-gradient(circle at top left, rgba(0,255,119,0.044), transparent 40%),
-    radial-gradient(circle at top right, rgba(0,255,119,0.044), transparent 40%),
-    radial-gradient(circle at bottom left, rgba(0,255,119,0.044), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(0,255,119,0.044), transparent 40%);
+    radial-gradient(circle at top left, rgba(0, 255, 119, 0.044), transparent 40%),
+    radial-gradient(circle at top right, rgba(0, 255, 119, 0.044), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(0, 255, 119, 0.044), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(0, 255, 119, 0.044), transparent 40%);
   animation: pulseCuraTela 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 @keyframes pulseCuraTela {
-  0% { opacity: 0; transform: scale(0.98); }
-  25% { opacity: 1; transform: scale(1.015); }
-  40% { opacity: 0.85; transform: scale(1.01); }
-  60% { opacity: 0.6; transform: scale(1); }
-  80% { opacity: 0.4; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+
+  40% {
+    opacity: 0.85;
+    transform: scale(1.01);
+  }
+
+  60% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  80% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
 }
 
 /* =====================================================
@@ -1164,9 +1243,19 @@ input, select, textarea, button {
   outline: none;
 }
 
-.ataque-select-qtd { width: 42px; }
-.ataque-d { color: #777; font-size: 11px; }
-.ataque-select-tipo { width: 100%; }
+.ataque-select-qtd {
+  width: 42px;
+}
+
+.ataque-d {
+  color: #777;
+  font-size: 11px;
+}
+
+.ataque-select-tipo {
+  width: 100%;
+}
+
 .ataque-modificador,
 .ataque-efeito {
   background: #0e0e0e;
@@ -1220,7 +1309,10 @@ input, select, textarea, button {
   color: #fff;
 }
 
-.ataque-resumo-acoes { display: flex; gap: 4px; }
+.ataque-resumo-acoes {
+  display: flex;
+  gap: 4px;
+}
 
 .btn-editar {
   background: transparent;
@@ -1231,7 +1323,9 @@ input, select, textarea, button {
   padding: 0 2px;
 }
 
-.btn-editar:hover { color: #d9a441; }
+.btn-editar:hover {
+  color: #d9a441;
+}
 
 .ataque-resumo-linha {
   display: flex;
@@ -1248,7 +1342,9 @@ input, select, textarea, button {
   letter-spacing: 0.3px;
 }
 
-.ataque-badge-tipo { color: #7fb3d9; }
+.ataque-badge-tipo {
+  color: #7fb3d9;
+}
 
 .ataque-resumo-efeito {
   margin-top: 4px;
@@ -1304,4 +1400,96 @@ input, select, textarea, button {
   line-height: 1.4;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.stat-box-defesa {
+  position: relative;
+  cursor: default;
+}
+
+.stat-requisito {
+  display: block;
+  text-align: center;
+  font-size: 7px;
+  color: #d9a441;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabela-acertos-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: 320px;
+  background: #141414;
+  border: 1px solid #333;
+  padding: 10px;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.stat-box-defesa:hover .tabela-acertos-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.tabela-acertos-titulo {
+  font-size: 10px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.tabela-acertos-grid {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 1px;
+  background: #232323;
+  border: 1px solid #232323;
+}
+
+.tabela-acertos-header {
+  background: #1a1a1a;
+  color: #999;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 5px 6px;
+  text-align: left;
+}
+
+.tabela-acertos-cel {
+  background: #0e0e0e;
+  color: #ccc;
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 6px;
+  text-align: left;
+}
+
+.tabela-acertos-faixa {
+  font-weight: bold;
+  color: #ddd;
+}
+
+.tabela-acertos-cel.ativa {
+  background: #2a1f08;
+  color: #d9a441;
+}
+
+.tabela-acertos-faixa.ativa {
+  color: #d9a441;
 }

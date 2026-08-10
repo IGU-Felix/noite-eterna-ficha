@@ -243,6 +243,20 @@ export default {
       return base + bonusNivel + (Number(armadura.value) || 0)
     })
 
+    const tabelaAcertos = [
+      { faixa: "Até 10", min: 0, max: 10, requisito: "1 acerto simples" },
+      { faixa: "11 – 15", min: 11, max: 15, requisito: "2 acertos simples" },
+      { faixa: "16 – 18", min: 16, max: 18, requisito: "3 acertos simples" },
+      { faixa: "19 – 21", min: 19, max: 21, requisito: "3 sucessos, sendo ao menos 1 com valor final 6 (natural ou ajustado por perícia)" },
+      { faixa: "22+", min: 22, max: Infinity, requisito: "3 sucessos, sendo ao menos 2 com valor final 6 (natural ou ajustado por perícia)" }
+    ]
+
+    const linhaAcertoAtiva = computed(() =>
+      tabelaAcertos.find(l => defesa.value >= l.min && defesa.value <= l.max) || tabelaAcertos[0]
+    )
+
+    const requisitoAcerto = computed(() => linhaAcertoAtiva.value.requisito)
+
     const pVan = computed(() => {
       const pontos = Math.floor((Number(nivel.value) || 0) / 5) * 3
       return String(pontos).padStart(2, "0")
@@ -683,6 +697,9 @@ export default {
       salvarMagia,
       editarMagia,
       toggleExpandido,
+      tabelaAcertos,
+      linhaAcertoAtiva,
+      requisitoAcerto,
       adicionarTruque
     }
   }

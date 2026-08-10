@@ -110,13 +110,33 @@
                 <span class="stat-label">Iniciativa</span>
                 <span class="stat-valor-calc">{{ iniciativa }}</span>
               </div>
-              <div class="stat-box" title="Calculado: 5 + ROB + (Nível ÷ 2) + Armadura">
+              <div class="stat-box stat-box-defesa">
                 <span class="stat-label">Defesa</span>
                 <span class="stat-valor-calc">{{ defesa }}</span>
                 <span class="stat-sub">
                   <input type="number" class="stat-sub-input" v-model.number="armadura" />
                   armadura
                 </span>
+                <span class="stat-requisito">{{ linhaAcertoAtiva.requisito.split(',')[0] }}</span>
+
+                <!-- TOOLTIP -->
+                <div class="tabela-acertos-tooltip">
+
+                  <div class="tabela-acertos-grid">
+                    <div class="tabela-acertos-header">Defesa</div>
+                    <div class="tabela-acertos-header">Requisito para Acerto</div>
+
+                    <template v-for="linha in tabelaAcertos" :key="linha.faixa">
+                      <div class="tabela-acertos-cel tabela-acertos-faixa"
+                        :class="{ ativa: linha === linhaAcertoAtiva }">
+                        {{ linha.faixa }}
+                      </div>
+                      <div class="tabela-acertos-cel" :class="{ ativa: linha === linhaAcertoAtiva }">
+                        {{ linha.requisito }}
+                      </div>
+                    </template>
+                  </div>
+                </div>
               </div>
               <div class="stat-box" title="Calculado: 3 pontos a cada 5 níveis">
                 <span class="stat-label">P. Van</span>
@@ -381,7 +401,7 @@
                 <select class="select-truque" @change="adicionarTruque($event.target.value); $event.target.value = ''">
                   <option value="">Escolher um truque...</option>
                   <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel
-                  }})</option>
+                    }})</option>
                 </select>
               </div>
 
