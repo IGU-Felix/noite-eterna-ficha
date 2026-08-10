@@ -120,11 +120,19 @@ export default {
 
     // ===== MANA =====
     const manaAtual = ref(10)
-    const manaMax = ref(10)
+    const manaMaxBase = ref(10) // usado só enquanto nenhuma classe foi escolhida
 
-    const manaPercent = computed(() =>
-      (manaAtual.value / manaMax.value) * 100
-    )
+    const manaMax = computed(() => {
+      const info = classeInfo.value
+      if (!info) return manaMaxBase.value
+      const men = valorAtributo("MEN")
+      return (info.dadoInicial_mn + men) + (info.dadoPorNivel_mn + men) * (nivel.value - 1)
+    })
+
+    const manaPercent = computed(() => {
+      const max = manaMax.value || 1
+      return (manaAtual.value / max) * 100
+    })
 
     const classeMana = computed(() => {
       const percent = manaPercent.value
@@ -132,6 +140,10 @@ export default {
       if (percent > 30) return "mana-media"
       return "mana-baixa"
     })
+
+    const manaCritica = computed(() =>
+      manaPercent.value <= 20
+    )
 
     function alterarMana(valor) {
       manaAtual.value += valor
@@ -152,6 +164,10 @@ export default {
     watch(manaAtual, (v) => {
       if (v > manaMax.value) manaAtual.value = manaMax.value
       if (v < 0) manaAtual.value = 0
+    })
+
+    watch(manaMax, (novoMax_mn) => {
+      if (manaAtual.value > novoMax_mn) manaAtual.value = novoMax_mn
     })
 
     // ===== ANIMAÇÕES =====
@@ -587,6 +603,7 @@ export default {
       manaMax,
       manaPercent,
       classeMana,
+      manaCritica,
       alterarMana,
 
       animacaoDano,

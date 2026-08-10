@@ -4,6 +4,8 @@ export const classes = [
         dadoVida: "12×ROB inicial, 8×ROB por nível",
         dadoInicial: 10,
         dadoPorNivel: 5,
+        dadoInicial_mn: 6,
+        dadoPorNivel_mn: 3,
         subclasses: ["Caminho do Atroz de Sangue", "Caminho do Chama Eterna", "Caminho do Protetor a Vapor", "Caminho do Arauto dos Afogados"],
         niveis: [
           "Fúria + Arma Predileta", "Resistência Brutal", "Habilidade de Subclasse", "Instinto Primitivo + Aumento de Atributo",
@@ -18,6 +20,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 7×ROB por nível",
         dadoInicial: 8,
         dadoPorNivel: 4,
+        dadoInicial_mn: 6,
+        dadoPorNivel_mn: 3,
         subclasses: ["Caminho do Esgrimista", "Caminho do Mestre da Reação", "Caminho do Fio Envolvente", "Caminho da Arma Viva"],
         niveis: [
           "Estilo de Combate + Disciplina de Aço", "Ação Extra (1x)", "Habilidade de Subclasse", "Aumento de Atributo",
@@ -32,6 +36,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 7×ROB por nível",
         dadoInicial: 8,
         dadoPorNivel: 4,
+        dadoInicial_mn: 7,
+        dadoPorNivel_mn: 4,
         subclasses: ["Caminho do Arauto Espiritual", "Caminho do Artista da Noite", "Caminho das Pegadas Ascendentes"],
         niveis: [
           "Golpe Desarmado + Defesa do Monge + 1 Ki + 3 Técnicas", "1 Ki + Nova Técnica de Ki", "Habilidade de Subclasse + 1 Ki", "Aumento de Atributo + 1 Ki + 2 Técnicas de Ki",
@@ -46,6 +52,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 7×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 7,
+        dadoPorNivel_mn: 4,
         subclasses: ["Caminho do Disparo Fantasmagórico", "Caminho da Laminarma"],
         niveis: [
           "Estilo de Tiro + Defesa Ágil", "Ação Extra", "Habilidade de Subclasse", "Aumento de Atributo",
@@ -60,6 +68,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 6×ROB por nível",
         dadoInicial: 10,
         dadoPorNivel: 5,
+        dadoInicial_mn: 8,
+        dadoPorNivel_mn: 6,
         subclasses: ["Caminho do Exorcista"],
         niveis: [
           "Imposição Sagrada / Arma Sagrada", "Juramento de Proteção", "Escolha de Subclasse", "Aura de Determinação + Aumento de Atributo",
@@ -74,6 +84,8 @@ export const classes = [
         dadoVida: "8×ROB inicial, 5×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 7,
+        dadoPorNivel_mn: 4,
         subclasses: ["Caminho da Extravagância", "Caminho da Pestilência"],
         niveis: [
           "Ataque Vantajoso", "Golpe de Emboscada", "Habilidade de Subclasse", "Reflexos Felinos + Aumento de Atributo",
@@ -88,6 +100,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 4×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 12,
+        dadoPorNivel_mn: 6,
         subclasses: ["Caminho do Cartomante"],
         niveis: [
           "Livro de Magias + Magia Imediata", "Reserva de Mana", "Habilidade de Subclasse", "Aumento de Atributo + Expandir Conhecimento (Magias Nv.2)",
@@ -102,6 +116,8 @@ export const classes = [
         dadoVida: "8×ROB inicial, 5×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 12,
+        dadoPorNivel_mn: 6,
         subclasses: ["Caminho do Mestre dos Truques", "Caminho do Invocador de Pesadelos"],
         niveis: [
           "Poder Latente", "Explosão de Mana", "Habilidade de Subclasse", "Aumento de Atributo + Expandir Conhecimento (Nv.2)",
@@ -116,6 +132,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 6×ROB por nível",
         dadoInicial: 8,
         dadoPorNivel: 5,
+        dadoInicial_mn: 8,
+        dadoPorNivel_mn: 5,
         subclasses: ["Caminho do Possuído", "Caminho do Sepulcro"],
         niveis: [
           "Juramento Profano + Ritual de Sangue", "Sacrifício Prematuro", "Dom do Patrono (Subclasse)", "Aumento de Atributo + Selo de Dor",
@@ -130,6 +148,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 6×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 7,
+        dadoPorNivel_mn: 4,
         subclasses: ["Caminho do Penitente", "Caminho do Alquimista"],
         niveis: [
           "Olhar do Julgamento (Fundamentos da Anatomia)", "Luz Purificadora", "Habilidade de Subclasse", "Aumento de Atributo + Escudo da Graça",
@@ -144,6 +164,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 6×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 7,
+        dadoPorNivel_mn: 4,
         subclasses: ["Caminho do Pirotécnico"],
         niveis: [
           "Oficina Adaptativa + Sistema Multidisciplinar", "Improviso Letal", "Habilidade de Subclasse", "Aumento de Atributo + Eficiência de Campo",
@@ -158,6 +180,8 @@ export const classes = [
         dadoVida: "8×ROB inicial, 5×ROB por nível",
         dadoInicial: 7,
         dadoPorNivel: 4,
+        dadoInicial_mn: 10,
+        dadoPorNivel_mn: 5,
         subclasses: ["Caminho do Maestro da Liberdade"],
         niveis: [
           "Canção da Noite + Inspiração Melódica", "Ritmo de Batalha", "Habilidade de Subclasse", "Aumento de Atributo + Nova Canção",
@@ -172,6 +196,8 @@ export const classes = [
         dadoVida: "10×ROB inicial, 6×ROB por nível",
         dadoInicial: 8,
         dadoPorNivel: 4,
+        dadoInicial_mn: 10,
+        dadoPorNivel_mn: 5,
         subclasses: ["Caminho da Encarnação", "Caminho da Invocação", "Caminho do Sobrevivente"],
         niveis: [
           "Forma Espiritual Maleável + Caminho da Maldição", "Maldição Natural", "Habilidade de Subclasse", "Aumento de Atributo + Espírito Vinculado",
@@ -186,6 +212,8 @@ export const classes = [
         dadoVida: "12×ROB inicial, 7×ROB por nível",
         dadoInicial: 10,
         dadoPorNivel: 5,
+        dadoInicial_mn: 4,
+        dadoPorNivel_mn: 2,
         subclasses: [],
         niveis: [
           "Estilo Assassino + Imortalidade Distorcida + A Presença", "Andar Imparável", "Olhos de Predador", "Aumento de Atributo",

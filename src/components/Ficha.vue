@@ -84,7 +84,8 @@
 
               <!-- MANA -->
               <div class="barra">
-                <div class="barra-preenchimento" :class="classeMana" :style="{ width: manaPercent + '%' }"></div>
+                <div class="barra-preenchimento" :class="[classeMana, { critica: manaCritica }]"
+                  :style="{ width: manaPercent + '%' }"></div>
 
                 <div class="barra-overlay">
                   <button class="btn-esq" @click="alterarMana(-5)">-5</button>
