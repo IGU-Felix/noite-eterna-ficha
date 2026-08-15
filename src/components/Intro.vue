@@ -74,7 +74,7 @@ onMounted(() => {
 .intro-fundo {
     position: absolute;
     inset: 0;
-    background-image: url("/fundo_noite-eterna.svg");
+    background-image: url("/fundo_noite_eterna.svg");
     background-size: cover;
     background-position: center bottom;
     background-repeat: no-repeat;
