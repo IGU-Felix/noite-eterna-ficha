@@ -1,5 +1,5 @@
 <template>
-    <div class="intro-tela" @click="entrar">
+    <div class="intro-tela">
 
         <!-- FLORESTA (camadas de profundidade) -->
         <div class="intro-fundo"></div>
@@ -12,26 +12,23 @@
 
         <!-- CONTEÚDO -->
         <div class="intro-conteudo">
-            <h1 class="intro-titulo">
-                <span>Noite</span>
-                <span>Eterna</span>
-            </h1>
+            <img class="intro-logo" src="/ne-logo-white.png" alt="Noite Eterna" />
 
             <div class="intro-rodape">
                 <div class="intro-icones">
-                    <button class="intro-icone" title="Mundo" @click.stop="entrar">
+                    <button class="intro-icone" title="Mundo">
                         <img src="/buttons/map-btn.svg" alt="Mundo" />
                     </button>
-                    <button class="intro-icone" title="Ameaças" @click.stop="entrar">
+                    <button class="intro-icone" title="Ameaças">
                         <img src="/buttons/threat-bnt.svg" alt="Ameaças" />
                     </button>
                     <button class="intro-icone" title="Ficha" @click.stop="entrar">
                         <img src="/buttons/character-btn.svg" alt="Ficha" />
                     </button>
-                    <button class="intro-icone" title="Livro de Regras" @click.stop="entrar">
+                    <button class="intro-icone" title="Livro de Regras">
                         <img src="/buttons/book-btn.svg" alt="Livro" />
                     </button>
-                    <button class="intro-icone" title="Mestre" @click.stop="entrar">
+                    <button class="intro-icone" title="Mestre">
                         <img src="/buttons/dm-bnt.svg" alt="Mestre" />
                     </button>
                 </div>
@@ -78,44 +75,17 @@ onMounted(() => {
     background-size: cover;
     background-position: center bottom;
     background-repeat: no-repeat;
+    animation: zoomFundo 20s ease-in-out infinite alternate;
 }
 
-.floresta {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 46%;
-}
+@keyframes zoomFundo {
+    from {
+        transform: scale(1);
+    }
 
-.floresta svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.floresta path {
-    fill: #000;
-}
-
-.floresta-longe {
-    height: 34%;
-    opacity: 0.35;
-    filter: blur(1.5px);
-    transform: scaleX(1.05);
-}
-
-.floresta-meio {
-    height: 40%;
-    opacity: 0.6;
-    filter: blur(0.5px);
-    transform: translateX(-2%) scaleX(1.1);
-}
-
-.floresta-perto {
-    height: 48%;
-    opacity: 0.95;
-    transform: translateX(3%) scaleX(1.15);
+    to {
+        transform: scale(1.06);
+    }
 }
 
 /* ===== RUÍDO / GRÃO ===== */
@@ -149,23 +119,28 @@ onMounted(() => {
     padding: 40px 20px;
 }
 
-.intro-titulo {
-    margin-top: 12vh;
-    text-align: center;
-    line-height: 0.95;
-    text-transform: uppercase;
-    letter-spacing: 6px;
-    font-weight: normal;
-    color: #2c2c2c;
-    font-size: 56px;
-    animation: respirarTitulo 7s ease-in-out infinite;
+.intro-logo {
+    margin-top: 6vh;
+    width: 680px;
+    max-width: 70vw;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.6));
+    animation: respirarLogo 7s ease-in-out infinite;
 }
 
-.intro-titulo span {
-    display: block;
-    text-shadow:
-        0 0 18px rgba(255, 255, 255, 0.05),
-        0 2px 0 rgba(0, 0, 0, 0.9);
+@keyframes respirarLogo {
+
+    0%,
+    100% {
+        opacity: 0.88;
+        filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.6)) brightness(0.95);
+    }
+
+    50% {
+        opacity: 1;
+        filter: drop-shadow(0 0 28px rgba(0, 0, 0, 0.6)) brightness(1.05);
+    }
 }
 
 @keyframes respirarTitulo {
