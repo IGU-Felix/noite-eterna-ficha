@@ -399,7 +399,7 @@
                 <select class="select-truque" @change="adicionarTruque($event.target.value); $event.target.value = ''">
                   <option value="">Escolher um truque...</option>
                   <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel
-                    }})</option>
+                  }})</option>
                 </select>
               </div>
 
