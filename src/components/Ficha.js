@@ -55,9 +55,6 @@ export default {
       classeInfo.value ? classeInfo.value.subclasses : []
     )
 
-    // tabela de progressão da classe escolhida. Quando o nível é um dos marcados como
-    // "Habilidade de Subclasse" no livro E existe dado mapeado para a subclasse escolhida,
-    // troca o nome genérico pelo nome real da habilidade daquela subclasse (com descrição).
     const progressaoClasse = computed(() => {
       if (!classeInfo.value) return []
 

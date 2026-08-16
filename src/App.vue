@@ -1,26 +1,23 @@
 <template>
-  <Transition name="fade" mode="out-in">
-    <Intro v-if="!entrou" key="intro" @entrar="entrou = true" />
-    <Ficha v-else key="ficha" />
-  </Transition>
+  <div class="app-root">
+    <Intro @entrar="fichaAberta = true" />
+    <FichaFlutuante v-if="fichaAberta" @fechar="fichaAberta = false" />
+  </div>
 </template>
 
 <script setup>
 import { ref } from "vue"
 import Intro from "./components/Intro.vue"
-import Ficha from "./components/Ficha.vue"
+import FichaFlutuante from "./components/FichaFlutuante.vue"
 
-const entrou = ref(false)
+const fichaAberta = ref(false)
 </script>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.6s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.app-root {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 </style>

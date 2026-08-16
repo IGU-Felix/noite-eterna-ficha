@@ -19,13 +19,14 @@ button {
    FUNDO / CARD PRINCIPAL
 ===================================================== */
 .ficha-container {
-  min-height: 100vh;
+  min-height: 100%;
   background: #111;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 24px 12px;
   font-family: "Aubrey", system-ui;
+  zoom: 1.15;
 }
 
 .ficha {
@@ -1493,3 +1494,4 @@ button {
 .tabela-acertos-faixa.ativa {
   color: #d9a441;
 }
+
