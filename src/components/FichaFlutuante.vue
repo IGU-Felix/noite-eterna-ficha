@@ -1,26 +1,20 @@
 <template>
-  <div
-    v-show="modo !== 'minimizada'"
-    class="janela-flutuante"
-    :class="{ 'tela-cheia': modo === 'tela-cheia' }"
-    :style="estiloJanela"
-  >
+  <div v-show="modo !== 'minimizada'" class="janela-flutuante" :class="{ 'tela-cheia': modo === 'tela-cheia' }"
+    :style="estiloJanela">
     <div class="janela-barra" @mousedown="iniciarArraste">
-      <span class="janela-titulo">❖ Ficha de {{ nomePersonagem }}</span>
+      <span class="janela-titulo">❖ {{ tituloBase }} ({{ nomePersonagem }})</span>
 
       <div class="janela-acoes" @mousedown.stop>
         <button class="janela-btn" @click="minimizar" title="minimizar">–</button>
-        <button
-          class="janela-btn"
-          @click="alternarTelaCheia"
-          :title="modo === 'tela-cheia' ? 'restaurar janela' : 'tela cheia'"
-        >{{ modo === 'tela-cheia' ? '❐' : '⛶' }}</button>
-        <button class="janela-btn btn-fechar" @click="$emit('fechar')" title="fechar">×</button>
+        <button class="janela-btn" @click="alternarTelaCheia"
+          :title="modo === 'tela-cheia' ? 'restaurar janela' : 'tela cheia'">{{ modo === 'tela-cheia' ? '❐' : '⛶'
+          }}</button>
+        <button class="janela-btn btn-fechar" @click="$emit('fechar')" title="fechar">X</button>
       </div>
     </div>
 
     <div class="janela-corpo">
-      <Ficha ref="fichaRef" />
+      <component :is="componenteFicha" ref="fichaRef" />
     </div>
 
     <div v-if="modo === 'flutuante'" class="janela-resize" @mousedown="iniciarResize"></div>
@@ -35,10 +29,19 @@
 <script setup>
 import { ref, computed } from "vue"
 import Ficha from "./Ficha.vue"
+import FichaAmeaca from "./FichaAmeaca.vue"
+
+const props = defineProps({
+  tipo: { type: String, default: "personagem" } // "personagem" | "ameaca"
+})
+
 const fichaRef = ref(null)
 const nomePersonagem = computed(() => fichaRef.value?.nome || "Sem Nome")
 
 defineEmits(["fechar"])
+
+const componenteFicha = computed(() => props.tipo === "ameaca" ? FichaAmeaca : Ficha)
+const tituloBase = computed(() => props.tipo === "ameaca" ? "Ameaça" : "Ficha")
 
 // 'flutuante' | 'tela-cheia' | 'minimizada'
 const modo = ref("flutuante")

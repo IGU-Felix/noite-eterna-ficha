@@ -19,7 +19,7 @@
                     <button class="intro-icone" title="Mundo">
                         <img src="/buttons/map-btn.svg" alt="Mundo" />
                     </button>
-                    <button class="intro-icone" title="Ameaças">
+                    <button class="intro-icone" title="Ameaças" @click.stop="abrirAmeaca">
                         <img src="/buttons/threat-bnt.svg" alt="Ameaças" />
                     </button>
                     <button class="intro-icone" title="Ficha" @click.stop="entrar">
@@ -41,11 +41,15 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const emit = defineEmits(["entrar"])
+const emit = defineEmits(["entrar", "abrir-ameaca"])
 const mostrarDica = ref(false)
 
 function entrar() {
     emit("entrar")
+}
+
+function abrirAmeaca() {
+  emit("abrir-ameaca")
 }
 
 onMounted(() => {
