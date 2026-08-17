@@ -1,0 +1,112 @@
+/* ===== Ficha de Ameaça — layout reduzido, reaproveitando o tema de Ficha.css ===== */
+
+.ameaca.ficha {
+  display: flex;
+  flex-direction: column;
+  width: 700px;
+  gap: 10px;
+}
+
+.ameaca-topo {
+  margin-bottom: 0;
+}
+
+.ameaca-atributos-wrap {
+  margin-left: 118px; /* alinha com a coluna de info, ao lado do retrato */
+}
+
+.ameaca-grid-atributos {
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 34px;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.ameaca-grid-atributos .box input {
+  font-size: 16px;
+}
+
+.ameaca-grid-atributos .box span {
+  font-size: 8px;
+}
+
+.ameaca-corpo {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #2a2a2a;
+  align-items: start;
+}
+
+.ameaca-coluna-meio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.ameaca-coluna-meio .painel-insanidade {
+  padding: 8px 10px;
+}
+
+.ameaca-coluna-meio .carga-titulo {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.ameaca-coluna-meio .cargas-grid {
+  margin: 0 0 8px;
+}
+
+.ameaca-pericias-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.ameaca-pericia-nome-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  outline: none;
+  color: #ddd;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.ameaca-pericia-attr-input {
+  width: 34px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  outline: none;
+  color: #666;
+  font-size: 9px;
+  text-align: center;
+}
+
+.ameaca-corpo .combate-painel {
+  flex: 1;
+  min-height: 0;
+}
+
+.ameaca-corpo .combate-lista {
+  max-height: 190px;
+}
+
+.ameaca-corpo .status-lista {
+  max-height: 360px;
+}
+
+.ameaca .select-carga {
+  width: auto;
+  min-width: 60px;
+}

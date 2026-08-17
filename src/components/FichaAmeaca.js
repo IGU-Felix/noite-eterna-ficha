@@ -131,6 +131,15 @@ export default {
     const cargasMax_2 = ref(3)
     const tipoCarga_2 = ref("Fúria")
 
+    const cargasBlocos = reactive([
+  { tipo: "Fúria", atual: 0, max: 3 },
+  { tipo: "Fúria", atual: 0, max: 3 }
+])
+
+function alternarCarga(bloco, i) {
+  bloco.atual = (bloco.atual === i) ? 0 : i
+}
+
     // ===== STATUS =====
     const status = ref([])
 
@@ -178,6 +187,13 @@ export default {
       inventario.value = inventario.value.filter(i => i.id !== id)
     }
 
+    const classeVida = computed(() => {
+      const p = vidaPercent.value
+      if (p > 60) return "vida-alta"
+      if (p > 30) return "vida-media"
+      return "vida-baixa"
+    })
+
     return {
       nome, editandoNome, inputNome, ativarEdicaoNome,
       imagemAmeaca, inputFile, abrirUpload, carregarImagem,
@@ -187,10 +203,10 @@ export default {
       tabelaAcertos, linhaAcertoAtiva,
       pericias, adicionarPericia, removerPericia, atualizarPericia,
       cargasAtual_1, cargasMax_1, tipoCarga_1,
-      cargasAtual_2, cargasMax_2, tipoCarga_2,
+      cargasAtual_2, cargasMax_2, tipoCarga_2, cargasBlocos, alternarCarga,
       status, adicionarStatus, removerStatus, salvarStatus, editarStatus,
       abas, abaAtiva, itens, adicionarItem, removerItem, salvarItem, editarItem, toggleExpandido,
-      inventario, cargaMaxima, cargaAtualInventario, adicionarItemInventario, removerItemInventario
+      classeVida, inventario, cargaMaxima, cargaAtualInventario, adicionarItemInventario, removerItemInventario
     }
   }
 }

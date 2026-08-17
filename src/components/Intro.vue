@@ -130,21 +130,32 @@ onMounted(() => {
     height: auto;
     display: block;
     filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.6));
-    animation: respirarLogo 7s ease-in-out infinite;
+    animation: fade-in-top 2s ease-in-out;
 }
 
-@keyframes respirarLogo {
-
-    0%,
-    100% {
-        opacity: 0.88;
-        filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.6)) brightness(0.95);
-    }
-
-    50% {
-        opacity: 1;
-        filter: drop-shadow(0 0 28px rgba(0, 0, 0, 0.6)) brightness(1.05);
-    }
+@-webkit-keyframes fade-in-top {
+  0% {
+    -webkit-transform: translateY(-50px);
+            transform: translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: translateY(0);
+            transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes fade-in-top {
+  0% {
+    -webkit-transform: translateY(-50px);
+            transform: translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: translateY(0);
+            transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes respirarTitulo {
@@ -222,6 +233,7 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     transition: transform 0.2s ease, filter 0.2s ease;
+    animation: fade-in-bottom 4s ease-in-out;
 }
 
 .intro-icone img {
@@ -237,6 +249,31 @@ onMounted(() => {
 }
 
 .intro-icone:hover img {
-    filter: brightness(1.15) drop-shadow(0 0 8px rgba(241, 241, 239, 0.5));
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(22, 22, 22, 0.5));
+}
+
+@-webkit-keyframes fade-in-bottom {
+  0% {
+    -webkit-transform: translateY(50px);
+            transform: translateY(50px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: translateY(0);
+            transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes fade-in-bottom {
+  0% {
+    -webkit-transform: translateY(50px);
+            transform: translateY(50px);
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: translateY(0);
+            transform: translateY(0);
+    opacity: 1;
+  }
 }
 </style>
