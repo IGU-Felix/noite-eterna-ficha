@@ -48,7 +48,12 @@ const modo = ref("flutuante")
 let modoAntesDeMinimizar = "flutuante"
 
 const pos = ref({ x: 60, y: 40 })
-const tamanho = ref({ w: 1360, h: 820 })
+const tamanho = computed(() => {
+  if (props.tipo === "ameaca") {
+    return { w: 780, h: 850 }
+  }
+  return { w: 1440, h: 980 }
+})
 
 const estiloJanela = computed(() => {
   if (modo.value === "tela-cheia") {
