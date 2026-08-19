@@ -25,7 +25,7 @@
                     <button class="intro-icone" title="Ficha" @click.stop="entrar">
                         <img src="/buttons/character-btn.svg" alt="Ficha" />
                     </button>
-                    <button class="intro-icone" title="Livro de Regras">
+                    <button class="intro-icone" title="Livro de Regras" @click.stop="$emit('consultar')">
                         <img src="/buttons/book-btn.svg" alt="Livro" />
                     </button>
                     <button class="intro-icone" title="Mestre">
@@ -41,7 +41,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const emit = defineEmits(["entrar", "abrir-ameaca"])
+const emit = defineEmits(["entrar", "abrir-ameaca","consultar"])
 const mostrarDica = ref(false)
 
 function entrar() {

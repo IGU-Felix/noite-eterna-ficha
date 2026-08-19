@@ -1495,3 +1495,73 @@ button {
   color: #d9a441;
 }
 
+.ameaca-coluna-meio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.ameaca-coluna-meio .painel-insanidade {
+  padding: 8px 10px;
+}
+
+.ameaca-coluna-meio .carga-titulo {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.ameaca-coluna-meio .cargas-grid {
+  margin: 0 0 8px;
+}
+
+.ameaca-corpo .combate-painel {
+  flex: 1;
+  min-height: 0;
+}
+
+.ameaca-corpo .combate-lista {
+  max-height: 190px;
+}
+
+.ameaca-corpo .status-lista {
+  max-height: 360px;
+}
+.ameaca-coluna-direita {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.ameaca-coluna-direita .painel-insanidade {
+  padding: 8px 10px;
+}
+
+.ameaca-coluna-direita .carga-titulo {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.ameaca-coluna-direita .cargas-grid {
+  margin: 0 0 8px;
+}
+
+.ameaca-corpo .combate-painel,
+.ameaca-corpo .inventario-painel,
+.ameaca-corpo .status-painel {
+  flex: 1;
+  min-height: 0;
+}
+
+.ameaca-corpo .combate-lista {
+  max-height: 160px;
+}
+
+.ameaca-corpo .status-lista {
+  max-height: 300px;
+}
+
+.ameaca-corpo .inventario-lista {
+  max-height: 120px;
+}

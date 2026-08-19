@@ -1,6 +1,8 @@
 <template>
   <div class="app-root">
-    <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" />
+    <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente" />
+
+    <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
 
     <FichaFlutuante
       v-if="personagemAberto"
@@ -19,10 +21,12 @@
 <script setup>
 import { ref } from "vue"
 import Intro from "./components/Intro.vue"
+import Assistente from "./components/Assistente.vue"
 import FichaFlutuante from "./components/FichaFlutuante.vue"
 
 const personagemAberto = ref(false)
 const ameacaAberta = ref(false)
+const assistenteAberto = ref(false)
 
 function abrirPersonagem() {
   personagemAberto.value = true
@@ -30,6 +34,10 @@ function abrirPersonagem() {
 
 function abrirAmeaca() {
   ameacaAberta.value = true
+}
+
+function abrirAssistente() {
+  assistenteAberto.value = true
 }
 </script>
 
