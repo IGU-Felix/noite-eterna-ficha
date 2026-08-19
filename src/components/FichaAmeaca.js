@@ -104,7 +104,19 @@ export default {
     )
 
     // ===== PERÍCIAS (lista livre — ameaças usam só 3 a 6 perícias escolhidas, não a lista toda) =====
-    const pericias = ref([])
+    const pericias = ref([
+      { id: gerarId(), nome: "Furtividade", atributo: "PRE", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Vontade", atributo: "ROB", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Percepção", atributo: "MEN", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Intimidação", atributo: "POD", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Lutar", atributo: "POD", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Reflexo", atributo: "PRE", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Bloqueio", atributo: "ROB", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Conjuração", atributo: "MEN", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Mirar", atributo: "PRE", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Instinto", atributo: "SOR", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Acrobacia", atributo: "PRE", valor: 1, mod: 0 },
+    ])
 
     function adicionarPericia() {
       pericias.value.push({ id: gerarId(), nome: "", atributo: "", valor: 1, mod: 0 })

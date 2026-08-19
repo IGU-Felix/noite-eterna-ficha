@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   width: 700px;
-  gap: 10px;
+  gap: 3px;
 }
 
 .ameaca-topo {
@@ -63,10 +63,10 @@
 .ameaca-pericias-lista {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 300px;
+  gap: 3px;
+  max-height: 500px;
   overflow-y: auto;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 .ameaca-pericia-nome-input {
