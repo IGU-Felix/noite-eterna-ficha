@@ -6,6 +6,7 @@
 
       <div class="janela-acoes" @mousedown.stop>
         <button class="janela-btn" @click="minimizar" title="minimizar">–</button>
+        <button class="janela-btn" @click="abrirAssistente" title="assistente de regras">☾</button>
         <button class="janela-btn" @click="alternarTelaCheia"
           :title="modo === 'tela-cheia' ? 'restaurar janela' : 'tela cheia'">{{ modo === 'tela-cheia' ? '❐' : '⛶'
           }}</button>
@@ -17,7 +18,12 @@
       <component :is="componenteFicha" ref="fichaRef" />
     </div>
 
-    <div v-if="modo === 'flutuante'" class="janela-resize" @mousedown="iniciarResize"></div>
+    <template v-if="modo === 'flutuante'">
+      <div v-for="direcao in direcoesResize" :key="direcao" class="janela-resize"
+        :class="`resize-${direcao}`" @mousedown="iniciarResize($event, direcao)"></div>
+    </template>
+
+    <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
   </div>
 
   <!-- ABA MINIMIZADA -->
@@ -28,6 +34,7 @@
 
 <script setup>
 import { ref, computed } from "vue"
+import Assistente from "./Assistente.vue"
 import Ficha from "./Ficha.vue"
 import FichaAmeaca from "./FichaAmeaca.vue"
 
@@ -46,14 +53,13 @@ const tituloBase = computed(() => props.tipo === "ameaca" ? "Ameaça" : "Ficha")
 // 'flutuante' | 'tela-cheia' | 'minimizada'
 const modo = ref("flutuante")
 let modoAntesDeMinimizar = "flutuante"
+const assistenteAberto = ref(false)
 
 const pos = ref({ x: 60, y: 40 })
-const tamanho = computed(() => {
-  if (props.tipo === "ameaca") {
-    return { w: 780, h: 850 }
-  }
-  return { w: 1440, h: 980 }
-})
+const tamanho = ref(props.tipo === "ameaca"
+  ? { w: 780, h: 850 }
+  : { w: 1440, h: 980 })
+const direcoesResize = ["n", "s", "e", "w", "ne", "nw", "se", "sw"]
 
 const estiloJanela = computed(() => {
   if (modo.value === "tela-cheia") {
@@ -78,6 +84,10 @@ function restaurar() {
 
 function alternarTelaCheia() {
   modo.value = modo.value === "tela-cheia" ? "flutuante" : "tela-cheia"
+}
+
+function abrirAssistente() {
+  assistenteAberto.value = true
 }
 
 // ===== ARRASTAR (só faz sentido no modo flutuante) =====
@@ -107,20 +117,44 @@ function pararArraste() {
 
 // ===== REDIMENSIONAR =====
 let redimensionando = false
-let inicioResize = { x: 0, y: 0, w: 0, h: 0 }
+let direcaoResize = "se"
+let inicioResize = { x: 0, y: 0, posX: 0, posY: 0, w: 0, h: 0 }
 
-function iniciarResize(e) {
+function iniciarResize(e, direcao) {
   redimensionando = true
-  inicioResize = { x: e.clientX, y: e.clientY, w: tamanho.value.w, h: tamanho.value.h }
+  direcaoResize = direcao
+  inicioResize = {
+    x: e.clientX,
+    y: e.clientY,
+    posX: pos.value.x,
+    posY: pos.value.y,
+    w: tamanho.value.w,
+    h: tamanho.value.h
+  }
   window.addEventListener("mousemove", moverResize)
   window.addEventListener("mouseup", pararResize)
+  e.preventDefault()
   e.stopPropagation()
 }
 
 function moverResize(e) {
   if (!redimensionando) return
-  tamanho.value.w = Math.max(480, inicioResize.w + (e.clientX - inicioResize.x))
-  tamanho.value.h = Math.max(320, inicioResize.h + (e.clientY - inicioResize.y))
+  const deltaX = e.clientX - inicioResize.x
+  const deltaY = e.clientY - inicioResize.y
+  const moveEsquerda = direcaoResize.includes("w")
+  const moveTopo = direcaoResize.includes("n")
+  const novaLargura = Math.max(480, inicioResize.w + (moveEsquerda ? -deltaX : deltaX))
+  const novaAltura = Math.max(320, inicioResize.h + (moveTopo ? -deltaY : deltaY))
+
+  tamanho.value.w = novaLargura
+  tamanho.value.h = novaAltura
+
+  if (moveEsquerda) {
+    pos.value.x = inicioResize.posX + inicioResize.w - novaLargura
+  }
+  if (moveTopo) {
+    pos.value.y = inicioResize.posY + inicioResize.h - novaAltura
+  }
 }
 
 function pararResize() {
@@ -209,14 +243,76 @@ function pararResize() {
 
 .janela-resize {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 16px;
-  height: 16px;
+  z-index: 2;
+}
+
+.resize-n,
+.resize-s {
+  left: 10px;
+  right: 10px;
+  height: 8px;
+}
+
+.resize-n {
+  top: -4px;
+  cursor: ns-resize;
+}
+
+.resize-s {
+  bottom: -4px;
+  cursor: ns-resize;
+}
+
+.resize-e,
+.resize-w {
+  top: 10px;
+  bottom: 10px;
+  width: 8px;
+}
+
+.resize-e {
+  right: -4px;
+  cursor: ew-resize;
+}
+
+.resize-w {
+  left: -4px;
+  cursor: ew-resize;
+}
+
+.resize-ne,
+.resize-nw,
+.resize-se,
+.resize-sw {
+  width: 14px;
+  height: 14px;
+}
+
+.resize-ne {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+
+.resize-nw {
+  top: -4px;
+  left: -4px;
   cursor: nwse-resize;
 }
 
-.janela-resize::after {
+.resize-se {
+  right: -4px;
+  bottom: -4px;
+  cursor: nwse-resize;
+}
+
+.resize-sw {
+  left: -4px;
+  bottom: -4px;
+  cursor: nesw-resize;
+}
+
+.resize-se::after {
   content: "";
   position: absolute;
   right: 3px;

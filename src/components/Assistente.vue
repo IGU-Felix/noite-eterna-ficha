@@ -1,10 +1,10 @@
 <template>
-  <div class="assistente-fundo" @click.self="$emit('fechar')">
-    <div class="assistente-janela">
+  <div class="assistente-fundo">
+    <div class="assistente-janela" :style="estiloJanela()">
 
-      <div class="assistente-barra">
+      <div class="assistente-barra" @mousedown="iniciarArraste">
         <span class="assistente-titulo">☾ Assistente de Regras — Noite Eterna</span>
-        <button class="assistente-btn-fechar" @click="$emit('fechar')" title="fechar">×</button>
+        <button class="assistente-btn-fechar" @mousedown.stop @click="$emit('fechar')" title="fechar">×</button>
       </div>
 
       <div class="assistente-corpo" ref="corpoRef">
@@ -50,6 +50,41 @@ const carregando = ref(false)
 const erro = ref("")
 const corpoRef = ref(null)
 const textoCarregando = ref("consultando o livro de regras...")
+const posicao = ref({ x: null, y: null })
+let arrastando = false
+let offset = { x: 0, y: 0 }
+
+function estiloJanela() {
+  if (posicao.value.x === null || posicao.value.y === null) return {}
+  return {
+    left: `${posicao.value.x}px`,
+    top: `${posicao.value.y}px`,
+    transform: "none"
+  }
+}
+
+function iniciarArraste(e) {
+  const janela = e.currentTarget.parentElement
+  const caixa = janela.getBoundingClientRect()
+  posicao.value = { x: caixa.left, y: caixa.top }
+  offset = { x: e.clientX - caixa.left, y: e.clientY - caixa.top }
+  arrastando = true
+  window.addEventListener("mousemove", moverArraste)
+  window.addEventListener("mouseup", pararArraste)
+  e.preventDefault()
+}
+
+function moverArraste(e) {
+  if (!arrastando) return
+  posicao.value.x = Math.max(0, e.clientX - offset.x)
+  posicao.value.y = Math.max(0, e.clientY - offset.y)
+}
+
+function pararArraste() {
+  arrastando = false
+  window.removeEventListener("mousemove", moverArraste)
+  window.removeEventListener("mouseup", pararArraste)
+}
 
 async function rolarParaFinal() {
   await nextTick()
@@ -87,13 +122,18 @@ async function enviarPergunta() {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .assistente-janela {
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: 640px;
   max-width: 92vw;
   height: 720px;
@@ -115,6 +155,8 @@ async function enviarPergunta() {
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
+  cursor: move;
+  user-select: none;
 }
 
 .assistente-titulo {
