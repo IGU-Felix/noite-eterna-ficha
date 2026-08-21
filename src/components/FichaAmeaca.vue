@@ -139,7 +139,7 @@
 
                                 <div v-else class="ataque-resumo">
                                     <div class="ataque-resumo-topo">
-                                        <span class="ataque-resumo-nome">🎲 {{ item.nome || 'sem nome' }}</span>
+                                        <span class="ataque-resumo-nome">{{ item.nome || 'sem nome' }}</span>
                                         <div class="ataque-resumo-acoes">
                                             <button class="btn-editar" @click="editarItem(item)"
                                                 title="editar">✎</button>

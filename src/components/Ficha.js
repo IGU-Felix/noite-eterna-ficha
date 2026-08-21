@@ -1,5 +1,6 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
 import { racas, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
+import { configurarPersistencia } from "../services/fichaPersistencia.js"
 
 // gerador simples de ids únicos para itens de listas (status, inventário, combate...)
 let proximoId = 1
@@ -8,7 +9,10 @@ function gerarId() {
 }
 
 export default {
-  setup() {
+  props: {
+    persistKey: { type: String, default: "ficha-personagem" }
+  },
+  setup(props) {
 
     // ===== IDENTIFICAÇÃO =====
     const jogador = ref("")
@@ -590,7 +594,7 @@ export default {
       inventario.value = inventario.value.filter(i => i.id !== id)
     }
 
-    return {
+    const estado = {
       jogador,
       racas,
       classes,
@@ -699,5 +703,8 @@ export default {
       requisitoAcerto,
       adicionarTruque
     }
+
+    configurarPersistencia(props.persistKey, estado)
+    return estado
   }
 }

@@ -1,5 +1,6 @@
 <template>
-  <div v-show="modo !== 'minimizada'" class="janela-flutuante" :class="{ 'tela-cheia': modo === 'tela-cheia' }"
+  <div class="janela-flutuante"
+    :class="{ 'tela-cheia': modo === 'tela-cheia', minimizada: fichaAtiva?.minimizada }"
     :style="estiloJanela">
     <div class="janela-barra" @mousedown="iniciarArraste">
       <span class="janela-titulo">❖ {{ tituloBase }} ({{ nomePersonagem }})</span>
@@ -7,18 +8,32 @@
       <div class="janela-acoes" @mousedown.stop>
         <button class="janela-btn" @click="minimizar" title="minimizar">–</button>
         <button class="janela-btn" @click="abrirAssistente" title="assistente de regras">☾</button>
-        <button class="janela-btn" @click="alternarTelaCheia"
+        <button class="janela-btn" @click.stop="alternarTelaCheia"
           :title="modo === 'tela-cheia' ? 'restaurar janela' : 'tela cheia'">{{ modo === 'tela-cheia' ? '❐' : '⛶'
           }}</button>
-        <button class="janela-btn btn-fechar" @click="$emit('fechar')" title="fechar">X</button>
+        <button class="janela-btn btn-fechar" @click="emitirFechamento" title="fechar">X</button>
       </div>
     </div>
 
-    <div class="janela-corpo">
-      <component :is="componenteFicha" ref="fichaRef" />
+    <nav v-if="fichas.length" class="janela-abas" aria-label="Fichas abertas" @mousedown.stop>
+      <div v-for="ficha in fichas" :key="ficha.id" class="janela-aba"
+        :class="{ minimizada: ficha.minimizada, ativa: ficha.id === ativaId }" role="button" tabindex="0"
+        @click.stop="selecionarFicha(ficha)">
+        <img class="janela-aba-icone"
+          :src="ficha.tipo === 'ameaca' ? '/ameaca_icon.svg' : '/personagem_icon.svg'"
+          :alt="ficha.tipo === 'ameaca' ? 'Criatura' : 'Personagem'" />
+        {{ ficha.nome || "Sem nome" }}
+      </div>
+      <button class="janela-aba-adicionar" title="nova ficha" @click.stop="emitirNovaFicha">+</button>
+    </nav>
+
+    <div v-if="!fichaAtiva?.minimizada" class="janela-corpo">
+      <KeepAlive>
+        <component :is="componenteFicha" :key="ativaId" :persist-key="`ficha-${ativaId}`" ref="fichaRef" />
+      </KeepAlive>
     </div>
 
-    <template v-if="modo === 'flutuante'">
+    <template v-if="modo === 'flutuante' && !fichaAtiva?.minimizada">
       <div v-for="direcao in direcoesResize" :key="direcao" class="janela-resize"
         :class="`resize-${direcao}`" @mousedown="iniciarResize($event, direcao)"></div>
     </template>
@@ -26,44 +41,63 @@
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
   </div>
 
-  <!-- ABA MINIMIZADA -->
-  <button v-if="modo === 'minimizada'" class="aba-minimizada" @click="restaurar">
-    ❖ Ficha de {{ nomePersonagem }} <span class="aba-seta">▲</span>
-  </button>
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import Assistente from "./Assistente.vue"
 import Ficha from "./Ficha.vue"
 import FichaAmeaca from "./FichaAmeaca.vue"
 
 const props = defineProps({
-  tipo: { type: String, default: "personagem" } // "personagem" | "ameaca"
+  fichas: { type: Array, default: () => [] },
+  ativaId: { type: [String, Number], default: null }
 })
 
+const fichas = computed(() => props.fichas)
+
 const fichaRef = ref(null)
+const fichaAtiva = computed(() => fichas.value.find(ficha => ficha.id === props.ativaId))
 const nomePersonagem = computed(() => fichaRef.value?.nome || "Sem Nome")
 
-defineEmits(["fechar"])
+const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "nova-ficha"])
 
-const componenteFicha = computed(() => props.tipo === "ameaca" ? FichaAmeaca : Ficha)
-const tituloBase = computed(() => props.tipo === "ameaca" ? "Ameaça" : "Ficha")
+const componenteFicha = computed(() => fichaAtiva.value?.tipo === "ameaca" ? FichaAmeaca : Ficha)
+const tituloBase = computed(() => fichaAtiva.value?.tipo === "ameaca" ? "Ameaça" : "Ficha")
+
+watch(nomePersonagem, nome => {
+  if (props.ativaId !== null) emit("nome-atualizado", props.ativaId, nome)
+}, { immediate: true })
 
 // 'flutuante' | 'tela-cheia' | 'minimizada'
 const modo = ref("flutuante")
-let modoAntesDeMinimizar = "flutuante"
 const assistenteAberto = ref(false)
 
 const pos = ref({ x: 60, y: 40 })
-const tamanho = ref(props.tipo === "ameaca"
-  ? { w: 780, h: 850 }
-  : { w: 1440, h: 980 })
+const tamanho = ref({ w: 1440, h: 980 })
 const direcoesResize = ["n", "s", "e", "w", "ne", "nw", "se", "sw"]
+
+function tamanhoPadrao(tipo) {
+  return tipo === "ameaca"
+    ? { w: 840, h: 850 }
+    : { w: 1440, h: 980 }
+}
+
+watch(() => props.ativaId, () => {
+  tamanho.value = tamanhoPadrao(fichaAtiva.value?.tipo)
+}, { immediate: true })
 
 const estiloJanela = computed(() => {
   if (modo.value === "tela-cheia") {
     return { left: "0px", top: "0px", width: "100vw", height: "100vh" }
+  }
+  if (fichaAtiva.value?.minimizada) {
+    return {
+      left: pos.value.x + "px",
+      top: pos.value.y + "px",
+      width: "520px",
+      height: "70px"
+    }
   }
   return {
     left: pos.value.x + "px",
@@ -74,16 +108,28 @@ const estiloJanela = computed(() => {
 })
 
 function minimizar() {
-  modoAntesDeMinimizar = modo.value
-  modo.value = "minimizada"
-}
-
-function restaurar() {
-  modo.value = modoAntesDeMinimizar
+  if (props.ativaId !== null) emit("minimizar", props.ativaId)
 }
 
 function alternarTelaCheia() {
   modo.value = modo.value === "tela-cheia" ? "flutuante" : "tela-cheia"
+}
+
+function restaurar() {
+  modo.value = "flutuante"
+  emit("restaurada")
+}
+
+function selecionarFicha(ficha) {
+  emit("selecionar", ficha.id)
+}
+
+function emitirNovaFicha() {
+  emit("nova-ficha")
+}
+
+function emitirFechamento() {
+  if (props.ativaId !== null) emit("fechar", props.ativaId)
 }
 
 function abrirAssistente() {
@@ -175,11 +221,23 @@ function pararResize() {
   flex-direction: column;
   min-width: 480px;
   min-height: 320px;
+  max-width: calc(100vw - 80px);
+  max-height: calc(100vh - 80px);
+  box-sizing: border-box;
 }
 
 .janela-flutuante.tela-cheia {
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none;
+  max-height: none;
   border: none;
   box-shadow: none;
+}
+
+.janela-flutuante.minimizada .janela-acoes {
+  display: none;
 }
 
 .janela-barra {
@@ -197,6 +255,62 @@ function pararResize() {
 
 .janela-flutuante.tela-cheia .janela-barra {
   cursor: default;
+}
+
+.janela-abas {
+  display: flex;
+  gap: 4px;
+  padding: 5px 8px 0;
+  background: #111;
+  border-bottom: 1px solid #2a2a2a;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.janela-aba {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-bottom: none;
+  color: #777;
+  cursor: pointer;
+  font-family: "Aubrey", system-ui;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.janela-aba-icone {
+  width: 10px;
+  height: 10px;
+  margin-right:2px;
+  vertical-align: -2px;
+}
+
+.janela-aba-adicionar {
+  flex: 0 0 auto;
+  width: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid #333;
+  border-bottom: none;
+  color: #777;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.janela-aba-adicionar:hover {
+  color: #d9a441;
+  border-color: #d9a441;
+}
+
+.janela-aba:hover {
+  color: #aaa;
+}
+
+.janela-aba.ativa {
+  color: #d9a441;
+  border-color: #d9a441;
 }
 
 .janela-titulo {
@@ -332,7 +446,7 @@ function pararResize() {
   background: #1a1a1a;
   border: 1px solid #333;
   border-bottom: none;
-  color: #d9a441;
+  color: #555555;
   font-family: "Aubrey", system-ui;
   font-size: 11px;
   letter-spacing: 1px;
@@ -343,6 +457,10 @@ function pararResize() {
   align-items: center;
   gap: 8px;
   transition: background 0.2s ease;
+}
+
+.aba-minimizada.aba-ameaca {
+  right: 250px;
 }
 
 .aba-minimizada:hover {

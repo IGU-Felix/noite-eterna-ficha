@@ -1,4 +1,5 @@
 import { ref, reactive, computed, nextTick } from "vue"
+import { configurarPersistencia } from "../services/fichaPersistencia.js"
 
 let proximoId = 1
 function gerarId() {
@@ -6,7 +7,10 @@ function gerarId() {
 }
 
 export default {
-  setup() {
+  props: {
+    persistKey: { type: String, default: "ficha-ameaca" }
+  },
+  setup(props) {
     // ===== IDENTIFICAÇÃO =====
     const nome = ref("Nome da Ameaça")
     const editandoNome = ref(false)
@@ -206,7 +210,7 @@ function alternarCarga(bloco, i) {
       return "vida-baixa"
     })
 
-    return {
+    const estado = {
       nome, editandoNome, inputNome, ativarEdicaoNome,
       imagemAmeaca, inputFile, abrirUpload, carregarImagem,
       vidaAtual, vidaMax, vidaPercent, alterarVida,
@@ -220,5 +224,8 @@ function alternarCarga(bloco, i) {
       abas, abaAtiva, itens, adicionarItem, removerItem, salvarItem, editarItem, toggleExpandido,
       classeVida, inventario, cargaMaxima, cargaAtualInventario, adicionarItemInventario, removerItemInventario
     }
+
+    configurarPersistencia(props.persistKey, estado)
+    return estado
   }
 }
