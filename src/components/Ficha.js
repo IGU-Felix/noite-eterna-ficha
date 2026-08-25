@@ -1,6 +1,7 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
 import { racas, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
 import { configurarPersistencia } from "../services/fichaPersistencia.js"
+import RolagemDados from "./RolagemDados.vue"
 
 // gerador simples de ids únicos para itens de listas (status, inventário, combate...)
 let proximoId = 1
@@ -10,8 +11,10 @@ function gerarId() {
 
 export default {
   props: {
+
     persistKey: { type: String, default: "ficha-personagem" }
   },
+  components: { RolagemDados },
   setup(props) {
 
     // ===== IDENTIFICAÇÃO =====
@@ -483,7 +486,26 @@ export default {
       item.valor = num
       item.mod = Math.floor(num / 2)
     }
+    // ===== ROLAGEM DE DADOS (clique no nome da perícia) =====
+    const rolagemAberta = ref(false)
+    const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "" })
 
+    function primeiroAtributo(strAtributo) {
+      if (!strAtributo) return ""
+      return strAtributo.split("/")[0].trim()
+    }
+
+    function abrirRolagemPericia(p) {
+      const sigla = primeiroAtributo(p.atributo)
+      rolagemConfig.dados = valorAtributo(sigla) || 1
+      rolagemConfig.modificador = p.mod || 0
+      rolagemConfig.titulo = `Teste de ${p.nome}`
+      rolagemAberta.value = true
+    }
+
+    function fecharRolagem() {
+      rolagemAberta.value = false
+    }
     // ===== COMBATE / HABILIDADES / MAGIAS / VANTAGENS / DESVANTAGENS =====
     const abasCombate = ["Combate", "Habilidades", "Magias", "Vantagens", "Desvantagens", "Progressão"]
     const abaCombateAtiva = ref("Combate")
@@ -620,6 +642,11 @@ export default {
       classeMana,
       manaCritica,
       alterarMana,
+
+      abrirRolagemPericia,
+      rolagemAberta,
+      rolagemConfig,
+      fecharRolagem,
 
       animacaoDano,
       animacaoCura,

@@ -225,7 +225,9 @@
               </div>
 
               <div class="pericia-nome">
-                {{ p.nome }}
+                <span class="pericia-nome-texto" @click="abrirRolagemPericia(p)" title="Rolar teste de perícia">{{
+                  p.nome
+                  }}</span>
                 <input v-if="p.especializacao !== undefined" class="pericia-especializacao"
                   v-model="p.especializacao" />
                 <span class="pericia-atributo">({{ p.atributo }})</span>
@@ -399,7 +401,7 @@
                 <select class="select-truque" @change="adicionarTruque($event.target.value); $event.target.value = ''">
                   <option value="">Escolher um truque...</option>
                   <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel
-                  }})</option>
+                    }})</option>
                 </select>
               </div>
 
@@ -562,7 +564,20 @@
       </div> <!-- FECHA col-direita -->
 
     </div> <!-- FECHA ficha -->
-  </div> <!-- FECHA ficha-container -->
+
+    <div v-if="rolagemAberta" class="rolagem-flutuante">
+      <button class="rolagem-fechar" @click="fecharRolagem" title="fechar">×</button>
+      <RolagemDados
+        :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador"
+        :dados-iniciais="rolagemConfig.dados"
+        :modificador-inicial="rolagemConfig.modificador"
+        :titulo-teste="rolagemConfig.titulo"
+        auto-rolar
+        compacto
+      />
+    </div>
+
+  </div> <!-- FECHA ficha-container -->F
 </template>
 
 <script src="./Ficha.js"></script>

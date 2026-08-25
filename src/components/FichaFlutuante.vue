@@ -72,7 +72,6 @@ watch(nomePersonagem, nome => {
 // 'flutuante' | 'tela-cheia' | 'minimizada'
 const modo = ref("flutuante")
 const assistenteAberto = ref(false)
-
 const pos = ref({ x: 60, y: 40 })
 const tamanho = ref({ w: 1440, h: 980 })
 const direcoesResize = ["n", "s", "e", "w", "ne", "nw", "se", "sw"]

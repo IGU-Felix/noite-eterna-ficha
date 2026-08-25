@@ -1565,3 +1565,44 @@ button {
 .ameaca-corpo .inventario-lista {
   max-height: 120px;
 }
+
+.pericia-nome-texto {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.pericia-nome-texto:hover {
+  color: #d9a441;
+  text-decoration: underline;
+}
+
+.rolagem-flutuante {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 300;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+.rolagem-fechar {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.rolagem-fechar:hover {
+  border-color: #a83232;
+  color: #a83232;
+}
