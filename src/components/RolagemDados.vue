@@ -19,8 +19,9 @@
             @click="alternarAcao(tipo)"
           >
             <span class="acao-nome">{{ nomeAcao(tipo) }}</span>
-            <span class="acao-icone" aria-hidden="true"></span>
-            <span v-if="acoesGastas[tipo]" class="acao-x">×</span>
+            <span class="acao-icone" aria-hidden="true">
+              <span v-if="acoesGastas[tipo]" class="acao-x">×</span>
+            </span>
           </button>
         </div>
       </div>
@@ -31,7 +32,13 @@
         <div class="rolagem-topo-controles">
           <div class="rolagem-badges">
             <div class="badge-losango badge-modificador">
-              <span class="badge-valor">+{{ modificadorRestante }}</span>
+              <input
+                class="badge-valor badge-valor-input"
+                v-model.number="modificadorTotal"
+                type="number"
+                min="0"
+                aria-label="Modificador"
+              />
               <span class="badge-rotulo">Modificador</span>
             </div>
             <div class="badge-losango badge-sucessos">
@@ -40,11 +47,7 @@
             </div>
           </div>
 
-          <div class="rolagem-ajustes">
-            <label>Dados <input type="number" min="1" max="12" v-model.number="quantidadeDados" /></label>
-            <label>Mod <input type="number" min="0" v-model.number="modificadorTotal" /></label>
-            <button class="btn-rolar" @click="rolar">Rolar Dados</button>
-          </div>
+          <button class="btn-rolar" @click="rolar">Rolar Dados</button>
         </div>
 
         <div v-if="jaRolou" class="dados-linha">
@@ -69,6 +72,16 @@
               @click="diminuirDado(dado)" title="desfazer ajuste">▽</button>
 
           </div>
+
+          <button
+            v-if="dados.length < 6"
+            class="dado-adicionar"
+            @click="adicionarDado"
+            title="Adicionar dado"
+            type="button"
+          >
+            +
+          </button>
         </div>
       </div>
 

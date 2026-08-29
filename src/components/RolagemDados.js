@@ -31,6 +31,8 @@ export default {
   setup(props) {
     const quantidadeDados = ref(props.dadosIniciais)
     const modificadorTotal = ref(props.modificadorInicial)
+    const audio = new Audio("/sounds/dice_roll_sound.mp3")
+    audio.volume = 0.45
 
     const dados = reactive([])
     const modificadorRestante = ref(modificadorTotal.value)
@@ -39,6 +41,9 @@ export default {
     const mostraNumero = ref(false)
 
     function rolar() {
+      audio.currentTime = 0
+      audio.play().catch(() => {})
+
       const novosDados = []
       for (let i = 0; i < quantidadeDados.value; i++) {
         const natural = rolarD6()
@@ -59,12 +64,18 @@ export default {
           clearInterval(intervalo)
           dados.forEach(d => { d.exibicao = d.atual })
           rolando.value = false
-          // após 2 segundos, mostra o número
+          // revela o número antes do fim da transição, deixando o efeito mais antecipado
           setTimeout(() => {
             mostraNumero.value = true
-          }, 500)
+          }, 420)
         }
       }, 55)
+    }
+
+    function adicionarDado() {
+      if (quantidadeDados.value >= 6) return
+      quantidadeDados.value++
+      if (jaRolou.value) rolar()
     }
 
     function aumentarDado(dado) {
@@ -170,6 +181,7 @@ export default {
       rolando,
       mostraNumero,
       rolar,
+      adicionarDado,
       aumentarDado,
       diminuirDado,
       sucessos,
