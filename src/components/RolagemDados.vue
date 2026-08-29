@@ -1,61 +1,100 @@
 <template>
-  <div class="rolagem-painel" :class="{ compacto }">
+  <div class="rolagem-painel" :style="estiloJanela()">
 
-    <div class="rolagem-cabecalho" v-if="tituloTeste || compacto">
-      <span class="rolagem-titulo">{{ tituloTeste }}</span>
-      <button v-if="compacto" class="btn-rerolar" @click="rolar" title="rolar novamente">⚄</button>
+    <div class="rolagem-barra" @mousedown="iniciarArraste">
+      <span class="rolagem-titulo-barra">{{ tituloTeste || 'Rolagem de Dados' }}</span>
+      <button class="rolagem-fechar" @mousedown.stop @click="$emit('fechar')" title="fechar">×</button>
     </div>
 
-    <div v-if="!compacto" class="rolagem-config">
-      <label>
-        Dados
-        <input type="number" min="1" max="12" v-model.number="quantidadeDados" />
-      </label>
-      <label>
-        Modificador
-        <input type="number" min="0" v-model.number="modificadorTotal" />
-      </label>
-      <button class="btn-rolar" @click="rolar">⚄ Rolar</button>
-    </div>
+    <div class="rolagem-corpo">
 
-    <div v-if="jaRolou" class="rolagem-resultado">
-
-      <div class="rolagem-badges">
-        <div class="badge-losango badge-modificador">
-          <span class="badge-valor">+{{ modificadorRestante }}</span>
-          <span class="badge-rotulo">Modificador</span>
-        </div>
-        <div class="badge-losango badge-sucessos">
-          <span class="badge-valor">{{ sucessos }}</span>
-          <span class="badge-rotulo">Sucessos</span>
+      <div class="secao-acoes">
+        <div class="secao-titulo">Ações de Combate</div>
+        <div class="acoes-grid">
+          <button
+            v-for="tipo in ['padrao', 'bonus', 'movimento', 'reacao']"
+            :key="tipo"
+            class="acao-box"
+            :class="{ gasta: acoesGastas[tipo] }"
+            @click="alternarAcao(tipo)"
+          >
+            <span class="acao-nome">{{ nomeAcao(tipo) }}</span>
+            <span class="acao-icone" aria-hidden="true"></span>
+            <span v-if="acoesGastas[tipo]" class="acao-x">×</span>
+          </button>
         </div>
       </div>
 
-      <div class="dados-linha">
-        <div class="dado-coluna" v-for="(dado, indice) in dados" :key="dado.id">
+      <div class="secao-rolagem">
+        <div class="secao-titulo">Rolagem de dados</div>
 
-          <button class="dado-seta dado-seta-cima"
-            :disabled="rolando || modificadorRestante <= 0 || dado.atual >= 6"
-            @click="aumentarDado(dado)" title="gastar 1 ponto de modificador">▲</button>
-
-          <div class="dado-caixa"
-            :style="{ '--atraso-rolagem': `${indice * 35}ms` }">
-            <div class="dado-cubo" :class="[
-              corDado(rolando ? dado.exibicao : dado.atual),
-              `show-${dado.face}`
-            ]">
-              <div v-for="face in 6" :key="face" class="dado-face" :class="`dado-face-${face}`">
-                <span v-for="ponto in pontosDaFace(face)" :key="ponto.id" class="dot"
-                  :style="posicaoPonto(face, ponto.id)"></span>
-              </div>
+        <div class="rolagem-topo-controles">
+          <div class="rolagem-badges">
+            <div class="badge-losango badge-modificador">
+              <span class="badge-valor">+{{ modificadorRestante }}</span>
+              <span class="badge-rotulo">Modificador</span>
             </div>
-            <span v-if="!rolando && dado.natural === 6" class="dado-critico" title="6 natural">★</span>
+            <div class="badge-losango badge-sucessos">
+              <span class="badge-valor">{{ sucessos }}</span>
+              <span class="badge-rotulo">Sucessos</span>
+            </div>
           </div>
 
-          <button class="dado-seta dado-seta-baixo"
-            :disabled="rolando || dado.ajustes <= 0"
-            @click="diminuirDado(dado)" title="desfazer ajuste">▽</button>
+          <div class="rolagem-ajustes">
+            <label>Dados <input type="number" min="1" max="12" v-model.number="quantidadeDados" /></label>
+            <label>Mod <input type="number" min="0" v-model.number="modificadorTotal" /></label>
+            <button class="btn-rolar" @click="rolar">Rolar Dados</button>
+          </div>
+        </div>
 
+        <div v-if="jaRolou" class="dados-linha">
+          <div class="dado-coluna" v-for="dado in dados" :key="dado.id">
+
+            <button class="dado-seta dado-seta-cima"
+              :disabled="rolando || modificadorRestante <= 0 || dado.atual >= 6"
+              @click="aumentarDado(dado)" title="gastar 1 ponto de modificador">▲</button>
+
+            <div class="dado-caixa" :class="[rolando ? 'girando' : (dado.atual >= 4 ? 'cor-sucesso' : 'cor-neutro')]">
+              <img
+                :key="`${dado.id}-${mostraNumero}`"
+                class="dado-imagem"
+                :src="`/dados/dice_side_${rolando ? dado.exibicao : dado.atual}${!rolando && mostraNumero ? '_num' : ''}.svg`"
+                :alt="'face ' + (rolando ? dado.exibicao : dado.atual)"
+              />
+              <span v-if="!rolando && dado.natural === 6" class="dado-critico" title="6 natural">★</span>
+            </div>
+
+            <button class="dado-seta dado-seta-baixo"
+              :disabled="rolando || dado.ajustes <= 0"
+              @click="diminuirDado(dado)" title="desfazer ajuste">▽</button>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="secao-habilidades">
+        <div class="secao-titulo">Habilidades</div>
+
+        <div v-if="habilidadesFiltradas.length === 0" class="habilidades-vazio">
+          Nenhuma habilidade vinculada a "{{ periciaNome }}". Vincule habilidades na aba Habilidades da ficha.
+        </div>
+
+        <div v-else class="habilidades-lista">
+          <div
+            v-for="h in habilidadesFiltradas"
+            :key="h.id"
+            class="habilidade-card"
+            :class="{ gasta: h.tipoAcao && acoesGastas[h.tipoAcao] }"
+            @click="usarHabilidade(h)"
+          >
+            <div class="habilidade-topo">
+              <span class="habilidade-nome">{{ h.nome || 'sem nome' }}</span>
+              <span v-if="h.tipoAcao" class="habilidade-custo" :class="{ gasta: acoesGastas[h.tipoAcao] }">
+                {{ nomeAcao(h.tipoAcao) }}
+              </span>
+            </div>
+            <p v-if="h.detalhe" class="habilidade-detalhe">{{ h.detalhe }}</p>
+          </div>
         </div>
       </div>
 

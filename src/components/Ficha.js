@@ -488,7 +488,7 @@ export default {
     }
     // ===== ROLAGEM DE DADOS (clique no nome da perícia) =====
     const rolagemAberta = ref(false)
-    const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "" })
+    const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "", periciaNome: "" })
 
     function primeiroAtributo(strAtributo) {
       if (!strAtributo) return ""
@@ -500,9 +500,24 @@ export default {
       rolagemConfig.dados = valorAtributo(sigla) || 1
       rolagemConfig.modificador = p.mod || 0
       rolagemConfig.titulo = `Teste de ${p.nome}`
+      rolagemConfig.periciaNome = p.nome
       rolagemAberta.value = true
     }
 
+    function fecharRolagem() {
+      rolagemAberta.value = false
+    }
+
+    // ===== AÇÕES DE COMBATE (marcadas ao usar uma habilidade, ou manualmente) =====
+    const acoesGastas = reactive({ padrao: false, bonus: false, movimento: false, reacao: false })
+
+    function alternarAcao(tipo) {
+      if (tipo in acoesGastas) acoesGastas[tipo] = !acoesGastas[tipo]
+    }
+
+    function resetarAcoes() {
+      Object.keys(acoesGastas).forEach(k => { acoesGastas[k] = false })
+    }
     function fecharRolagem() {
       rolagemAberta.value = false
     }
@@ -720,6 +735,10 @@ export default {
       salvarAtaque,
       editarAtaque,
       resumoAtaque,
+
+      acoesGastas,
+      alternarAcao,
+      resetarAcoes,
 
       truquesFeiticeiro,
       salvarMagia,

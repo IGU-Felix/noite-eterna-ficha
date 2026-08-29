@@ -9,14 +9,25 @@ function rolarD6() {
   return Math.floor(Math.random() * 6) + 1
 }
 
+const NOMES_ACAO = {
+  padrao: "Ação Padrão",
+  bonus: "Ação Bônus",
+  movimento: "Movimento",
+  reacao: "Reação"
+}
+
 export default {
   props: {
     dadosIniciais: { type: Number, default: 3 },
     modificadorInicial: { type: Number, default: 0 },
     tituloTeste: { type: String, default: "" },
-    autoRolar: { type: Boolean, default: false }, // rola sozinho ao montar (usado ao clicar na perícia)
-    compacto: { type: Boolean, default: false }   // esconde os campos de configuração manual
+    periciaNome: { type: String, default: "" },
+    habilidades: { type: Array, default: () => [] },
+    acoesGastas: { type: Object, default: () => ({ padrao: false, bonus: false, movimento: false, reacao: false }) },
+    alternarAcao: { type: Function, default: () => {} },
+    autoRolar: { type: Boolean, default: false }
   },
+  emits: ["fechar"],
   setup(props) {
     const quantidadeDados = ref(props.dadosIniciais)
     const modificadorTotal = ref(props.modificadorInicial)
@@ -25,46 +36,35 @@ export default {
     const modificadorRestante = ref(modificadorTotal.value)
     const jaRolou = ref(false)
     const rolando = ref(false)
-
-    // ângulos fixos (não aleatórios a cada render) pra dar um ar "desenhado à mão"
-    const angulosTraco = [-8, 5, -3, 7, -6]
-
-    function anguloTraco(indice) {
-      return angulosTraco[indice % angulosTraco.length]
-    }
-
-    let fimRolagem
+    const mostraNumero = ref(false)
 
     function rolar() {
-      const quantidade = Math.max(1, Math.min(12, Number(quantidadeDados.value) || 1))
-      quantidadeDados.value = quantidade
-      const resultados = Array.from({ length: quantidade }, () => rolarD6())
-
-      if (dados.length !== quantidade) {
-        dados.splice(0, dados.length, ...resultados.map(natural => ({
-          id: gerarId(), natural, atual: natural, exibicao: natural, face: 1, ajustes: 0
-        })))
-      } else {
-        dados.forEach((dado, indice) => {
-          const natural = resultados[indice]
-          dado.natural = natural
-          dado.atual = natural
-          dado.exibicao = natural
-          dado.face = 1
-          dado.ajustes = 0
-        })
+      const novosDados = []
+      for (let i = 0; i < quantidadeDados.value; i++) {
+        const natural = rolarD6()
+        novosDados.push({ id: gerarId(), natural, atual: natural, exibicao: natural, ajustes: 0 })
       }
-
+      dados.splice(0, dados.length, ...novosDados)
       modificadorRestante.value = modificadorTotal.value
       jaRolou.value = true
+      mostraNumero.value = false
+
+      // pequeno efeito de "embaralhar" antes de fixar o valor final
       rolando.value = true
-      setTimeout(() => {
-        dados.forEach(dado => { dado.face = dado.atual })
-      }, 20)
-      clearTimeout(fimRolagem)
-      fimRolagem = setTimeout(() => {
-        rolando.value = false
-      }, 1000)
+      let tique = 0
+      const intervalo = setInterval(() => {
+        tique++
+        dados.forEach(d => { d.exibicao = Math.floor(Math.random() * 6) + 1 })
+        if (tique >= 7) {
+          clearInterval(intervalo)
+          dados.forEach(d => { d.exibicao = d.atual })
+          rolando.value = false
+          // após 2 segundos, mostra o número
+          setTimeout(() => {
+            mostraNumero.value = true
+          }, 500)
+        }
+      }, 55)
     }
 
     function aumentarDado(dado) {
@@ -73,7 +73,6 @@ export default {
       if (dado.atual >= 6) return
       dado.atual++
       dado.exibicao = dado.atual
-      dado.face = dado.atual
       dado.ajustes++
       modificadorRestante.value--
     }
@@ -83,40 +82,80 @@ export default {
       if (dado.ajustes <= 0) return
       dado.atual--
       dado.exibicao = dado.atual
-      dado.face = dado.atual
       dado.ajustes--
       modificadorRestante.value++
     }
 
-    function corDado(valor) {
-      return valor >= 4 ? "cor-sucesso" : "cor-neutro"
-    }
+    const sucessos = computed(() => dados.filter(d => d.atual >= 4).length)
+    const criticosNaturais = computed(() => dados.filter(d => d.natural === 6).length)
 
-    const pontosPorFace = {
-      1: [[50, 50]],
-      2: [[20, 20], [80, 80]],
-      3: [[20, 20], [50, 50], [80, 80]],
-      4: [[20, 20], [80, 20], [20, 80], [80, 80]],
-      5: [[20, 20], [80, 20], [50, 50], [20, 80], [80, 80]],
-      6: [[20, 20], [80, 20], [20, 50], [80, 50], [20, 80], [80, 80]]
-    }
-
-    function pontosDaFace(face) {
-      return pontosPorFace[face].map((_, indice) => ({ id: indice + 1 }))
-    }
-
-    function posicaoPonto(face, id) {
-      const [top, left] = pontosPorFace[face][id - 1]
-      return { top: `${top}%`, left: `${left}%` }
-    }
-
-    const sucessos = computed(() =>
-      dados.filter(d => d.atual >= 4).length
+    // só entram habilidades explicitamente vinculadas a esta perícia (campo "Perícia Vinculada")
+    const habilidadesFiltradas = computed(() =>
+      props.habilidades.filter(h => h.periciaVinculada && h.periciaVinculada === props.periciaNome)
     )
 
-    const criticosNaturais = computed(() =>
-      dados.filter(d => d.natural === 6).length
-    )
+    function nomeAcao(tipo) {
+      return NOMES_ACAO[tipo] || ""
+    }
+
+    function usarHabilidade(h) {
+      if (!h.tipoAcao) return
+      props.alternarAcao(h.tipoAcao)
+    }
+
+    // ===== ARRASTAR =====
+    const posicao = ref({ x: null, y: null })
+    let arrastando = false
+    let offset = { x: 0, y: 0 }
+
+    function estiloJanela() {
+      if (posicao.value.x === null || posicao.value.y === null) {
+        return {
+          right: "24px",
+          bottom: "24px",
+          left: "auto",
+          top: "auto",
+          transform: "none"
+        }
+      }
+
+      return {
+        left: `${posicao.value.x}px`,
+        top: `${posicao.value.y}px`,
+        right: "auto",
+        bottom: "auto",
+        transform: "none"
+      }
+    }
+
+    function iniciarArraste(e) {
+      const janela = e.currentTarget.parentElement
+      const estilo = window.getComputedStyle(janela)
+      const left = parseFloat(estilo.left) || window.innerWidth - janela.offsetWidth - 24
+      const top = parseFloat(estilo.top) || window.innerHeight - janela.offsetHeight - 24
+
+      posicao.value = { x: left, y: top }
+      offset = { x: e.clientX - left, y: e.clientY - top }
+      arrastando = true
+      window.addEventListener("mousemove", moverArraste)
+      window.addEventListener("mouseup", pararArraste)
+      e.preventDefault()
+    }
+
+    function moverArraste(e) {
+      if (!arrastando) return
+      const maxX = Math.max(0, window.innerWidth - 360)
+      const maxY = Math.max(0, window.innerHeight - 160)
+      const novaX = Math.min(Math.max(0, e.clientX - offset.x), maxX)
+      const novaY = Math.min(Math.max(0, e.clientY - offset.y), maxY)
+      posicao.value = { x: novaX, y: novaY }
+    }
+
+    function pararArraste() {
+      arrastando = false
+      window.removeEventListener("mousemove", moverArraste)
+      window.removeEventListener("mouseup", pararArraste)
+    }
 
     onMounted(() => {
       if (props.autoRolar) rolar()
@@ -129,15 +168,20 @@ export default {
       dados,
       jaRolou,
       rolando,
+      mostraNumero,
       rolar,
       aumentarDado,
       diminuirDado,
-      corDado,
-      pontosDaFace,
-      posicaoPonto,
-      anguloTraco,
       sucessos,
-      criticosNaturais
+      criticosNaturais,
+      habilidadesFiltradas,
+      nomeAcao,
+      usarHabilidade,
+      estiloJanela,
+      iniciarArraste,
+      acoesGastas: props.acoesGastas,
+      alternarAcao: props.alternarAcao,
+      periciaNome: props.periciaNome
     }
   }
 }

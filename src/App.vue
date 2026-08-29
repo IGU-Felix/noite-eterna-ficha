@@ -5,7 +5,7 @@
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
 
     <FichaFlutuante
-      v-if="todasJanelas.some(janela => !janela.minimizada)"
+      v-if="todasJanelas.length"
       :fichas="todasJanelas"
       :ativa-id="janelaAtiva"
       @selecionar="selecionarJanela"

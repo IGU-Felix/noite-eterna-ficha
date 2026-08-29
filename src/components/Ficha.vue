@@ -486,6 +486,21 @@
                     title="mostrar/ocultar descrição">▾</button>
                   <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                 </div>
+
+                <div v-if="abaCombateAtiva === 'Habilidades'" class="habilidade-vinculos">
+                  <select class="habilidade-select" v-model="item.tipoAcao">
+                    <option value="">Sem custo de ação</option>
+                    <option value="padrao">Ação Padrão</option>
+                    <option value="bonus">Ação Bônus</option>
+                    <option value="movimento">Movimento</option>
+                    <option value="reacao">Reação</option>
+                  </select>
+                  <select class="habilidade-select" v-model="item.periciaVinculada">
+                    <option value="">Não vinculada a perícia</option>
+                    <option v-for="p in pericias" :key="p.id" :value="p.nome">{{ p.nome }}</option>
+                  </select>
+                </div>
+
                 <textarea v-show="item.expandido" class="combate-detalhe" v-model="item.detalhe"
                   placeholder="dano, custo, efeito, descrição..."></textarea>
               </div>
@@ -564,19 +579,11 @@
       </div> <!-- FECHA col-direita -->
 
     </div> <!-- FECHA ficha -->
-
-    <div v-if="rolagemAberta" class="rolagem-flutuante">
-      <button class="rolagem-fechar" @click="fecharRolagem" title="fechar">×</button>
-      <RolagemDados
-        :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador"
-        :dados-iniciais="rolagemConfig.dados"
-        :modificador-inicial="rolagemConfig.modificador"
-        :titulo-teste="rolagemConfig.titulo"
-        auto-rolar
-        compacto
-      />
-    </div>
-
+    <RolagemDados v-if="rolagemAberta" :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador"
+      :dados-iniciais="rolagemConfig.dados" :modificador-inicial="rolagemConfig.modificador"
+      :titulo-teste="rolagemConfig.titulo" :pericia-nome="rolagemConfig.periciaNome"
+      :habilidades="itensCombate.Habilidades" :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao" auto-rolar
+      @fechar="fecharRolagem" />F
   </div> <!-- FECHA ficha-container -->F
 </template>
 
