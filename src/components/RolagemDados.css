@@ -422,8 +422,8 @@
 
 .dado-critico {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: 5px;
+  right: 10px;
   font-size: 11px;
   color: #d8b365;
   text-shadow: 0 0 4px rgba(216, 179, 101, 0.8);
