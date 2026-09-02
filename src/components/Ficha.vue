@@ -225,7 +225,7 @@
               </div>
 
               <div class="pericia-nome">
-                <span class="pericia-nome-texto" @click="abrirRolagemPericia(p)" title="Rolar teste de perícia">{{
+                <span class="pericia-nome-texto" @click="abrirOuRolarPericia(p)" title="Rolar teste de perícia / Rolar novamente">{{
                   p.nome
                   }}</span>
                 <input v-if="p.especializacao !== undefined" class="pericia-especializacao"
@@ -494,7 +494,15 @@
                     <option value="bonus">Ação Bônus</option>
                     <option value="movimento">Movimento</option>
                     <option value="reacao">Reação</option>
+                    <option value="descanso">Descanso</option>
+                    <option value="cena">Cena</option>
+                    <option value="mana">Mana</option>
                   </select>
+                  <input 
+                    type="number" 
+                    class="habilidade-select" 
+                    v-model.number="item.modificadorHabilidade" 
+                    placeholder="Modificador (+/-)"/>
                   <select class="habilidade-select" v-model="item.periciaVinculada">
                     <option value="">Não vinculada a perícia</option>
                     <option v-for="p in pericias" :key="p.id" :value="p.nome">{{ p.nome }}</option>
@@ -582,9 +590,11 @@
     <RolagemDados v-if="rolagemAberta" :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador"
       :dados-iniciais="rolagemConfig.dados" :modificador-inicial="rolagemConfig.modificador"
       :titulo-teste="rolagemConfig.titulo" :pericia-nome="rolagemConfig.periciaNome"
-      :habilidades="itensCombate.Habilidades" :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao" auto-rolar
-      @fechar="fecharRolagem" />F
-  </div> <!-- FECHA ficha-container -->F
+      :habilidades="itensCombate.Habilidades" :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao"
+      :valor-atributo="obterValorAtributoAtual" :rolar-novamente="rolarPericia" :disparador-rolagem="disparadorRolagem"
+      :habilidades-gastas-rolagem="habilidadesGastasRolagem" :marcar-habilidade-gasta="marcarHabilidadeGasta"
+      @fechar="fecharRolagem" />
+  </div> <!-- FECHA ficha-container -->
 </template>
 
 <script src="./Ficha.js"></script>

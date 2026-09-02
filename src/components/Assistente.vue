@@ -1,6 +1,6 @@
 <template>
   <div class="assistente-fundo">
-    <div class="assistente-janela" :style="estiloJanela()">
+    <div class="assistente-janela" :style="[estiloJanela(), { zIndex: zIndexAtivo }]" @mousedown.capture="ativarJanelaNoTopo">
 
       <div class="assistente-barra" @mousedown="iniciarArraste">
         <span class="assistente-titulo">☾ Assistente de Regras — Noite Eterna</span>
@@ -39,10 +39,10 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from "vue"
+import { ref, nextTick, computed, onMounted, onBeforeUnmount } from "vue"
 import { perguntarAoMestre } from "../services/gemini.js"
 
-defineEmits(["fechar"])
+const emit = defineEmits(["fechar", "topo"])
 
 const pergunta = ref("")
 const mensagens = ref([])
@@ -51,8 +51,40 @@ const erro = ref("")
 const corpoRef = ref(null)
 const textoCarregando = ref("consultando o livro de regras...")
 const posicao = ref({ x: null, y: null })
+const painelId = "assistente-principal"
+const janelaAtivaGlobal = ref(typeof window !== "undefined" ? window.__janelaAtivaGeral || null : null)
 let arrastando = false
 let offset = { x: 0, y: 0 }
+
+function ativarJanelaNoTopo() {
+  const payload = { id: painelId, tipo: "assistente" }
+  janelaAtivaGlobal.value = payload
+  emit("topo", painelId)
+  if (typeof window !== "undefined") {
+    window.__janelaAtivaGeral = payload
+    window.dispatchEvent(new CustomEvent("janela-ativa-global", { detail: payload }))
+  }
+}
+
+function tratarJanelaAtivaGlobal(event) {
+  janelaAtivaGlobal.value = event.detail || (typeof window !== "undefined" ? window.__janelaAtivaGeral : null)
+}
+
+const zIndexAtivo = computed(() => {
+  return window.__janelaAtivaGeral === painelId ? 350 : 200
+})
+
+onMounted(() => {
+  if (typeof window !== "undefined") {
+    window.addEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+  }
+})
 
 function estiloJanela() {
   if (posicao.value.x === null || posicao.value.y === null) return {}

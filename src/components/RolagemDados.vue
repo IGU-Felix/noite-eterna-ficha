@@ -1,5 +1,5 @@
 <template>
-  <div class="rolagem-painel" :style="estiloJanela()">
+  <div class="rolagem-painel" :style="[estiloJanela(), { zIndex: zIndexAtivo }]" @mousedown.capture="ativarPainelNoTopo">
 
     <div class="rolagem-barra" @mousedown="iniciarArraste">
       <span class="rolagem-titulo-barra">{{ tituloTeste || 'Rolagem de Dados' }}</span>
@@ -9,8 +9,11 @@
     <div class="rolagem-corpo">
 
       <div class="secao-acoes">
-        <div class="secao-titulo">Ações de Combate</div>
-        <div class="acoes-grid">
+        <div class="secao-titulo">
+          <button class="btn-expandir-secao" :class="{ aberto: acoesExpandidas }" @click="toggleAcoes" title="mostrar/ocultar ações">▾</button>
+          Ações de Combate
+        </div>
+        <div v-show="acoesExpandidas" class="acoes-grid">
           <button
             v-for="tipo in ['padrao', 'bonus', 'movimento', 'reacao']"
             :key="tipo"
@@ -97,8 +100,8 @@
             v-for="h in habilidadesFiltradas"
             :key="h.id"
             class="habilidade-card"
-            :class="{ gasta: h.tipoAcao && acoesGastas[h.tipoAcao] }"
-            @click="usarHabilidade(h)"
+            :class="{ gasta: h.tipoAcao && acoesGastas[h.tipoAcao], desabilitada: !podeUsarHabilidade(h) }"
+            @click="podeUsarHabilidade(h) && usarHabilidade(h)"
           >
             <div class="habilidade-topo">
               <span class="habilidade-nome">{{ h.nome || 'sem nome' }}</span>

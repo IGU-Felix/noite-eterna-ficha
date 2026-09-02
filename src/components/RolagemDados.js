@@ -1,4 +1,4 @@
-import { ref, reactive, computed, onMounted } from "vue"
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from "vue"
 
 let proximoId = 1
 function gerarId() {
@@ -10,10 +10,12 @@ function rolarD6() {
 }
 
 const NOMES_ACAO = {
-  padrao: "Ação Padrão",
   bonus: "Ação Bônus",
   movimento: "Movimento",
-  reacao: "Reação"
+  reacao: "Reação",
+  descanso: "Descanso",
+  cena: "Cena",
+  mana: "Mana"
 }
 
 export default {
@@ -23,22 +25,50 @@ export default {
     tituloTeste: { type: String, default: "" },
     periciaNome: { type: String, default: "" },
     habilidades: { type: Array, default: () => [] },
-    acoesGastas: { type: Object, default: () => ({ padrao: false, bonus: false, movimento: false, reacao: false }) },
+    acoesGastas: { type: Object, default: () => ({ padrao: false, bonus: false, movimento: false, reacao: false, descanso: false, cena: false, mana: false }) },
     alternarAcao: { type: Function, default: () => {} },
-    autoRolar: { type: Boolean, default: false }
+    autoRolar: { type: Boolean, default: false },
+    valorAtributo: { type: Function, default: () => 1 },
+    rolarNovamente: { type: Function, default: () => {} },
+    disparadorRolagem: { type: Number, default: 0 },
+    habilidadesGastasRolagem: { type: Array, default: () => [] },
+    marcarHabilidadeGasta: { type: Function, default: () => {} }
   },
   emits: ["fechar"],
   setup(props) {
     const quantidadeDados = ref(props.dadosIniciais)
+    const modificadorInicial = props.modificadorInicial
     const modificadorTotal = ref(props.modificadorInicial)
     const audio = new Audio("/sounds/dice_roll_sound.mp3")
     audio.volume = 0.45
+    const painelId = `rolagem-${Math.random().toString(36).slice(2)}`
+    const janelaAtivaGlobal = ref(typeof window !== "undefined" ? window.__janelaAtivaGeral || null : null)
 
     const dados = reactive([])
     const modificadorRestante = ref(modificadorTotal.value)
     const jaRolou = ref(false)
     const rolando = ref(false)
     const mostraNumero = ref(false)
+    const acoesExpandidas = ref(false)
+    const modificadorUsadoNaRolagem = ref(false)
+
+    function ativarPainelNoTopo() {
+      const payload = { id: painelId, tipo: "rolagem" }
+      janelaAtivaGlobal.value = payload
+      if (typeof window !== "undefined") {
+        window.__janelaAtivaGeral = payload
+        window.dispatchEvent(new CustomEvent("janela-ativa-global", { detail: payload }))
+      }
+    }
+
+    function tratarJanelaAtivaGlobal(event) {
+      janelaAtivaGlobal.value = event.detail || (typeof window !== "undefined" ? window.__janelaAtivaGeral : null)
+    }
+
+    const zIndexAtivo = computed(() => {
+      if (typeof window !== "undefined" && window.__janelaAtivaGeral === painelId) return 350
+      return 300
+    })
 
     function rolar() {
       audio.currentTime = 0
@@ -50,7 +80,12 @@ export default {
         novosDados.push({ id: gerarId(), natural, atual: natural, exibicao: natural, ajustes: 0 })
       }
       dados.splice(0, dados.length, ...novosDados)
+      
+      // Marca que o modificador foi usado e reseta para o valor inicial
+      modificadorUsadoNaRolagem.value = true
+      modificadorTotal.value = modificadorInicial
       modificadorRestante.value = modificadorTotal.value
+      
       jaRolou.value = true
       mostraNumero.value = false
 
@@ -109,9 +144,47 @@ export default {
       return NOMES_ACAO[tipo] || ""
     }
 
+    function toggleAcoes() {
+      acoesExpandidas.value = !acoesExpandidas.value
+    }
+
     function usarHabilidade(h) {
+      // Verifica se é descanso ou cena
+      if (h.tipoAcao === "descanso" || h.tipoAcao === "cena") {
+        // Verifica se já foi gasta nesta rolagem
+        if (props.habilidadesGastasRolagem.includes(h.id)) {
+          // Já foi gasta, não faz nada
+          return
+        }
+        // Marca como gasta nesta rolagem
+        props.marcarHabilidadeGasta(h.id)
+      }
+
       if (!h.tipoAcao) return
       props.alternarAcao(h.tipoAcao)
+      
+      // Adiciona modificador da habilidade ao modificador total
+      if (h.modificadorHabilidade) {
+        // Se já usou na rolagem anterior, reseta o flag
+        if (modificadorUsadoNaRolagem.value) {
+          modificadorUsadoNaRolagem.value = false
+          modificadorTotal.value = modificadorInicial + h.modificadorHabilidade
+        } else {
+          modificadorTotal.value += h.modificadorHabilidade
+        }
+        modificadorRestante.value = modificadorTotal.value
+      }
+    }
+
+    function podeUsarHabilidade(h) {
+      // Se não tem tipo de ação, pode usar
+      if (!h.tipoAcao) return true
+      // Se é descanso ou cena, só pode usar se não foi gasta nesta rolagem
+      if (h.tipoAcao === "descanso" || h.tipoAcao === "cena") {
+        return !props.habilidadesGastasRolagem.includes(h.id)
+      }
+      // Outras ações podem ser usadas se a ação não foi gasta
+      return !props.acoesGastas[h.tipoAcao]
     }
 
     // ===== ARRASTAR =====
@@ -169,7 +242,41 @@ export default {
     }
 
     onMounted(() => {
-      if (props.autoRolar) rolar()
+      if (typeof window !== "undefined") {
+        window.addEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+      }
+      
+      // Inicializa os dados sem rolar (mostra na tela)
+      const novosDados = []
+      for (let i = 0; i < quantidadeDados.value; i++) {
+        novosDados.push({ id: gerarId(), natural: 1, atual: 1, exibicao: 1, ajustes: 0 })
+      }
+      dados.splice(0, dados.length, ...novosDados)
+      jaRolou.value = true
+      
+      // Observa mudanças no atributo
+      watch(() => props.valorAtributo(), () => {
+        const novoValor = props.valorAtributo()
+        if (novoValor !== quantidadeDados.value && jaRolou.value) {
+          quantidadeDados.value = novoValor || 1
+          rolar()
+        }
+      })
+
+      // Observa trigger de rolagem novamente
+      watch(() => props.disparadorRolagem, () => {
+        if (jaRolou.value) {
+          // Reseta o flag quando rolar novamente
+          modificadorUsadoNaRolagem.value = false
+          rolar()
+        }
+      })
+    })
+
+    onBeforeUnmount(() => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+      }
     })
 
     return {
@@ -180,7 +287,9 @@ export default {
       jaRolou,
       rolando,
       mostraNumero,
+      zIndexAtivo,
       rolar,
+      ativarPainelNoTopo,
       adicionarDado,
       aumentarDado,
       diminuirDado,
@@ -188,9 +297,12 @@ export default {
       criticosNaturais,
       habilidadesFiltradas,
       nomeAcao,
+      toggleAcoes,
       usarHabilidade,
+      podeUsarHabilidade,
       estiloJanela,
       iniciarArraste,
+      acoesExpandidas,
       acoesGastas: props.acoesGastas,
       alternarAcao: props.alternarAcao,
       periciaNome: props.periciaNome

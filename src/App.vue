@@ -8,12 +8,14 @@
       v-if="todasJanelas.length"
       :fichas="todasJanelas"
       :ativa-id="janelaAtiva"
+      :janela-em-frente-id="janelaEmFrente"
       @selecionar="selecionarJanela"
       @nome-atualizado="atualizarNome"
       @nova-ficha="criarPersonagem"
       @minimizar="minimizarJanela"
       @restaurada="restaurarJanela"
       @fechar="fecharJanela"
+      @topo="registrarJanelaEmFrente"
     />
 
   </div>
@@ -29,6 +31,7 @@ const personagensAbertos = ref([])
 const ameacasAbertas = ref([])
 const assistenteAberto = ref(false)
 const janelaAtiva = ref(null)
+const janelaEmFrente = ref(null)
 const todasJanelas = computed(() => [
   ...personagensAbertos.value.map(janela => ({ ...janela, tipo: "personagem" })),
   ...ameacasAbertas.value.map(janela => ({ ...janela, tipo: "ameaca" }))
@@ -74,8 +77,13 @@ function gerarIdJanela() {
 
 function selecionarJanela(id) {
   janelaAtiva.value = id
+  registrarJanelaEmFrente(`ficha-${id}`)
   const janela = encontrarJanela(id)
   if (janela) janela.minimizada = false
+}
+
+function registrarJanelaEmFrente(id) {
+  janelaEmFrente.value = id
 }
 
 function minimizarJanela(id) {

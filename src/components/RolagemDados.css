@@ -78,6 +78,35 @@
   border-bottom: 1px solid rgba(140, 120, 90, 0.35);
   padding-bottom: 4px;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-expandir-secao {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-expandir-secao:hover {
+  color: #d9a441;
+}
+
+.btn-expandir-secao.aberto {
+  transform: rotate(180deg);
+  color: #d9a441;
 }
 
 /* ===== AÇÕES ===== */
@@ -457,6 +486,12 @@
 
 .habilidade-card.gasta {
   opacity: 0.55;
+}
+
+.habilidade-card.desabilitada {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .habilidade-topo {

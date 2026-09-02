@@ -487,8 +487,10 @@ export default {
       item.mod = Math.floor(num / 2)
     }
     // ===== ROLAGEM DE DADOS (clique no nome da perícia) =====
+    const disparadorRolagem = ref(0)
     const rolagemAberta = ref(false)
     const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "", periciaNome: "" })
+    let atributoPeriodAtual = ""
 
     function primeiroAtributo(strAtributo) {
       if (!strAtributo) return ""
@@ -497,6 +499,7 @@ export default {
 
     function abrirRolagemPericia(p) {
       const sigla = primeiroAtributo(p.atributo)
+      atributoPeriodAtual = sigla
       rolagemConfig.dados = valorAtributo(sigla) || 1
       rolagemConfig.modificador = p.mod || 0
       rolagemConfig.titulo = `Teste de ${p.nome}`
@@ -508,8 +511,36 @@ export default {
       rolagemAberta.value = false
     }
 
+    function obterValorAtributoAtual() {
+      return valorAtributo(atributoPeriodAtual) || 1
+    }
+
+    function rolarPericia() {
+      // Função chamada quando clica novamente no nome da perícia
+      // Já rola automaticamente via watch em RolagemDados
+    }
+
+    function abrirOuRolarPericia(p) {
+      if (rolagemAberta.value && rolagemConfig.periciaNome === p.nome) {
+        // Mesma perícia já aberta, rola novamente
+        disparadorRolagem.value += 1
+      } else {
+        // Abre normalmente
+        abrirRolagemPericia(p)
+      }
+    }
+
     // ===== AÇÕES DE COMBATE (marcadas ao usar uma habilidade, ou manualmente) =====
-    const acoesGastas = reactive({ padrao: false, bonus: false, movimento: false, reacao: false })
+    const acoesGastas = reactive({ padrao: false, bonus: false, movimento: false, reacao: false, descanso: false, cena: false, mana: false })
+
+    // Rastreia habilidades de descanso/cena que foram usadas nesta rolagem
+    const habilidadesGastasRolagem = ref([])
+
+    function marcarHabilidadeGasta(habilidadeId) {
+      if (!habilidadesGastasRolagem.value.includes(habilidadeId)) {
+        habilidadesGastasRolagem.value.push(habilidadeId)
+      }
+    }
 
     function alternarAcao(tipo) {
       if (tipo in acoesGastas) acoesGastas[tipo] = !acoesGastas[tipo]
@@ -520,6 +551,7 @@ export default {
     }
     function fecharRolagem() {
       rolagemAberta.value = false
+      habilidadesGastasRolagem.value = []
     }
     // ===== COMBATE / HABILIDADES / MAGIAS / VANTAGENS / DESVANTAGENS =====
     const abasCombate = ["Combate", "Habilidades", "Magias", "Vantagens", "Desvantagens", "Progressão"]
@@ -561,6 +593,19 @@ export default {
           efeito: "",
           editando: true,
           expandido: false
+        })
+        return
+      }
+
+      if (aba === "Habilidades") {
+        itensCombate.Habilidades.push({ 
+          id: gerarId(), 
+          nome: "", 
+          detalhe: "", 
+          tipoAcao: "",
+          modificadorHabilidade: 0,
+          periciaVinculada: "",
+          expandido: false 
         })
         return
       }
@@ -661,7 +706,11 @@ export default {
       abrirRolagemPericia,
       rolagemAberta,
       rolagemConfig,
+      disparadorRolagem,
       fecharRolagem,
+      obterValorAtributoAtual,
+      rolarPericia,
+      abrirOuRolarPericia,
 
       animacaoDano,
       animacaoCura,
@@ -739,6 +788,8 @@ export default {
       acoesGastas,
       alternarAcao,
       resetarAcoes,
+      habilidadesGastasRolagem,
+      marcarHabilidadeGasta,
 
       truquesFeiticeiro,
       salvarMagia,

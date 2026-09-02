@@ -1,7 +1,8 @@
 <template>
   <div class="janela-flutuante"
     :class="{ 'tela-cheia': modo === 'tela-cheia', minimizada: fichaAtiva?.minimizada }"
-    :style="estiloJanela">
+    :style="[estiloJanela, { zIndex: zIndexAtiva }]"
+    @mousedown.capture="ativarJanelaNoTopo">
     <div class="janela-barra" @mousedown="iniciarArraste">
       <span class="janela-titulo">❖ {{ tituloBase }} ({{ nomePersonagem }})</span>
 
@@ -44,14 +45,15 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue"
 import Assistente from "./Assistente.vue"
 import Ficha from "./Ficha.vue"
 import FichaAmeaca from "./FichaAmeaca.vue"
 
 const props = defineProps({
   fichas: { type: Array, default: () => [] },
-  ativaId: { type: [String, Number], default: null }
+  ativaId: { type: [String, Number], default: null },
+  janelaEmFrenteId: { type: [String, Number, null], default: null }
 })
 
 const fichas = computed(() => props.fichas)
@@ -60,10 +62,43 @@ const fichaRef = ref(null)
 const fichaAtiva = computed(() => fichas.value.find(ficha => ficha.id === props.ativaId))
 const nomePersonagem = computed(() => fichaRef.value?.nome || "Sem Nome")
 
-const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "nova-ficha"])
+const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "nova-ficha", "topo"])
 
 const componenteFicha = computed(() => fichaAtiva.value?.tipo === "ameaca" ? FichaAmeaca : Ficha)
 const tituloBase = computed(() => fichaAtiva.value?.tipo === "ameaca" ? "Ameaça" : "Ficha")
+const painelId = computed(() => `ficha-${props.ativaId ?? "none"}`)
+const janelaAtivaGlobal = ref(typeof window !== "undefined" ? window.__janelaAtivaGeral || null : null)
+
+function ativarJanelaNoTopo() {
+  const payload = { id: painelId.value, tipo: "ficha", fichaId: props.ativaId }
+  janelaAtivaGlobal.value = payload
+  emit("topo", painelId.value)
+  if (typeof window !== "undefined") {
+    window.__janelaAtivaGeral = payload
+    window.dispatchEvent(new CustomEvent("janela-ativa-global", { detail: payload }))
+  }
+}
+
+function tratarJanelaAtivaGlobal(event) {
+  janelaAtivaGlobal.value = event.detail || (typeof window !== "undefined" ? window.__janelaAtivaGeral : null)
+}
+
+const zIndexAtiva = computed(() => {
+  if (typeof window !== "undefined" && window.__janelaAtivaGeral === painelId.value) return 350
+  return 200
+})
+
+onMounted(() => {
+  if (typeof window !== "undefined") {
+    window.addEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+  }
+})
 
 watch(nomePersonagem, nome => {
   if (props.ativaId !== null) emit("nome-atualizado", props.ativaId, nome)
