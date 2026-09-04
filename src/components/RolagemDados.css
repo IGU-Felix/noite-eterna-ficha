@@ -324,6 +324,31 @@
   background: rgba(21, 94, 163, 0.12);
 }
 
+.resultado-dano-animacao {
+  animation: slide-in-blurred-top 0.45s ease-out both;
+}
+
+.resultado-dano-oculto {
+  visibility: hidden;
+  opacity: 0;
+}
+
+@keyframes slide-in-blurred-top {
+  0% {
+    transform: translateY(-70px) scaleY(1.05) scaleX(0.98);
+    transform-origin: 50% 0;
+    filter: blur(8px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0) scaleY(1) scaleX(1);
+    transform-origin: 50% 50%;
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
 .resultado-dano-titulo {
   color: rgb(236, 236, 236);
   font-size: 10px;

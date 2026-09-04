@@ -10,6 +10,7 @@ function rolarD6() {
 }
 
 const NOMES_ACAO = {
+  padrao: "Ação Padrão",
   bonus: "Ação Bônus",
   movimento: "Movimento",
   reacao: "Reação",
@@ -73,6 +74,8 @@ export default {
     })
 
     function rolar() {
+      if (props.resultadoDano?.rolar) props.resultadoDano.rolar()
+
       audio.currentTime = 0
       audio.play().catch(() => {})
 

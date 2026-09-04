@@ -53,8 +53,11 @@
           <button class="btn-rolar" @click="rolar">Rolar Dados</button>
         </div>
 
-        <div v-if="resultadoDano && resultadoDanoVisivel"
-          :class="resultadoDano.tipo === 'magia' ? 'resultado-dano-magias' : 'resultado-dano'">
+        <div v-if="resultadoDano"
+          :class="[resultadoDano.tipo === 'magia' ? 'resultado-dano-magias' : 'resultado-dano', {
+            'resultado-dano-oculto': !resultadoDanoVisivel,
+            'resultado-dano-animacao': resultadoDanoVisivel
+          }]">
           <span class="resultado-dano-titulo">Dano · {{ resultadoDano.nome }}</span>
           <span class="resultado-dano-valores"><strong>{{ resultadoDano.total }}</strong></span>
         </div>

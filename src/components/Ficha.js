@@ -540,7 +540,15 @@ export default {
       resultadoDano.value = {
         nome: ataque.nome || "Ataque",
         dados: dadosDano,
-        total: calcularModificadorAtaque(ataque, danoBase)
+        total: calcularModificadorAtaque(ataque, danoBase),
+        rolar: () => {
+          const novosDados = Array.from({ length: quantidade }, () => Math.floor(Math.random() * tipoDado) + 1)
+          resultadoDano.value.dados = novosDados
+          resultadoDano.value.total = calcularModificadorAtaque(
+            ataque,
+            novosDados.reduce((total, dado) => total + dado, 0)
+          )
+        }
       }
       disparadorRolagem.value += 1
       rolagemAberta.value = true
@@ -562,7 +570,12 @@ export default {
         nome: magia.nome || "Magia",
         tipo: "magia",
         dados: dadosDano,
-        total: dadosDano.reduce((total, dado) => total + dado, 0)
+        total: dadosDano.reduce((total, dado) => total + dado, 0),
+        rolar: () => {
+          const novosDados = Array.from({ length: quantidade }, () => Math.floor(Math.random() * tipoDado) + 1)
+          resultadoDano.value.dados = novosDados
+          resultadoDano.value.total = novosDados.reduce((total, dado) => total + dado, 0)
+        }
       }
       disparadorRolagem.value += 1
       rolagemAberta.value = true
