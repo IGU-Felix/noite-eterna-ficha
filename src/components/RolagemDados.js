@@ -31,6 +31,7 @@ export default {
     valorAtributo: { type: Function, default: () => 1 },
     rolarNovamente: { type: Function, default: () => {} },
     disparadorRolagem: { type: Number, default: 0 },
+    resultadoDano: { type: Object, default: null },
     habilidadesGastasRolagem: { type: Array, default: () => [] },
     marcarHabilidadeGasta: { type: Function, default: () => {} }
   },
@@ -49,6 +50,7 @@ export default {
     const jaRolou = ref(false)
     const rolando = ref(false)
     const mostraNumero = ref(false)
+    const resultadoDanoVisivel = ref(false)
     const acoesExpandidas = ref(false)
     const modificadorUsadoNaRolagem = ref(false)
 
@@ -87,6 +89,7 @@ export default {
       modificadorRestante.value = modificadorTotal.value
       
       jaRolou.value = true
+      resultadoDanoVisivel.value = false
       mostraNumero.value = false
 
       // pequeno efeito de "embaralhar" antes de fixar o valor final
@@ -102,6 +105,7 @@ export default {
           // revela o número antes do fim da transição, deixando o efeito mais antecipado
           setTimeout(() => {
             mostraNumero.value = true
+            resultadoDanoVisivel.value = true
           }, 420)
         }
       }, 55)
@@ -271,6 +275,8 @@ export default {
           rolar()
         }
       })
+
+      if (props.autoRolar) rolar()
     })
 
     onBeforeUnmount(() => {
@@ -287,6 +293,7 @@ export default {
       jaRolou,
       rolando,
       mostraNumero,
+      resultadoDanoVisivel,
       zIndexAtivo,
       rolar,
       ativarPainelNoTopo,

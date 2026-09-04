@@ -1315,6 +1315,21 @@ button {
   gap: 4px;
 }
 
+.btn-rolar-ataque {
+  background: transparent;
+  border: 1px solid #999797;
+  color: rgb(223, 217, 217);
+  font-size: 9px;
+  padding: 2px 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.btn-rolar-ataque:hover {
+  background: #dfdddd;
+  color: #1b1b1b;
+}
+
 .btn-editar {
   background: transparent;
   border: none;

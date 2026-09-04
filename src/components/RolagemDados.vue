@@ -53,6 +53,12 @@
           <button class="btn-rolar" @click="rolar">Rolar Dados</button>
         </div>
 
+        <div v-if="resultadoDano && resultadoDanoVisivel"
+          :class="resultadoDano.tipo === 'magia' ? 'resultado-dano-magias' : 'resultado-dano'">
+          <span class="resultado-dano-titulo">Dano · {{ resultadoDano.nome }}</span>
+          <span class="resultado-dano-valores"><strong>{{ resultadoDano.total }}</strong></span>
+        </div>
+
         <div v-if="jaRolou" class="dados-linha">
           <div class="dado-coluna" v-for="dado in dados" :key="dado.id">
 

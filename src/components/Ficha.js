@@ -489,7 +489,8 @@ export default {
     // ===== ROLAGEM DE DADOS (clique no nome da perícia) =====
     const disparadorRolagem = ref(0)
     const rolagemAberta = ref(false)
-    const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "", periciaNome: "" })
+    const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "", periciaNome: "", autoRolar: false })
+    const resultadoDano = ref(null)
     let atributoPeriodAtual = ""
 
     function primeiroAtributo(strAtributo) {
@@ -504,6 +505,66 @@ export default {
       rolagemConfig.modificador = p.mod || 0
       rolagemConfig.titulo = `Teste de ${p.nome}`
       rolagemConfig.periciaNome = p.nome
+      rolagemConfig.autoRolar = false
+      resultadoDano.value = null
+      rolagemAberta.value = true
+    }
+
+    function calcularModificadorAtaque(ataque, danoBase) {
+      const texto = String(ataque.modificador || "").trim().toUpperCase()
+      if (!texto) return danoBase
+
+      const formula = texto.match(/^([+X×*])\s*(POD|ROB|MEN|PRE|CAR|SOR)$/)
+      if (formula) {
+        const valor = valorAtributo(formula[2]) || 0
+        return formula[1] === "+" ? danoBase + valor : danoBase * valor
+      }
+
+      const valorNumerico = Number(texto.replace(",", "."))
+      return Number.isFinite(valorNumerico) ? danoBase + valorNumerico : danoBase
+    }
+
+    function abrirRolagemAtaque(ataque) {
+      const periciaLutar = pericias.value.find(p => p.nome === "Lutar")
+      const quantidade = Math.max(1, Number(ataque.qtdDados) || 1)
+      const tipoDado = Math.max(2, Number(ataque.tipoDado) || 6)
+      const dadosDano = Array.from({ length: quantidade }, () => Math.floor(Math.random() * tipoDado) + 1)
+      const danoBase = dadosDano.reduce((total, dado) => total + dado, 0)
+
+      atributoPeriodAtual = primeiroAtributo(periciaLutar?.atributo || "POD")
+      rolagemConfig.dados = valorAtributo(atributoPeriodAtual) || 1
+      rolagemConfig.modificador = periciaLutar?.mod || 0
+      rolagemConfig.titulo = `Teste de Lutar · ${ataque.nome || "Ataque"}`
+      rolagemConfig.periciaNome = "Lutar"
+      rolagemConfig.autoRolar = true
+      resultadoDano.value = {
+        nome: ataque.nome || "Ataque",
+        dados: dadosDano,
+        total: calcularModificadorAtaque(ataque, danoBase)
+      }
+      disparadorRolagem.value += 1
+      rolagemAberta.value = true
+    }
+
+    function abrirRolagemMagia(magia) {
+      const periciaConjuracao = pericias.value.find(p => p.nome === "Conjuração")
+      const quantidade = Math.max(1, Number(magia.qtdDados) || 1)
+      const tipoDado = Math.max(2, Number(magia.tipoDado) || 6)
+      const dadosDano = Array.from({ length: quantidade }, () => Math.floor(Math.random() * tipoDado) + 1)
+
+      atributoPeriodAtual = primeiroAtributo(periciaConjuracao?.atributo || "MEN")
+      rolagemConfig.dados = valorAtributo(atributoPeriodAtual) || 1
+      rolagemConfig.modificador = periciaConjuracao?.mod || 0
+      rolagemConfig.titulo = `Teste de Conjuração · ${magia.nome || "Magia"}`
+      rolagemConfig.periciaNome = "Conjuração"
+      rolagemConfig.autoRolar = true
+      resultadoDano.value = {
+        nome: magia.nome || "Magia",
+        tipo: "magia",
+        dados: dadosDano,
+        total: dadosDano.reduce((total, dado) => total + dado, 0)
+      }
+      disparadorRolagem.value += 1
       rolagemAberta.value = true
     }
 
@@ -552,6 +613,8 @@ export default {
     function fecharRolagem() {
       rolagemAberta.value = false
       habilidadesGastasRolagem.value = []
+      resultadoDano.value = null
+      // Limpa o resultado ao fechar
     }
     // ===== COMBATE / HABILIDADES / MAGIAS / VANTAGENS / DESVANTAGENS =====
     const abasCombate = ["Combate", "Habilidades", "Magias", "Vantagens", "Desvantagens", "Progressão"]
@@ -589,6 +652,8 @@ export default {
           nome: "",
           nivel: 1,
           custoMana: 1,
+          qtdDados: 1,
+          tipoDado: 6,
           tipoDano: "Nenhum",
           efeito: "",
           editando: true,
@@ -648,6 +713,8 @@ export default {
         nome: truque.nome,
         nivel: truque.nivel,
         custoMana: 0,
+        qtdDados: 1,
+        tipoDado: 6,
         tipoDano: "Físico",
         efeito: `Alcance: ${truque.alcance} · Dado: ${truque.dado} · ${truque.desc}`,
         editando: false,
@@ -784,6 +851,9 @@ export default {
       salvarAtaque,
       editarAtaque,
       resumoAtaque,
+      abrirRolagemAtaque,
+      abrirRolagemMagia,
+      resultadoDano,
 
       acoesGastas,
       alternarAcao,

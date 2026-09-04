@@ -302,6 +302,46 @@
   background: rgba(216, 179, 101, 0.12);
 }
 
+.resultado-dano {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border-left: 2px solid #a31515;
+  background: rgba(163, 21, 21, 0.12);
+}
+
+.resultado-dano-magias {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border-left: 2px solid #155ea3;
+  background: rgba(21, 94, 163, 0.12);
+}
+
+.resultado-dano-titulo {
+  color: rgb(236, 236, 236);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.resultado-dano-valores {
+  color: #eee;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.resultado-dano-valores strong {
+  color: #fff;
+  font-size: 15px;
+}
+
 .dados-linha {
   display: flex;
   gap: 6px;
