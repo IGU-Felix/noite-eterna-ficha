@@ -1,5 +1,6 @@
 import { ref, reactive, computed, nextTick } from "vue"
-import { configurarPersistencia } from "../services/fichaPersistencia.js"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson } from "../services/fichaPersistencia.js"
+import RolagemDados from "./RolagemDados.vue"
 
 let proximoId = 1
 function gerarId() {
@@ -10,6 +11,7 @@ export default {
   props: {
     persistKey: { type: String, default: "ficha-ameaca" }
   },
+  components: { RolagemDados },
   setup(props) {
     // ===== IDENTIFICAÇÃO =====
     const nome = ref("Nome da Ameaça")
@@ -171,12 +173,18 @@ function alternarCarga(bloco, i) {
     // ===== COMBATE / HABILIDADES / MAGIAS =====
     const abas = ["Combate", "Habilidades", "Magias"]
     const abaAtiva = ref("Combate")
+    const dadosOptions = [2, 4, 6, 8, 10, 12, 20]
+    const rolagemAberta = ref(false)
+    const disparadorRolagem = ref(0)
+    const rolagemConfig = reactive({ dados: 1, modificador: 0, titulo: "", periciaNome: "", autoRolar: false })
+    const resultadoDano = ref(null)
 
     const itens = reactive({ Combate: [], Habilidades: [], Magias: [] })
 
     function adicionarItem() {
       itens[abaAtiva.value].push({
-        id: gerarId(), nome: "", detalhe: "", editando: true, expandido: false
+        id: gerarId(), nome: "", detalhe: "", qtdDados: 1, tipoDado: 6, atributo: "POD",
+        editando: true, expandido: false
       })
     }
 
@@ -187,6 +195,50 @@ function alternarCarga(bloco, i) {
     function salvarItem(item) { item.editando = false }
     function editarItem(item) { item.editando = true }
     function toggleExpandido(item) { item.expandido = !item.expandido }
+
+    function fecharRolagem() {
+      rolagemAberta.value = false
+      resultadoDano.value = null
+    }
+
+    function abrirRolagemPericia(pericia) {
+      rolagemConfig.dados = Math.max(1, Number(pericia.valor) || 1)
+      rolagemConfig.modificador = Number(pericia.mod) || 0
+      rolagemConfig.titulo = `Teste de ${pericia.nome || "Perícia"}`
+      rolagemConfig.periciaNome = pericia.nome || ""
+      rolagemConfig.autoRolar = true
+      resultadoDano.value = null
+      disparadorRolagem.value += 1
+      rolagemAberta.value = true
+    }
+
+    function abrirRolagemItem(item) {
+      const nomePericia = abaAtiva.value === "Magias" ? "Conjuração" : "Lutar"
+      const pericia = pericias.value.find(p => p.nome === nomePericia)
+      const quantidade = Math.max(1, Number(item.qtdDados) || 1)
+      const tipoDado = Math.max(2, Number(item.tipoDado) || 6)
+      const dadosTeste = item.atributo
+        ? Math.max(1, valorAtributo(item.atributo))
+        : Math.max(1, Number(pericia?.valor) || 1)
+      const modificador = Number(pericia?.mod) || 0
+
+      rolagemConfig.dados = dadosTeste
+      rolagemConfig.modificador = modificador
+      rolagemConfig.titulo = `${abaAtiva.value === "Magias" ? "Conjuração" : "Ataque"} · ${item.nome || "sem nome"}`
+      rolagemConfig.periciaNome = nomePericia
+      rolagemConfig.autoRolar = true
+      resultadoDano.value = {
+        nome: item.nome || "sem nome",
+        tipo: abaAtiva.value === "Magias" ? "magia" : "ataque",
+        total: 0,
+        rolar: () => {
+          const dados = Array.from({ length: quantidade }, () => Math.floor(Math.random() * tipoDado) + 1)
+          resultadoDano.value.total = dados.reduce((total, dado) => total + dado, 0)
+        }
+      }
+      disparadorRolagem.value += 1
+      rolagemAberta.value = true
+    }
 
     // ===== INVENTÁRIO =====
     const inventario = ref([])
@@ -222,8 +274,21 @@ function alternarCarga(bloco, i) {
       cargasAtual_2, cargasMax_2, tipoCarga_2, cargasBlocos, alternarCarga,
       status, adicionarStatus, removerStatus, salvarStatus, editarStatus,
       abas, abaAtiva, itens, adicionarItem, removerItem, salvarItem, editarItem, toggleExpandido,
+      dadosOptions, rolagemAberta, disparadorRolagem, rolagemConfig, resultadoDano, fecharRolagem,
+      abrirRolagemPericia, abrirRolagemItem,
       classeVida, inventario, cargaMaxima, cargaAtualInventario, adicionarItemInventario, removerItemInventario
     }
+
+    function exportarJson() {
+      exportarFichaJson(estado, "ameaca", nome.value)
+    }
+
+    async function importarJson(arquivo) {
+      await importarFichaJson(estado, arquivo, "ameaca")
+    }
+
+    estado.exportarJson = exportarJson
+    estado.importarJson = importarJson
 
     configurarPersistencia(props.persistKey, estado)
     return estado

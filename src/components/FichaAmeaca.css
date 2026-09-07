@@ -11,6 +11,36 @@
   margin-bottom: 0;
 }
 
+.ameaca .barra-overlay {
+  justify-content: flex-start;
+  gap: 6px;
+  padding-left: 6px;
+}
+
+.ameaca .barra-overlay .centro {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.ameaca .barra-overlay .input-barra {
+  width: 30px !important;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.ameaca .barra-overlay .input-barra::-webkit-outer-spin-button,
+.ameaca .barra-overlay .input-barra::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ameaca .barra-separador {
+  color: #fff;
+  line-height: 1;
+}
+
 .ameaca-atributos-titulo {
   margin-top: 10px;
 }
@@ -32,7 +62,7 @@
 
 .ameaca-corpo {
   display: grid;
-  grid-template-columns: 1fr 1.25fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 10px;
   margin-top: 14px;
   padding-top: 14px;
@@ -45,6 +75,28 @@
   flex-direction: column;
   gap: 10px;
   min-height: 0;
+  min-width: 0;
+}
+
+.ameaca .combate-painel,
+.ameaca .combate-lista,
+.ameaca .ataque-item,
+.ameaca .ataque-editor,
+.ameaca .ataque-caixa {
+  min-width: 0;
+}
+
+.ameaca .ataque-form-linha {
+  flex-wrap: wrap;
+}
+
+.ameaca .ataque-caixa-dano,
+.ameaca .ataque-caixa-tipo {
+  min-width: 0;
+}
+
+.ameaca .ataque-dado-controles {
+  min-width: 0;
 }
 
 .ameaca-coluna-meio .painel-insanidade {

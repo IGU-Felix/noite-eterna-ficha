@@ -1,6 +1,6 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
 import { racas, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
-import { configurarPersistencia } from "../services/fichaPersistencia.js"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson } from "../services/fichaPersistencia.js"
 import RolagemDados from "./RolagemDados.vue"
 
 // gerador simples de ids únicos para itens de listas (status, inventário, combate...)
@@ -93,14 +93,21 @@ export default {
     // ===== VIDA =====
     const vidaAtual = ref(10)
     const vidaMaxBase = ref(10) // usado só enquanto nenhuma classe foi escolhida
+    const vidaMaxEditada = ref(null)
 
     // livro: PV = (Dado Inicial × ROB) + (Dado por Nível × ROB × (Nível - 1))
     // cada classe tem seus próprios multiplicadores (ex: Guerreiro 10/7, Mago 10/4...)
     const vidaMax = computed(() => {
+      if (vidaMaxEditada.value !== null) return vidaMaxEditada.value
       const info = classeInfo.value
       if (!info) return vidaMaxBase.value
       const rob = valorAtributo("ROB")
       return (info.dadoInicial + rob) + (info.dadoPorNivel + rob) * (nivel.value - 1)
+    })
+
+    const vidaMaxEditavel = computed({
+      get: () => vidaMax.value,
+      set: valor => { vidaMaxEditada.value = Math.max(0, Number(valor) || 0) }
     })
 
     const vidaPercent = computed(() =>
@@ -125,12 +132,19 @@ export default {
     // ===== MANA =====
     const manaAtual = ref(10)
     const manaMaxBase = ref(10) // usado só enquanto nenhuma classe foi escolhida
+    const manaMaxEditada = ref(null)
 
     const manaMax = computed(() => {
+      if (manaMaxEditada.value !== null) return manaMaxEditada.value
       const info = classeInfo.value
       if (!info) return manaMaxBase.value
       const men = valorAtributo("MEN")
       return (info.dadoInicial_mn + men) + (info.dadoPorNivel_mn + men) * (nivel.value - 1)
+    })
+
+    const manaMaxEditavel = computed({
+      get: () => manaMax.value,
+      set: valor => { manaMaxEditada.value = Math.max(0, Number(valor) || 0) }
     })
 
     const manaPercent = computed(() => {
@@ -413,6 +427,14 @@ export default {
     watch(tipoSelecionado_1, (novo) => { cargasAtual_1.value = 0; definirMaxSugerido(novo, cargasMax_1) })
     watch(tipoSelecionado_2, (novo) => { cargasAtual_2.value = 0; definirMaxSugerido(novo, cargasMax_2) })
     watch(tipoSelecionado_3, (novo) => { cargasAtual_3.value = 0; definirMaxSugerido(novo, cargasMax_3) })
+
+    watch([classeSelecionada, nivel, () => valorAtributo("ROB")], () => {
+      vidaMaxEditada.value = null
+    })
+
+    watch([classeSelecionada, nivel, () => valorAtributo("MEN")], () => {
+      manaMaxEditada.value = null
+    })
 
     // ===== STATUS =====
     // lista livre de condições/efeitos ativos na personagem (ex: "Fragmentado: Penumbra")
@@ -771,6 +793,8 @@ export default {
 
       vidaAtual,
       vidaMax,
+      vidaMaxEditada,
+      vidaMaxEditavel,
       vidaPercent,
       classeVida,
       vidaCritica,
@@ -778,6 +802,8 @@ export default {
 
       manaAtual,
       manaMax,
+      manaMaxEditada,
+      manaMaxEditavel,
       manaPercent,
       classeMana,
       manaCritica,
@@ -883,6 +909,17 @@ export default {
       requisitoAcerto,
       adicionarTruque
     }
+
+    function exportarJson() {
+      exportarFichaJson(estado, "personagem", nome.value)
+    }
+
+    async function importarJson(arquivo) {
+      await importarFichaJson(estado, arquivo, "personagem")
+    }
+
+    estado.exportarJson = exportarJson
+    estado.importarJson = importarJson
 
     configurarPersistencia(props.persistKey, estado)
     return estado

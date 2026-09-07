@@ -66,7 +66,7 @@
             <div class="recursos-principais">
 
               <!-- VIDA -->
-              <div class="barra">
+              <div class="barra barra-vida">
                 <div class="barra-preenchimento"
                   :class="[classeVida, { dano: animacaoDano, cura: animacaoCura, critica: vidaCritica }]"
                   :style="{ width: vidaPercent + '%' }"></div>
@@ -75,7 +75,9 @@
                   <button class="btn-esq" @click="alterarVida(-5)">-5</button>
 
                   <div class="centro">
-                    {{ vidaAtual }} / {{ vidaMax }}
+                    <input class="input-barra recurso-input" type="number" v-model.number="vidaAtual" />
+                    <span class="barra-separador">/</span>
+                    <input class="input-barra recurso-input" type="number" v-model.number="vidaMaxEditavel" />
                   </div>
 
                   <button class="btn-dir" @click="alterarVida(5)">+5</button>
@@ -91,7 +93,9 @@
                   <button class="btn-esq" @click="alterarMana(-5)">-5</button>
 
                   <div class="centro">
-                    {{ manaAtual }} / {{ manaMax }}
+                    <input class="input-barra recurso-input" type="number" v-model.number="manaAtual" />
+                    <span class="barra-separador">/</span>
+                    <input class="input-barra recurso-input" type="number" v-model.number="manaMaxEditavel" />
                   </div>
 
                   <button class="btn-dir" @click="alterarMana(5)">+5</button>

@@ -11,6 +11,7 @@
       :janela-em-frente-id="janelaEmFrente"
       @selecionar="selecionarJanela"
       @nome-atualizado="atualizarNome"
+      @imagem-atualizada="atualizarImagem"
       @nova-ficha="criarPersonagem"
       @minimizar="minimizarJanela"
       @restaurada="restaurarJanela"
@@ -49,7 +50,7 @@ function abrirPersonagem() {
 
 function criarPersonagem() {
   const id = gerarIdJanela()
-  personagensAbertos.value.push({ id, tipo: "personagem", nome: "Sem nome", minimizada: false })
+  personagensAbertos.value.push({ id, tipo: "personagem", nome: "Sem nome", imagem: null, minimizada: false })
   janelaAtiva.value = id
 }
 
@@ -65,7 +66,7 @@ function abrirAmeaca() {
 
 function criarAmeaca() {
   const id = gerarIdJanela()
-  ameacasAbertas.value.push({ id, tipo: "ameaca", nome: "Sem nome", minimizada: false })
+  ameacasAbertas.value.push({ id, tipo: "ameaca", nome: "Sem nome", imagem: null, minimizada: false })
   janelaAtiva.value = id
 }
 
@@ -101,6 +102,11 @@ function encontrarJanela(id) {
 function atualizarNome(id, nome) {
   const janela = encontrarJanela(id)
   if (janela) janela.nome = nome || "Sem nome"
+}
+
+function atualizarImagem(id, imagem) {
+  const janela = encontrarJanela(id)
+  if (janela) janela.imagem = imagem || null
 }
 
 function restaurarJanela(id) {

@@ -375,6 +375,7 @@ button {
   padding: 1px 6px;
   cursor: pointer;
   height: 100%;
+  color: #fff;
 }
 
 .btn-esq:hover,
@@ -385,6 +386,24 @@ button {
 .centro {
   color: #fff;
   font-size: 10px;
+}
+
+.recurso-input {
+  width: 30px !important;
+  color: #fff;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.recurso-input::-webkit-outer-spin-button,
+.recurso-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.barra-separador {
+  color: #fff;
+  line-height: 1;
 }
 
 .nome-barra .centro {

@@ -1,16 +1,17 @@
 <template>
-  <div class="janela-flutuante"
-    :class="{ 'tela-cheia': modo === 'tela-cheia', minimizada: fichaAtiva?.minimizada }"
-    :style="[estiloJanela, { zIndex: zIndexAtiva }]"
-    @mousedown.capture="ativarJanelaNoTopo">
+  <div class="janela-flutuante" :class="{ 'tela-cheia': modo === 'tela-cheia', minimizada: fichaAtiva?.minimizada }"
+    :style="[estiloJanela, { zIndex: zIndexAtiva }]" @mousedown.capture="ativarJanelaNoTopo">
     <div class="janela-barra" @mousedown="iniciarArraste">
       <span class="janela-titulo">❖ {{ tituloBase }} ({{ nomePersonagem }})</span>
 
       <div class="janela-acoes" @mousedown.stop>
-        <button class="janela-btn" @click="minimizar" title="minimizar">–</button>
+        <button class="janela-btn" @click="abrirImportacao" title="importar ficha JSON">🗁</button>
+        <button class="janela-btn" @click="salvarFicha" title="salvar ficha em JSON">⇩</button>
+        <input ref="inputImportacao" type="file" accept="application/json,.json" hidden @change="importarFicha" />
         <button class="janela-btn" @click="abrirAssistente" title="assistente de regras">☾</button>
+        <button class="janela-btn" style="margin-left: 5px;" @click="minimizar" title="minimizar">-</button>
         <button class="janela-btn" @click.stop="alternarTelaCheia"
-          :title="modo === 'tela-cheia' ? 'restaurar janela' : 'tela cheia'">{{ modo === 'tela-cheia' ? '❐' : '⛶'
+          :title="modo === 'tela-cheia' ? 'restaurar janela' : 'tela cheia'">{{ modo === 'tela-cheia' ? '⿻' : '⛶'
           }}</button>
         <button class="janela-btn btn-fechar" @click="emitirFechamento" title="fechar">X</button>
       </div>
@@ -20,8 +21,7 @@
       <div v-for="ficha in fichas" :key="ficha.id" class="janela-aba"
         :class="{ minimizada: ficha.minimizada, ativa: ficha.id === ativaId }" role="button" tabindex="0"
         @click.stop="selecionarFicha(ficha)">
-        <img class="janela-aba-icone"
-          :src="ficha.tipo === 'ameaca' ? '/ameaca_icon.svg' : '/personagem_icon.svg'"
+        <img class="janela-aba-icone" :src="ficha.imagem || (ficha.tipo === 'ameaca' ? '/ameaca_icon.svg' : '/personagem_icon.svg')"
           :alt="ficha.tipo === 'ameaca' ? 'Criatura' : 'Personagem'" />
         {{ ficha.nome || "Sem nome" }}
       </div>
@@ -35,8 +35,8 @@
     </div>
 
     <template v-if="modo === 'flutuante' && !fichaAtiva?.minimizada">
-      <div v-for="direcao in direcoesResize" :key="direcao" class="janela-resize"
-        :class="`resize-${direcao}`" @mousedown="iniciarResize($event, direcao)"></div>
+      <div v-for="direcao in direcoesResize" :key="direcao" class="janela-resize" :class="`resize-${direcao}`"
+        @mousedown="iniciarResize($event, direcao)"></div>
     </template>
 
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
@@ -59,10 +59,14 @@ const props = defineProps({
 const fichas = computed(() => props.fichas)
 
 const fichaRef = ref(null)
+const inputImportacao = ref(null)
 const fichaAtiva = computed(() => fichas.value.find(ficha => ficha.id === props.ativaId))
 const nomePersonagem = computed(() => fichaRef.value?.nome || "Sem Nome")
+const imagemPersonagem = computed(() =>
+  fichaRef.value?.imagemStatus || fichaRef.value?.imagemAmeaca || null
+)
 
-const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "nova-ficha", "topo"])
+const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "imagem-atualizada", "nova-ficha", "topo"])
 
 const componenteFicha = computed(() => fichaAtiva.value?.tipo === "ameaca" ? FichaAmeaca : Ficha)
 const tituloBase = computed(() => fichaAtiva.value?.tipo === "ameaca" ? "Ameaça" : "Ficha")
@@ -102,6 +106,10 @@ onBeforeUnmount(() => {
 
 watch(nomePersonagem, nome => {
   if (props.ativaId !== null) emit("nome-atualizado", props.ativaId, nome)
+}, { immediate: true })
+
+watch(imagemPersonagem, imagem => {
+  if (props.ativaId !== null) emit("imagem-atualizada", props.ativaId, imagem)
 }, { immediate: true })
 
 // 'flutuante' | 'tela-cheia' | 'minimizada'
@@ -168,6 +176,28 @@ function emitirFechamento() {
 
 function abrirAssistente() {
   assistenteAberto.value = true
+}
+
+function salvarFicha() {
+  fichaRef.value?.exportarJson?.()
+}
+
+function abrirImportacao() {
+  inputImportacao.value?.click()
+}
+
+async function importarFicha(event) {
+  const input = event.target
+  const arquivo = input.files?.[0]
+  if (!arquivo) return
+
+  try {
+    await fichaRef.value?.importarJson?.(arquivo)
+  } catch (erro) {
+    window.alert(erro.message || "Não foi possível importar a ficha.")
+  } finally {
+    input.value = ""
+  }
 }
 
 // ===== ARRASTAR (só faz sentido no modo flutuante) =====
@@ -317,7 +347,7 @@ function pararResize() {
 .janela-aba-icone {
   width: 10px;
   height: 10px;
-  margin-right:2px;
+  margin-right: 2px;
   vertical-align: -2px;
 }
 

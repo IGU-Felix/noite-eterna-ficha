@@ -30,10 +30,9 @@
                         <div class="barra-overlay">
                             <button class="btn-esq" @click="alterarVida(-5)">-5</button>
                             <div class="centro">
-                                <input class="input-barra" style="width:40px" type="number"
-                                    v-model.number="vidaAtual" />
-                                /
-                                <input class="input-barra" style="width:40px" type="number" v-model.number="vidaMax" />
+                                <input class="input-barra" type="number" v-model.number="vidaAtual" />
+                                <span class="barra-separador">/</span>
+                                <input class="input-barra" type="number" v-model.number="vidaMax" />
                             </div>
                             <button class="btn-dir" @click="alterarVida(5)">+5</button>
                         </div>
@@ -104,6 +103,8 @@
                             </div>
                             <input class="ameaca-pericia-nome-input" v-model="p.nome" placeholder="perícia" />
                             <input class="ameaca-pericia-attr-input" v-model="p.atributo" placeholder="attr" />
+                            <button class="btn-rolar-ataque btn-rolar-pericia" @click="abrirRolagemPericia(p)"
+                                title="rolar perícia">Rolar</button>
                             <button class="btn-remover" @click="removerPericia(p.id)" title="remover">×</button>
                         </div>
                         <p v-if="pericias.length === 0" class="lista-vazia">Nenhuma perícia adicionada.</p>
@@ -128,6 +129,24 @@
                                     <div class="ataque-caixa">
                                         <input class="ataque-nome-input" v-model="item.nome" placeholder="nome" />
                                     </div>
+                                    <div v-if="abaAtiva !== 'Habilidades'" class="ataque-form-linha">
+                                        <div class="ataque-caixa ataque-caixa-dano">
+                                            <span class="ataque-caixa-label">Dados de Dano</span>
+                                            <div class="ataque-dado-controles">
+                                                <select class="ataque-select ataque-select-qtd" v-model.number="item.qtdDados">
+                                                    <option v-for="n in 6" :key="n" :value="n">{{ n }}</option>
+                                                </select>
+                                                <span class="ataque-d">d</span>
+                                                <select class="ataque-select" v-model.number="item.tipoDado">
+                                                    <option v-for="d in dadosOptions" :key="d" :value="d">{{ d }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="ataque-caixa ataque-caixa-tipo">
+                                            <span class="ataque-caixa-label">Modificador</span>
+                                            <input class="ataque-select" type="number" v-model.number="item.modificador" />
+                                        </div>
+                                    </div>
                                     <textarea class="ataque-efeito" v-model="item.detalhe"
                                         placeholder="dano, teste, efeito..."></textarea>
                                     <div class="ataque-editor-acoes">
@@ -141,6 +160,8 @@
                                     <div class="ataque-resumo-topo">
                                         <span class="ataque-resumo-nome">{{ item.nome || 'sem nome' }}</span>
                                         <div class="ataque-resumo-acoes">
+                                            <button v-if="abaAtiva !== 'Habilidades'" class="btn-rolar-ataque"
+                                                @click="abrirRolagemItem(item)" title="rolar">Rolar</button>
                                             <button class="btn-editar" @click="editarItem(item)"
                                                 title="editar">✎</button>
                                             <button v-if="item.detalhe" class="btn-expandir"
@@ -149,6 +170,9 @@
                                             <button class="btn-remover" @click="removerItem(item.id)"
                                                 title="remover">×</button>
                                         </div>
+                                    </div>
+                                    <div v-if="abaAtiva !== 'Habilidades'" class="ataque-resumo-linha">
+                                        <span class="ataque-badge">{{ item.qtdDados || 1 }}d{{ item.tipoDado || 6 }} + {{ item.modificador || 0 }}</span>
                                     </div>
                                     <p v-if="item.detalhe && item.expandido" class="ataque-resumo-efeito">{{
                                         item.detalhe }}</p>
@@ -262,6 +286,13 @@
 
         </div>
     </div>
+    <RolagemDados v-if="rolagemAberta"
+        :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador + disparadorRolagem"
+        :dados-iniciais="rolagemConfig.dados" :modificador-inicial="rolagemConfig.modificador"
+        :titulo-teste="rolagemConfig.titulo" :pericia-nome="rolagemConfig.periciaNome"
+        :auto-rolar="rolagemConfig.autoRolar" :resultado-dano="resultadoDano"
+        :valor-atributo="() => rolagemConfig.dados" :disparador-rolagem="disparadorRolagem"
+        @fechar="fecharRolagem" />
 </template>
 
 <script src="./FichaAmeaca.js"></script>
