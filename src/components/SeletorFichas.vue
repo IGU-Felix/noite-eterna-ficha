@@ -134,8 +134,9 @@ async function importarFicha(event) {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(620px, calc(100vw - 32px));
-  max-height: min(720px, calc(100vh - 32px));
+  width: min(430px, calc(100vw - 32px));
+  height: auto;
+  max-height: calc(100vh - 32px);
   overflow: hidden;
   transform: translate(-50%, -50%);
   border: 1px solid #555;
@@ -172,7 +173,7 @@ async function importarFicha(event) {
 }
 
 .seletor-corpo {
-  padding: 16px;
+  padding: 12px;
   overflow-y: auto;
   max-height: calc(100vh - 104px);
 }
@@ -226,7 +227,8 @@ async function importarFicha(event) {
 }
 
 .seletor-filtros {
-  margin: 12px 0;
+  gap: 6px;
+  margin: 9px 0;
 }
 
 .seletor-lista {
@@ -296,6 +298,11 @@ async function importarFicha(event) {
 }
 
 .seletor-acoes button {
-  flex: 1;
+  flex: 0 1 180px;
+}
+
+.seletor-acoes {
+  justify-content: center;
+  gap: 6px;
 }
 </style>

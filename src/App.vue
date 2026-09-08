@@ -9,7 +9,7 @@
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
 
     <FichaFlutuante
-      v-if="todasJanelas.length"
+      v-if="todasJanelas.some(janela => !janela.minimizada) && !seletorAberto"
       :fichas="todasJanelas"
       :ativa-id="janelaAtiva"
       :janela-em-frente-id="janelaEmFrente"
@@ -50,7 +50,7 @@ const todasJanelas = computed(() => [
 ])
 
 function abrirPersonagem() {
-  abrirSeletor()
+  abrirSeletor("personagem")
 }
 
 function criarPersonagem() {
@@ -62,7 +62,7 @@ function criarPersonagem() {
 }
 
 function abrirAmeaca() {
-  abrirSeletor()
+  abrirSeletor("ameaca")
 }
 
 function criarAmeaca() {
@@ -89,7 +89,9 @@ function abrirFichaSessao(id) {
   if (!ficha) return
 
   const lista = ficha.tipo === "ameaca" ? ameacasAbertas : personagensAbertos
-  if (!lista.value.some(item => item.id === id)) lista.value.push({ ...ficha, minimizada: false })
+  const janela = lista.value.find(item => item.id === id)
+  if (janela) janela.minimizada = false
+  else lista.value.push({ ...ficha, minimizada: false })
   seletorAberto.value = false
   janelaAtiva.value = id
 }
@@ -135,6 +137,7 @@ function minimizarJanela(id) {
     janela.minimizada = true
   })
   janelaAtiva.value = id
+  abrirSeletor("todas")
 }
 
 function encontrarJanela(id) {
