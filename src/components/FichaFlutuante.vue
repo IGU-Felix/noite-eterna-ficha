@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue"
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue"
 import Assistente from "./Assistente.vue"
 import Ficha from "./Ficha.vue"
 import FichaAmeaca from "./FichaAmeaca.vue"
@@ -53,7 +53,8 @@ import FichaAmeaca from "./FichaAmeaca.vue"
 const props = defineProps({
   fichas: { type: Array, default: () => [] },
   ativaId: { type: [String, Number], default: null },
-  janelaEmFrenteId: { type: [String, Number, null], default: null }
+  janelaEmFrenteId: { type: [String, Number, null], default: null },
+  importacaoPendente: { type: Object, default: null }
 })
 
 const fichas = computed(() => props.fichas)
@@ -66,7 +67,7 @@ const imagemPersonagem = computed(() =>
   fichaRef.value?.imagemStatus || fichaRef.value?.imagemAmeaca || null
 )
 
-const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "imagem-atualizada", "nova-ficha", "topo"])
+const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "imagem-atualizada", "importacao-concluida", "nova-ficha", "topo"])
 
 const componenteFicha = computed(() => fichaAtiva.value?.tipo === "ameaca" ? FichaAmeaca : Ficha)
 const tituloBase = computed(() => fichaAtiva.value?.tipo === "ameaca" ? "Ameaça" : "Ficha")
@@ -112,6 +113,18 @@ watch(imagemPersonagem, imagem => {
   if (props.ativaId !== null) emit("imagem-atualizada", props.ativaId, imagem)
 }, { immediate: true })
 
+watch(() => [props.importacaoPendente, fichaRef.value, props.ativaId], async ([pendente, ficha, ativaId]) => {
+  if (!pendente || pendente.id !== ativaId || !ficha?.importarJson) return
+
+  try {
+    await nextTick()
+    await ficha.importarJson(pendente.arquivo)
+    emit("importacao-concluida", pendente.id)
+  } catch (erro) {
+    window.alert(erro.message || "Não foi possível importar a ficha.")
+  }
+}, { immediate: true, flush: "post" })
+
 // 'flutuante' | 'tela-cheia' | 'minimizada'
 const modo = ref("flutuante")
 const assistenteAberto = ref(false)
@@ -150,6 +163,7 @@ const estiloJanela = computed(() => {
 })
 
 function minimizar() {
+  fichaRef.value?.salvarAgora?.()
   if (props.ativaId !== null) emit("minimizar", props.ativaId)
 }
 

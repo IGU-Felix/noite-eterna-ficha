@@ -41,7 +41,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const emit = defineEmits(["entrar", "abrir-ameaca","consultar"])
+const emit = defineEmits(["entrar", "abrir-ameaca", "consultar"])
 const mostrarDica = ref(false)
 
 function entrar() {

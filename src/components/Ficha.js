@@ -916,12 +916,14 @@ export default {
 
     async function importarJson(arquivo) {
       await importarFichaJson(estado, arquivo, "personagem")
+      salvarPersistencia()
     }
 
     estado.exportarJson = exportarJson
     estado.importarJson = importarJson
 
-    configurarPersistencia(props.persistKey, estado)
+    const salvarPersistencia = configurarPersistencia(props.persistKey, estado)
+    estado.salvarAgora = salvarPersistencia
     return estado
   }
 }

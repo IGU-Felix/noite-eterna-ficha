@@ -1,4 +1,4 @@
-import { isReadonly, isRef, onMounted, watch } from "vue"
+import { isReadonly, isRef, onBeforeUnmount, onMounted, watch } from "vue"
 
 const camposIgnorados = new Set(["inputNome", "inputFile", "audio"])
 
@@ -27,6 +27,38 @@ function removerCookie(chave) {
   document.cookie = `${encodeURIComponent(chave)}=; max-age=0; path=/; SameSite=Lax`
 }
 
+function abrirBanco() {
+  return new Promise((resolve, reject) => {
+    const requisicao = indexedDB.open("noite-eterna-fichas", 1)
+    requisicao.onupgradeneeded = () => requisicao.result.createObjectStore("fichas")
+    requisicao.onsuccess = () => resolve(requisicao.result)
+    requisicao.onerror = () => reject(requisicao.error)
+  })
+}
+
+async function salvarNoBanco(chave, valor) {
+  const banco = await abrirBanco()
+  await new Promise((resolve, reject) => {
+    const transacao = banco.transaction("fichas", "readwrite")
+    transacao.objectStore("fichas").put(valor, chave)
+    transacao.oncomplete = resolve
+    transacao.onerror = () => reject(transacao.error)
+  })
+  banco.close()
+}
+
+async function lerDoBanco(chave) {
+  const banco = await abrirBanco()
+  const valor = await new Promise((resolve, reject) => {
+    const transacao = banco.transaction("fichas", "readonly")
+    const requisicao = transacao.objectStore("fichas").get(chave)
+    requisicao.onsuccess = () => resolve(requisicao.result || null)
+    requisicao.onerror = () => reject(requisicao.error)
+  })
+  banco.close()
+  return valor
+}
+
 export function configurarPersistencia(chave, estado) {
   const campos = Object.entries(estado).filter(([nome, valor]) =>
     !camposIgnorados.has(nome) && typeof valor !== "function" && !isReadonly(valor)
@@ -39,20 +71,32 @@ export function configurarPersistencia(chave, estado) {
   function salvar() {
     try {
       const valor = JSON.stringify(snapshot())
-      localStorage.setItem(chave, valor)
-      salvarCookie(`${chave}-ref`, "localStorage")
-      removerCookie(chave)
+      try {
+        localStorage.setItem(chave, valor)
+        salvarCookie(`${chave}-ref`, "localStorage")
+        removerCookie(chave)
+      } catch (erro) {
+        salvarNoBanco(chave, valor)
+          .then(() => {
+            salvarCookie(`${chave}-ref`, "indexeddb")
+            removerCookie(chave)
+            localStorage.removeItem(chave)
+          })
+          .catch(() => console.warn("Não foi possível salvar a ficha no navegador."))
+      }
     } catch (erro) {
       console.warn("Não foi possível salvar a ficha:", erro)
     }
   }
 
-  function carregar() {
+  async function carregar() {
     try {
       const referencia = lerCookie(`${chave}-ref`)
-      const valor = referencia === "localStorage"
-        ? localStorage.getItem(chave)
-        : lerCookie(chave)
+      const valor = referencia === "indexeddb"
+        ? await lerDoBanco(chave)
+        : referencia === "localStorage"
+          ? localStorage.getItem(chave)
+          : lerCookie(chave)
       if (!valor) return
 
       if (referencia === "localStorage") removerCookie(chave)
@@ -70,6 +114,9 @@ export function configurarPersistencia(chave, estado) {
 
   onMounted(carregar)
   watch(() => campos.map(([, valor]) => isRef(valor) ? valor.value : valor), salvar, { deep: true })
+  onBeforeUnmount(salvar)
+
+  return salvar
 }
 
 export function exportarFichaJson(estado, tipo = "personagem", nome = "Ficha") {

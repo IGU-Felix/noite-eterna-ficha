@@ -28,13 +28,11 @@
                         <div class="barra-preenchimento" :class="classeVida" :style="{ width: vidaPercent + '%' }">
                         </div>
                         <div class="barra-overlay">
-                            <button class="btn-esq" @click="alterarVida(-5)">-5</button>
                             <div class="centro">
                                 <input class="input-barra" type="number" v-model.number="vidaAtual" />
                                 <span class="barra-separador">/</span>
                                 <input class="input-barra" type="number" v-model.number="vidaMax" />
                             </div>
-                            <button class="btn-dir" @click="alterarVida(5)">+5</button>
                         </div>
                     </div>
 
