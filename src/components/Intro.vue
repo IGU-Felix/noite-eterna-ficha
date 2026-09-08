@@ -28,8 +28,8 @@
                     <button class="intro-icone" title="Livro de Regras" @click.stop="$emit('consultar')">
                         <img src="/buttons/book-btn.svg" alt="Livro" />
                     </button>
-                    <button class="intro-icone" title="Mestre">
-                        <img src="/buttons/dm-bnt.svg" alt="Mestre" />
+                    <button class="intro-icone" title="Sessão Online" @click.stop="abrirSessao">
+                        <img src="/buttons/dm-bnt.svg" alt="Sessão Online" />
                     </button>
                 </div>
             </div>
@@ -41,7 +41,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const emit = defineEmits(["entrar", "abrir-ameaca", "consultar"])
+const emit = defineEmits(["entrar", "abrir-ameaca", "consultar",  "abrir-sessao"])
 const mostrarDica = ref(false)
 
 function entrar() {
@@ -49,7 +49,11 @@ function entrar() {
 }
 
 function abrirAmeaca() {
-  emit("abrir-ameaca")
+    emit("abrir-ameaca")
+}
+
+function abrirSessao() {
+  emit("abrir-sessao")
 }
 
 onMounted(() => {
@@ -134,28 +138,31 @@ onMounted(() => {
 }
 
 @-webkit-keyframes fade-in-top {
-  0% {
-    -webkit-transform: translateY(-50px);
-            transform: translateY(-50px);
-    opacity: 0;
-  }
-  100% {
-    -webkit-transform: translateY(0);
-            transform: translateY(0);
-    opacity: 1;
-  }
+    0% {
+        -webkit-transform: translateY(-50px);
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
+
 @keyframes fade-in-top {
-  0% {
-    -webkit-transform: translateY(-50px);
-            transform: translateY(-50px);
-    opacity: 0;
-  }
-  100% {
-    -webkit-transform: translateY(0);
-            transform: translateY(0);
-    opacity: 1;
-  }
+    0% {
+        -webkit-transform: translateY(-50px);
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes respirarTitulo {
@@ -253,27 +260,30 @@ onMounted(() => {
 }
 
 @-webkit-keyframes fade-in-bottom {
-  0% {
-    -webkit-transform: translateY(50px);
-            transform: translateY(50px);
-    opacity: 0;
-  }
-  100% {
-    -webkit-transform: translateY(0);
-            transform: translateY(0);
-    opacity: 1;
-  }
+    0% {
+        -webkit-transform: translateY(50px);
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
+
 @keyframes fade-in-bottom {
-  0% {
-    -webkit-transform: translateY(50px);
-            transform: translateY(50px);
-    opacity: 0;
-  }
-  100% {
-    -webkit-transform: translateY(0);
-            transform: translateY(0);
-    opacity: 1;
-  }
+    0% {
+        -webkit-transform: translateY(50px);
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    100% {
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 </style>

@@ -286,6 +286,10 @@ function pararResize() {
   window.removeEventListener("mousemove", moverResize)
   window.removeEventListener("mouseup", pararResize)
 }
+
+defineExpose({
+  nome: nomePersonagem
+})
 </script>
 
 <style scoped>

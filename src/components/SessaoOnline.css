@@ -1,0 +1,295 @@
+* { box-sizing: border-box; }
+
+.sessao-painel {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 300;
+  width: 320px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  border: 1px solid #333;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  font-family: "Aubrey", system-ui;
+  color: #ddd;
+}
+
+.sessao-barra {
+  height: 32px;
+  flex-shrink: 0;
+  background: #1a1a1a;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  cursor: move;
+  user-select: none;
+}
+
+.sessao-titulo-barra {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #a37bd9;
+  text-transform: uppercase;
+}
+
+.sessao-fechar {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sessao-fechar:hover {
+  border-color: #a83232;
+  color: #a83232;
+}
+
+.sessao-corpo {
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sessao-erro {
+  background: #2a1414;
+  border: 1px solid #7a1e1e;
+  color: #e0a0a0;
+  font-size: 11px;
+  padding: 6px 8px;
+  line-height: 1.4;
+}
+
+.sessao-intro {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.sessao-btn-principal {
+  background: transparent;
+  border: 1px solid #d9a441;
+  color: #d9a441;
+  font-size: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  font-family: inherit;
+}
+
+.sessao-btn-principal:hover {
+  background: #d9a441;
+  color: #111;
+}
+
+.sessao-btn-secundario {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+  font-size: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  font-family: inherit;
+}
+
+.sessao-btn-secundario:hover {
+  border-color: #a37bd9;
+  color: #a37bd9;
+}
+
+.sessao-btn-voltar {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px;
+  font-family: inherit;
+}
+
+.sessao-btn-voltar:hover {
+  color: #ccc;
+}
+
+.sessao-acoes-form {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.sessao-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sessao-input {
+  background: #0e0e0e;
+  border: 1px solid #333;
+  color: #eee;
+  font-size: 13px;
+  padding: 7px 8px;
+  outline: none;
+  font-family: inherit;
+  text-transform: none;
+}
+
+.sessao-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.sessao-status {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* ===== CONECTADO ===== */
+.sessao-info-conexao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 10px;
+}
+
+.sessao-papel-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border: 1px solid;
+}
+
+.badge-mestre {
+  color: #d9a441;
+  border-color: #d9a441;
+}
+
+.badge-jogador {
+  color: #7fb3d9;
+  border-color: #7fb3d9;
+}
+
+.sessao-codigo-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sessao-codigo {
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #fff;
+}
+
+.sessao-copiar {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  font-size: 9px;
+  padding: 3px 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sessao-copiar:hover {
+  border-color: #d9a441;
+  color: #d9a441;
+}
+
+.sessao-jogadores-titulo {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #999;
+  margin-top: 4px;
+}
+
+.sessao-jogadores-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sessao-jogador-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #171717;
+  border: 1px solid #262626;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.sessao-online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4caf50;
+  flex-shrink: 0;
+}
+
+.sessao-online-dot.offline {
+  background: #555;
+}
+
+.sessao-jogador-nome {
+  flex: 1;
+  color: #eee;
+}
+
+.sessao-jogador-tag {
+  font-size: 9px;
+  color: #d9a441;
+  border: 1px solid #d9a441;
+  padding: 1px 5px;
+  text-transform: uppercase;
+}
+
+.sessao-jogador-ficha {
+  font-size: 9px;
+  color: #7fb3d9;
+}
+
+.sessao-btn-sair {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid #7a1e1e;
+  color: #d97a7a;
+  font-size: 11px;
+  padding: 7px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sessao-btn-sair:hover {
+  background: #7a1e1e;
+  color: #fff;
+}

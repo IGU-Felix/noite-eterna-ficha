@@ -1,29 +1,21 @@
 <template>
   <div class="app-root">
-    <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente" />
+    <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente"
+      @abrir-sessao="sessaoAberta = true" />
 
     <SeletorFichas v-if="seletorAberto" :fichas="fichasSessao" :tipo-inicial="tipoSeletor"
-      @fechar="seletorAberto = false" @abrir="abrirFichaSessao" @criar="criarFicha"
-      @importar="importarFicha" />
+      @fechar="seletorAberto = false" @abrir="abrirFichaSessao" @criar="criarFicha" @importar="importarFicha" />
 
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
 
-    <FichaFlutuante
-      v-if="todasJanelas.some(janela => !janela.minimizada) && !seletorAberto"
-      :fichas="todasJanelas"
-      :ativa-id="janelaAtiva"
-      :janela-em-frente-id="janelaEmFrente"
-      :importacao-pendente="importacaoPendente"
-      @selecionar="selecionarJanela"
-      @nome-atualizado="atualizarNome"
-      @imagem-atualizada="atualizarImagem"
-      @importacao-concluida="limparImportacao"
-      @nova-ficha="abrirSeletor"
-      @minimizar="minimizarJanela"
-      @restaurada="restaurarJanela"
-      @fechar="fecharJanela"
-      @topo="registrarJanelaEmFrente"
-    />
+    <SessaoOnline v-if="sessaoAberta" :nome-personagem="nomePersonagemAtual"
+      :personagem-disponivel="personagemDisponivel" @fechar="sessaoAberta = false" />
+
+    <FichaFlutuante v-if="todasJanelas.some(janela => !janela.minimizada) && !seletorAberto" :fichas="todasJanelas"
+      :ativa-id="janelaAtiva" :janela-em-frente-id="janelaEmFrente" :importacao-pendente="importacaoPendente"
+      @selecionar="selecionarJanela" @nome-atualizado="atualizarNome" @imagem-atualizada="atualizarImagem"
+      @importacao-concluida="limparImportacao" @nova-ficha="abrirSeletor" @minimizar="minimizarJanela"
+      @restaurada="restaurarJanela" @fechar="fecharJanela" @topo="registrarJanelaEmFrente" />
 
   </div>
 </template>
@@ -34,6 +26,7 @@ import Intro from "./components/Intro.vue"
 import Assistente from "./components/Assistente.vue"
 import FichaFlutuante from "./components/FichaFlutuante.vue"
 import SeletorFichas from "./components/SeletorFichas.vue"
+import SessaoOnline from "./components/SessaoOnline.vue"
 
 const personagensAbertos = ref([])
 const ameacasAbertas = ref([])
@@ -42,12 +35,21 @@ const seletorAberto = ref(false)
 const tipoSeletor = ref("todas")
 const importacaoPendente = ref(null)
 const assistenteAberto = ref(false)
+const sessaoAberta = ref(false)
 const janelaAtiva = ref(null)
 const janelaEmFrente = ref(null)
 const todasJanelas = computed(() => [
   ...personagensAbertos.value.map(janela => ({ ...janela, tipo: "personagem" })),
   ...ameacasAbertas.value.map(janela => ({ ...janela, tipo: "ameaca" }))
 ])
+const nomePersonagemAtual = computed(() => {
+  const ativa = todasJanelas.value.find(janela => janela.id === janelaAtiva.value)
+  if (ativa && ativa.tipo === "personagem") return ativa.nome
+  const primeiro = personagensAbertos.value[0]
+  return primeiro ? primeiro.nome : ""
+})
+
+const personagemDisponivel = computed(() => personagensAbertos.value.length > 0)
 
 function abrirPersonagem() {
   abrirSeletor("personagem")
@@ -181,6 +183,8 @@ function limparImportacao(id) {
   if (importacaoPendente.value?.id === id) importacaoPendente.value = null
 }
 
+
+
 </script>
 
 <style>
@@ -190,5 +194,4 @@ function limparImportacao(id) {
   height: 100vh;
   overflow: hidden;
 }
-
 </style>
