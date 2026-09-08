@@ -21,8 +21,8 @@
       <div v-for="ficha in fichas" :key="ficha.id" class="janela-aba"
         :class="{ minimizada: ficha.minimizada, ativa: ficha.id === ativaId }" role="button" tabindex="0"
         @click.stop="selecionarFicha(ficha)">
-        <img class="janela-aba-icone" :src="ficha.imagem || (ficha.tipo === 'ameaca' ? '/ameaca_icon.svg' : '/personagem_icon.svg')"
-          :alt="ficha.tipo === 'ameaca' ? 'Criatura' : 'Personagem'" />
+        <img class="janela-aba-icone" :src="ficha.tipo === 'ameaca' ? '/ameaca_icon.svg' : '/personagem_icon.svg'"
+          :alt="ficha.tipo === 'ameaca' ? 'Ameaça' : 'Ficha'" />
         {{ ficha.nome || "Sem nome" }}
       </div>
       <button class="janela-aba-adicionar" title="nova ficha" @click.stop="emitirNovaFicha">+</button>
@@ -362,7 +362,8 @@ function pararResize() {
   width: 10px;
   height: 10px;
   margin-right: 2px;
-  vertical-align: -2px;
+  margin-left: -3px;
+  vertical-align: -1px;
 }
 
 .janela-aba-adicionar {

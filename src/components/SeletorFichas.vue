@@ -192,8 +192,8 @@ async function importarFicha(event) {
 }
 
 .seletor-legenda {
-  color: #a37bd9;
-  font-size: 9px;
+  color: #f3b736;
+  font-size: 10px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
 }
