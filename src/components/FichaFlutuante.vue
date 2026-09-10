@@ -51,6 +51,7 @@ import Assistente from "./Assistente.vue"
 import Ficha from "./Ficha.vue"
 import FichaAmeaca from "./FichaAmeaca.vue"
 import FichaRemotaVisualizacao from "./FichaRemotaVisualizacao.vue"
+import { sessaoEstado, enviarSyncFichaParaMestre } from "../services/sessaoP2P.js"
 
 const props = defineProps({
   fichas: { type: Array, default: () => [] },
@@ -108,6 +109,7 @@ onBeforeUnmount(() => {
   if (typeof window !== "undefined") {
     window.removeEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
   }
+  clearTimeout(timeoutSyncCompleto)
 })
 
 watch(nomePersonagem, nome => {
@@ -119,6 +121,29 @@ watch(imagemPersonagem, imagem => {
   if (fichaAtiva.value?.remota) return
   if (props.ativaId !== null) emit("imagem-atualizada", props.ativaId, imagem)
 }, { immediate: true })
+
+// Sincroniza a FICHA INTEIRA com o Mestre (debounce de 400ms pra não disparar a cada tecla)
+let timeoutSyncCompleto = null
+
+watch(() => {
+  if (sessaoEstado.papel !== "jogador") return null
+  if (sessaoEstado.fichaVinculadaId !== props.ativaId) return null
+  if (fichaAtiva.value?.remota) return null
+  return fichaRef.value?.obterSnapshot?.() || null
+}, (snapshot) => {
+  if (!snapshot) return
+
+  clearTimeout(timeoutSyncCompleto)
+  timeoutSyncCompleto = setTimeout(() => {
+    enviarSyncFichaParaMestre({
+      id: props.ativaId,
+      tipo: fichaAtiva.value?.tipo || "personagem",
+      nome: snapshot.nome || "Sem Nome",
+      imagem: snapshot.imagemStatus || snapshot.imagemAmeaca || null,
+      dados: snapshot
+    })
+  }, 400)
+}, { deep: true })
 
 watch(() => [props.importacaoPendente, fichaRef.value, props.ativaId], async ([pendente, ficha, ativaId]) => {
   if (!pendente || pendente.id !== ativaId || !ficha?.importarJson) return

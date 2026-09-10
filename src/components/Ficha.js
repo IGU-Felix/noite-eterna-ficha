@@ -1,6 +1,6 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
 import { racas, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
-import { configurarPersistencia, exportarFichaJson, importarFichaJson } from "../services/fichaPersistencia.js"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot } from "../services/fichaPersistencia.js"
 import RolagemDados from "./RolagemDados.vue"
 
 // gerador simples de ids únicos para itens de listas (status, inventário, combate...)
@@ -698,14 +698,14 @@ export default {
       }
 
       if (aba === "Habilidades") {
-        itensCombate.Habilidades.push({ 
-          id: gerarId(), 
-          nome: "", 
-          detalhe: "", 
+        itensCombate.Habilidades.push({
+          id: gerarId(),
+          nome: "",
+          detalhe: "",
           tipoAcao: "",
           modificadorHabilidade: 0,
           periciaVinculada: "",
-          expandido: false 
+          expandido: false
         })
         return
       }
@@ -921,6 +921,7 @@ export default {
 
     estado.exportarJson = exportarJson
     estado.importarJson = importarJson
+    estado.obterSnapshot = () => criarSnapshot(estado)
 
     const salvarPersistencia = configurarPersistencia(props.persistKey, estado)
     estado.salvarAgora = salvarPersistencia

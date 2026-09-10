@@ -16,6 +16,21 @@
         <span class="remota-dono" v-if="dados?.dono">Jogador: {{ dados.dono }}</span>
       </div>
 
+      <div v-if="snapshot" class="remota-stats">
+        <div class="remota-stat">
+          <span class="remota-stat-valor">{{ snapshot.vidaAtual }}/{{ snapshot.vidaMaxEditavel ?? snapshot.vidaMax }}</span>
+          <span class="remota-stat-label">Vida</span>
+        </div>
+        <div class="remota-stat" v-if="snapshot.manaAtual !== undefined">
+          <span class="remota-stat-valor">{{ snapshot.manaAtual }}/{{ snapshot.manaMaxEditavel ?? snapshot.manaMax }}</span>
+          <span class="remota-stat-label">Mana</span>
+        </div>
+        <div class="remota-stat">
+          <span class="remota-stat-valor">{{ snapshot.nivel }}</span>
+          <span class="remota-stat-label">Nível</span>
+        </div>
+      </div>
+
       <div class="remota-status">
         <span class="remota-dot"></span>
         Espelho ao vivo — atualiza automaticamente
@@ -28,7 +43,6 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { computed } from "vue"
 import { sessaoEstado } from "../services/sessaoP2P.js"
@@ -37,9 +51,12 @@ const props = defineProps({
   fichaId: { type: String, default: null }
 })
 
+
+
 const dados = computed(() => props.fichaId ? sessaoEstado.fichasRemotas[props.fichaId] : null)
 const nome = computed(() => dados.value?.nome || "Sem Nome")
 const imagemStatus = computed(() => dados.value?.imagem || null)
+const snapshot = computed(() => dados.value?.dados || null)
 
 defineExpose({
   nome,
@@ -157,5 +174,31 @@ defineExpose({
   color: #666;
   font-style: italic;
   line-height: 1.5;
+}
+
+.remota-stats {
+  display: flex;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.remota-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.remota-stat-valor {
+  font-size: 15px;
+  font-weight: bold;
+  color: #d9a441;
+}
+
+.remota-stat-label {
+  font-size: 9px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 </style>

@@ -2,7 +2,7 @@ import { isReadonly, isRef, onBeforeUnmount, onMounted, watch } from "vue"
 
 const camposIgnorados = new Set(["inputNome", "inputFile", "audio"])
 
-function criarSnapshot(estado) {
+export function criarSnapshot(estado) {
   const campos = Object.entries(estado).filter(([nome, valor]) =>
     !camposIgnorados.has(nome) && typeof valor !== "function" && !isReadonly(valor)
   )
