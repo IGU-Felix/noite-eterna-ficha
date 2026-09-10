@@ -6,12 +6,18 @@ export const sessaoEstado = reactive({
   conectado: false,
   conectando: false,
   erro: null,
-  papel: null, // "mestre" | "jogador" | null
+  papel: null,
   codigoSessao: "",
   nomeUsuario: localStorage.getItem("noite-eterna-usuario") || "Jogador",
-  jogadores: [], // lista de { id, nome, papel, online, fichaId, fichaNome, fichaTipo, fichaImagem }
-  fichasRemotas: {} // id -> { id, tipo, nome, imagem, dados, dono, donoId, atualizadoEm }
+  jogadores: [],
+  fichasRemotas: {},
+  fichaVinculadaId: null
 })
+
+// Marca qual ficha local (janela aberta) deve ser reenviada ao Mestre sempre que mudar
+export function definirFichaVinculada(id) {
+  sessaoEstado.fichaVinculadaId = id
+}
 
 let peer = null
 let conexoes = [] // array de conns para o mestre
@@ -338,16 +344,16 @@ export function enviarSyncFichaParaMestre(ficha) {
 // Desconectar tudo
 export function desconectarSessao() {
   if (connMestre) {
-    try { connMestre.close() } catch (e) {}
+    try { connMestre.close() } catch (e) { }
     connMestre = null
   }
   conexoes.forEach(c => {
-    try { c.close() } catch (e) {}
+    try { c.close() } catch (e) { }
   })
   conexoes = []
 
   if (peer) {
-    try { peer.destroy() } catch (e) {}
+    try { peer.destroy() } catch (e) { }
     peer = null
   }
 
@@ -357,4 +363,5 @@ export function desconectarSessao() {
   sessaoEstado.codigoSessao = ""
   sessaoEstado.jogadores = []
   sessaoEstado.erro = null
+  sessaoEstado.fichaVinculadaId = null
 }

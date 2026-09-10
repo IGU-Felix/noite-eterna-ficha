@@ -4,13 +4,15 @@ import {
   criarSessao,
   entrarSessao,
   desconectarSessao,
-  enviarSyncFichaParaMestre
+  enviarSyncFichaParaMestre,
+  definirFichaVinculada
 } from "../services/sessaoP2P.js"
 
 export default {
   props: {
     nomePersonagem: { type: String, default: "" },
-    personagemDisponivel: { type: Boolean, default: false }
+    personagemDisponivel: { type: Boolean, default: false },
+    fichaVinculadaId: { type: String, default: null }
   },
   emits: ["fechar"],
   setup(props) {
@@ -41,10 +43,11 @@ export default {
     }
 
     async function confirmarEntrarSessao() {
-      const fichaAtual = vincularFicha.value && props.nomePersonagem
-        ? { id: "personagem-local", tipo: "personagem", nome: props.nomePersonagem }
+      const fichaAtual = vincularFicha.value && props.nomePersonagem && props.fichaVinculadaId
+        ? { id: props.fichaVinculadaId, tipo: "personagem", nome: props.nomePersonagem }
         : null
       await entrarSessao(nomeInput.value, codigoParaEntrar.value, fichaAtual)
+      if (fichaAtual) definirFichaVinculada(fichaAtual.id)
     }
 
     function sair() {
@@ -57,7 +60,7 @@ export default {
       navigator.clipboard?.writeText(sessaoEstado.codigoSessao).then(() => {
         copiado.value = true
         setTimeout(() => { copiado.value = false }, 1500)
-      }).catch(() => {})
+      }).catch(() => { })
     }
 
     // ===== ARRASTAR =====

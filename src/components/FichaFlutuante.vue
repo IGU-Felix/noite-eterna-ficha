@@ -30,7 +30,8 @@
 
     <div v-if="!fichaAtiva?.minimizada" class="janela-corpo">
       <KeepAlive>
-        <component :is="componenteFicha" :key="ativaId" :persist-key="`ficha-${ativaId}`" ref="fichaRef" />
+        <component :is="componenteFicha" :key="ativaId" :persist-key="`ficha-${ativaId}`" :ficha-id="ativaId"
+          ref="fichaRef" />
       </KeepAlive>
     </div>
 
@@ -49,6 +50,7 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue"
 import Assistente from "./Assistente.vue"
 import Ficha from "./Ficha.vue"
 import FichaAmeaca from "./FichaAmeaca.vue"
+import FichaRemotaVisualizacao from "./FichaRemotaVisualizacao.vue"
 
 const props = defineProps({
   fichas: { type: Array, default: () => [] },
@@ -69,7 +71,10 @@ const imagemPersonagem = computed(() =>
 
 const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "imagem-atualizada", "importacao-concluida", "nova-ficha", "topo"])
 
-const componenteFicha = computed(() => fichaAtiva.value?.tipo === "ameaca" ? FichaAmeaca : Ficha)
+const componenteFicha = computed(() => {
+  if (fichaAtiva.value?.remota) return FichaRemotaVisualizacao
+  return fichaAtiva.value?.tipo === "ameaca" ? FichaAmeaca : Ficha
+})
 const tituloBase = computed(() => fichaAtiva.value?.tipo === "ameaca" ? "Ameaça" : "Ficha")
 const painelId = computed(() => `ficha-${props.ativaId ?? "none"}`)
 const janelaAtivaGlobal = ref(typeof window !== "undefined" ? window.__janelaAtivaGeral || null : null)
@@ -106,10 +111,12 @@ onBeforeUnmount(() => {
 })
 
 watch(nomePersonagem, nome => {
+  if (fichaAtiva.value?.remota) return
   if (props.ativaId !== null) emit("nome-atualizado", props.ativaId, nome)
 }, { immediate: true })
 
 watch(imagemPersonagem, imagem => {
+  if (fichaAtiva.value?.remota) return
   if (props.ativaId !== null) emit("imagem-atualizada", props.ativaId, imagem)
 }, { immediate: true })
 

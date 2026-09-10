@@ -9,7 +9,8 @@
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
 
     <SessaoOnline v-if="sessaoAberta" :nome-personagem="nomePersonagemAtual"
-      :personagem-disponivel="personagemDisponivel" @fechar="sessaoAberta = false" />
+      :personagem-disponivel="personagemDisponivel" :ficha-vinculada-id="primeiroPersonagemId"
+      @fechar="sessaoAberta = false" />
 
     <FichaFlutuante v-if="todasJanelas.some(janela => !janela.minimizada) && !seletorAberto" :fichas="todasJanelas"
       :ativa-id="janelaAtiva" :janela-em-frente-id="janelaEmFrente" :importacao-pendente="importacaoPendente"
@@ -27,6 +28,8 @@ import Assistente from "./components/Assistente.vue"
 import FichaFlutuante from "./components/FichaFlutuante.vue"
 import SeletorFichas from "./components/SeletorFichas.vue"
 import SessaoOnline from "./components/SessaoOnline.vue"
+import { watch } from "vue"
+import { sessaoEstado, enviarSyncFichaParaMestre } from "./services/sessaoP2P.js"
 
 const personagensAbertos = ref([])
 const ameacasAbertas = ref([])
@@ -50,6 +53,7 @@ const nomePersonagemAtual = computed(() => {
 })
 
 const personagemDisponivel = computed(() => personagensAbertos.value.length > 0)
+const primeiroPersonagemId = computed(() => personagensAbertos.value[0]?.id || null)
 
 function abrirPersonagem() {
   abrirSeletor("personagem")
@@ -151,6 +155,7 @@ function atualizarNome(id, nome) {
   if (janela) janela.nome = nome || "Sem nome"
   const ficha = fichasSessao.value.find(item => item.id === id)
   if (ficha) ficha.nome = nome || "Sem nome"
+  sincronizarComMestreSeVinculada(id)
 }
 
 function atualizarImagem(id, imagem) {
@@ -158,10 +163,24 @@ function atualizarImagem(id, imagem) {
   if (janela) janela.imagem = imagem || null
   const ficha = fichasSessao.value.find(item => item.id === id)
   if (ficha) ficha.imagem = imagem || null
+  sincronizarComMestreSeVinculada(id)
 }
 
 function restaurarJanela(id) {
   selecionarJanela(id)
+}
+
+function sincronizarComMestreSeVinculada(id) {
+  if (sessaoEstado.papel !== "jogador") return
+  if (sessaoEstado.fichaVinculadaId !== id) return
+  const janela = encontrarJanela(id)
+  if (!janela) return
+  enviarSyncFichaParaMestre({
+    id: janela.id,
+    tipo: janela.tipo,
+    nome: janela.nome,
+    imagem: janela.imagem
+  })
 }
 
 function fecharJanela(id) {
@@ -183,7 +202,33 @@ function limparImportacao(id) {
   if (importacaoPendente.value?.id === id) importacaoPendente.value = null
 }
 
-
+// Espelha as fichas recebidas dos jogadores (via P2P) na lista que alimenta o Seletor de Fichas
+watch(
+  () => ({ ...sessaoEstado.fichasRemotas }),
+  (remotas) => {
+    Object.values(remotas).forEach(remota => {
+      const existente = fichasSessao.value.find(f => f.id === remota.id)
+      if (existente) {
+        existente.nome = remota.nome
+        existente.imagem = remota.imagem
+        existente.tipo = remota.tipo
+        existente.remota = true
+        existente.donoNome = remota.dono
+      } else {
+        fichasSessao.value.push({
+          id: remota.id,
+          tipo: remota.tipo,
+          nome: remota.nome,
+          imagem: remota.imagem,
+          minimizada: true,
+          remota: true,
+          donoNome: remota.dono
+        })
+      }
+    })
+  },
+  { deep: true }
+)
 
 </script>
 
