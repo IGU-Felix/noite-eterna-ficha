@@ -7,10 +7,70 @@ export function criarSnapshot(estado) {
     !camposIgnorados.has(nome) && typeof valor !== "function" && !isReadonly(valor)
   )
 
-  return Object.fromEntries(campos.map(([nome, valor]) => [
+  const obj = Object.fromEntries(campos.map(([nome, valor]) => [
     nome,
     isRef(valor) ? valor.value : valor
   ]))
+
+  try {
+    return JSON.parse(JSON.stringify(obj))
+  } catch {
+    return obj
+  }
+}
+
+export function aplicarSnapshot(estado, dados) {
+  if (!dados || typeof dados !== "object") return
+
+  // Campos estruturais prioritários para calcular limites antes de aplicar valores customizados
+  const prioridades = ["racaSelecionada", "classeSelecionada", "subclasseSelecionada", "nivel", "atributos"]
+  const chaves = [
+    ...prioridades.filter(k => k in dados),
+    ...Object.keys(dados).filter(k => !prioridades.includes(k))
+  ]
+
+  chaves.forEach((nome) => {
+    if (camposIgnorados.has(nome)) return
+    const estadoAtual = estado[nome]
+    if (estadoAtual === undefined || typeof estadoAtual === "function" || isReadonly(estadoAtual)) return
+
+    const valorSalvo = dados[nome]
+    if (valorSalvo === undefined) return
+
+    if (isRef(estadoAtual)) {
+      if (Array.isArray(estadoAtual.value) && Array.isArray(valorSalvo)) {
+        estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
+      } else if (estadoAtual.value && typeof estadoAtual.value === "object" && valorSalvo && typeof valorSalvo === "object") {
+        estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
+      } else {
+        estadoAtual.value = valorSalvo
+      }
+    } else if (Array.isArray(estadoAtual) && Array.isArray(valorSalvo)) {
+      estadoAtual.splice(0, estadoAtual.length, ...JSON.parse(JSON.stringify(valorSalvo)))
+    } else if (estadoAtual && typeof estadoAtual === "object" && valorSalvo && typeof valorSalvo === "object") {
+      Object.entries(valorSalvo).forEach(([subChave, subValor]) => {
+        if (Array.isArray(estadoAtual[subChave]) && Array.isArray(subValor)) {
+          estadoAtual[subChave].splice(0, estadoAtual[subChave].length, ...JSON.parse(JSON.stringify(subValor)))
+        } else {
+          estadoAtual[subChave] = JSON.parse(JSON.stringify(subValor))
+        }
+      })
+    }
+  })
+
+  // Garante valores explícitos de vida/mana editadas se estiverem no snapshot
+  if ("vidaMaxEditada" in dados && estado.vidaMaxEditada && isRef(estado.vidaMaxEditada)) {
+    estado.vidaMaxEditada.value = dados.vidaMaxEditada
+  }
+  if ("manaMaxEditada" in dados && estado.manaMaxEditada && isRef(estado.manaMaxEditada)) {
+    estado.manaMaxEditada.value = dados.manaMaxEditada
+  }
+  if ("vidaAtual" in dados && estado.vidaAtual && isRef(estado.vidaAtual)) {
+    estado.vidaAtual.value = dados.vidaAtual
+  }
+  if ("manaAtual" in dados && estado.manaAtual && isRef(estado.manaAtual)) {
+    estado.manaAtual.value = dados.manaAtual
+  }
 }
 
 function lerCookie(chave) {
@@ -59,7 +119,11 @@ async function lerDoBanco(chave) {
   return valor
 }
 
-export function configurarPersistencia(chave, estado) {
+export function configurarPersistencia(chave, estado, ativo = true) {
+  if (!ativo) {
+    return () => {}
+  }
+
   const campos = Object.entries(estado).filter(([nome, valor]) =>
     !camposIgnorados.has(nome) && typeof valor !== "function" && !isReadonly(valor)
   )
@@ -102,11 +166,7 @@ export function configurarPersistencia(chave, estado) {
       if (referencia === "localStorage") removerCookie(chave)
 
       const salvo = JSON.parse(valor)
-      campos.forEach(([nome, estadoAtual]) => {
-        if (!(nome in salvo)) return
-        if (isRef(estadoAtual)) estadoAtual.value = salvo[nome]
-        else if (estadoAtual && typeof estadoAtual === "object") Object.assign(estadoAtual, salvo[nome])
-      })
+      aplicarSnapshot(estado, salvo)
     } catch (erro) {
       console.warn("Não foi possível carregar a ficha:", erro)
     }
@@ -152,20 +212,6 @@ export async function importarFichaJson(estado, arquivo, tipoEsperado) {
     throw new Error(`Este arquivo é de uma ficha de ${importado.tipo}, não de ${tipoEsperado}.`)
   }
 
-  const campos = Object.entries(estado).filter(([nome, valor]) =>
-    !camposIgnorados.has(nome) && typeof valor !== "function" && !isReadonly(valor)
-  )
-
-  campos.forEach(([nome, estadoAtual]) => {
-    if (!(nome in importado.dados)) return
-
-    const valorSalvo = importado.dados[nome]
-    if (isRef(estadoAtual)) {
-      estadoAtual.value = valorSalvo
-    } else if (Array.isArray(estadoAtual) && Array.isArray(valorSalvo)) {
-      estadoAtual.splice(0, estadoAtual.length, ...valorSalvo)
-    } else if (estadoAtual && typeof estadoAtual === "object" && valorSalvo && typeof valorSalvo === "object") {
-      Object.assign(estadoAtual, valorSalvo)
-    }
-  })
+  aplicarSnapshot(estado, importado.dados)
 }
+

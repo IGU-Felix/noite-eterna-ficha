@@ -162,3 +162,30 @@
   width: auto;
   min-width: 60px;
 }
+
+/* Modo somente leitura para Ameaça */
+.ameaca-container.ficha-somente-leitura input,
+.ameaca-container.ficha-somente-leitura select,
+.ameaca-container.ficha-somente-leitura textarea {
+  pointer-events: none !important;
+  user-select: text;
+}
+
+.ameaca-container.ficha-somente-leitura .status-imagem {
+  cursor: default !important;
+}
+
+.ameaca-container.ficha-somente-leitura .placeholder {
+  display: none !important;
+}
+
+.ameaca-container.ficha-somente-leitura .nome-barra .centro span {
+  cursor: default !important;
+}
+
+.ameaca-container.ficha-somente-leitura .btn-add,
+.ameaca-container.ficha-somente-leitura .btn-remover,
+.ameaca-container.ficha-somente-leitura .btn-editar,
+.ameaca-container.ficha-somente-leitura .btn-salvar {
+  display: none !important;
+}

@@ -1624,3 +1624,44 @@ button {
   font-size: 10px;
   padding: 3px 4px;
 }
+
+/* =====================================================
+   MODO SOMENTE LEITURA (Espelho Remoto)
+===================================================== */
+.ficha-somente-leitura input,
+.ficha-somente-leitura select,
+.ficha-somente-leitura textarea {
+  pointer-events: none !important;
+  user-select: text;
+}
+
+.ficha-somente-leitura .status-imagem {
+  cursor: default !important;
+}
+
+.ficha-somente-leitura .placeholder {
+  display: none !important;
+}
+
+.ficha-somente-leitura .nome-barra .centro span {
+  cursor: default !important;
+}
+
+.ficha-somente-leitura .btn-esq,
+.ficha-somente-leitura .btn-dir,
+.ficha-somente-leitura .btn-add,
+.ficha-somente-leitura .btn-remover,
+.ficha-somente-leitura .btn-editar,
+.ficha-somente-leitura .btn-salvar {
+  display: none !important;
+}
+
+.ficha-somente-leitura .barra .centro {
+  margin: 0 auto;
+}
+
+.ficha-somente-leitura .recurso-input {
+  border: none !important;
+  background: transparent !important;
+  cursor: default !important;
+}

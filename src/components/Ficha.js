@@ -1,6 +1,6 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
 import { racas, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
-import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot } from "../services/fichaPersistencia.js"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../services/fichaPersistencia.js"
 import RolagemDados from "./RolagemDados.vue"
 
 // gerador simples de ids únicos para itens de listas (status, inventário, combate...)
@@ -11,8 +11,9 @@ function gerarId() {
 
 export default {
   props: {
-
-    persistKey: { type: String, default: "ficha-personagem" }
+    persistKey: { type: String, default: "ficha-personagem" },
+    dadosRemotos: { type: Object, default: null },
+    somenteLeitura: { type: Boolean, default: false }
   },
   components: { RolagemDados },
   setup(props) {
@@ -126,6 +127,7 @@ export default {
     )
 
     function alterarVida(valor) {
+      if (props.somenteLeitura) return
       vidaAtual.value += valor
     }
 
@@ -164,6 +166,7 @@ export default {
     )
 
     function alterarMana(valor) {
+      if (props.somenteLeitura) return
       manaAtual.value += valor
     }
 
@@ -216,6 +219,7 @@ export default {
     const inputNome = ref(null)
 
     function ativarEdicaoNome() {
+      if (props.somenteLeitura) return
       editandoNome.value = true
       nextTick(() => {
         inputNome.value?.focus()
@@ -228,6 +232,7 @@ export default {
     const inputFile = ref(null)
 
     function abrirUpload() {
+      if (props.somenteLeitura) return
       inputFile.value.click()
     }
 
@@ -358,6 +363,7 @@ export default {
     })
 
     watch(vidaCritica, (critico) => {
+      if (props.somenteLeitura) return
       if (critico) {
         audio.currentTime = 0
         audio.play().catch(() => { })
@@ -919,11 +925,18 @@ export default {
       salvarPersistencia()
     }
 
+    estado.somenteLeitura = computed(() => props.somenteLeitura)
     estado.exportarJson = exportarJson
     estado.importarJson = importarJson
     estado.obterSnapshot = () => criarSnapshot(estado)
 
-    const salvarPersistencia = configurarPersistencia(props.persistKey, estado)
+    watch(() => props.dadosRemotos, (novosDados) => {
+      if (novosDados) {
+        aplicarSnapshot(estado, novosDados)
+      }
+    }, { deep: true, immediate: true })
+
+    const salvarPersistencia = configurarPersistencia(props.persistKey, estado, !props.dadosRemotos)
     estado.salvarAgora = salvarPersistencia
     return estado
   }

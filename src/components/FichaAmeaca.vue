@@ -1,5 +1,5 @@
 <template>
-    <div class="ficha-container ameaca-container">
+    <div class="ficha-container ameaca-container" :class="{ 'ficha-somente-leitura': somenteLeitura }">
         <div class="ameaca ficha">
 
             <!-- CABEÇALHO -->

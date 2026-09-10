@@ -99,15 +99,24 @@ const zIndexAtiva = computed(() => {
   return 200
 })
 
+function tratarSolicitacaoSync(evento) {
+  const fichaIdSolicitada = evento.detail
+  if (!fichaIdSolicitada || fichaIdSolicitada === props.ativaId) {
+    sincronizarFichaCompleta(true)
+  }
+}
+
 onMounted(() => {
   if (typeof window !== "undefined") {
     window.addEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+    window.addEventListener("sessao-solicitar-sync-ficha", tratarSolicitacaoSync)
   }
 })
 
 onBeforeUnmount(() => {
   if (typeof window !== "undefined") {
     window.removeEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
+    window.removeEventListener("sessao-solicitar-sync-ficha", tratarSolicitacaoSync)
   }
   clearTimeout(timeoutSyncCompleto)
 })
@@ -122,19 +131,18 @@ watch(imagemPersonagem, imagem => {
   if (props.ativaId !== null) emit("imagem-atualizada", props.ativaId, imagem)
 }, { immediate: true })
 
-// Sincroniza a FICHA INTEIRA com o Mestre (debounce de 400ms pra não disparar a cada tecla)
+// Sincroniza a FICHA INTEIRA com o Mestre (debounce de 400ms para digitação contínua)
 let timeoutSyncCompleto = null
 
-watch(() => {
-  if (sessaoEstado.papel !== "jogador") return null
-  if (sessaoEstado.fichaVinculadaId !== props.ativaId) return null
-  if (fichaAtiva.value?.remota) return null
-  return fichaRef.value?.obterSnapshot?.() || null
-}, (snapshot) => {
+function sincronizarFichaCompleta(imediato = false) {
+  if (sessaoEstado.papel !== "jogador") return
+  if (sessaoEstado.fichaVinculadaId !== props.ativaId) return
+  if (fichaAtiva.value?.remota) return
+  const snapshot = fichaRef.value?.obterSnapshot?.()
   if (!snapshot) return
 
   clearTimeout(timeoutSyncCompleto)
-  timeoutSyncCompleto = setTimeout(() => {
+  const executar = () => {
     enviarSyncFichaParaMestre({
       id: props.ativaId,
       tipo: fichaAtiva.value?.tipo || "personagem",
@@ -142,8 +150,24 @@ watch(() => {
       imagem: snapshot.imagemStatus || snapshot.imagemAmeaca || null,
       dados: snapshot
     })
-  }, 400)
-}, { deep: true })
+  }
+
+  if (imediato) {
+    executar()
+  } else {
+    timeoutSyncCompleto = setTimeout(executar, 400)
+  }
+}
+
+watch(() => {
+  if (sessaoEstado.papel !== "jogador") return null
+  if (sessaoEstado.fichaVinculadaId !== props.ativaId) return null
+  if (fichaAtiva.value?.remota) return null
+  return fichaRef.value?.obterSnapshot?.() || null
+}, (snapshot, oldSnapshot) => {
+  if (!snapshot) return
+  sincronizarFichaCompleta(!oldSnapshot)
+}, { deep: true, immediate: true })
 
 watch(() => [props.importacaoPendente, fichaRef.value, props.ativaId], async ([pendente, ficha, ativaId]) => {
   if (!pendente || pendente.id !== ativaId || !ficha?.importarJson) return

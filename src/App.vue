@@ -225,6 +225,16 @@ watch(
           donoNome: remota.dono
         })
       }
+
+      // Também atualiza as janelas abertas se já estiverem em exibição
+      const aberta = [...personagensAbertos.value, ...ameacasAbertas.value].find(j => j.id === remota.id)
+      if (aberta) {
+        aberta.nome = remota.nome
+        aberta.imagem = remota.imagem
+        aberta.tipo = remota.tipo
+        aberta.remota = true
+        aberta.donoNome = remota.dono
+      }
     })
   },
   { deep: true }

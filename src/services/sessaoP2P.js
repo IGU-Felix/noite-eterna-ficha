@@ -163,6 +163,16 @@ function tratarMensagemNoMestre(conn, msg) {
         tipo: "LISTA_JOGADORES",
         jogadores: sessaoEstado.jogadores
       })
+
+      // Se o jogador se identificou com uma ficha, solicita o snapshot completo
+      if (msg.fichaId) {
+        try {
+          conn.send({
+            tipo: "SOLICITAR_SYNC_FICHA",
+            fichaId: msg.fichaId
+          })
+        } catch (e) { }
+      }
       break
     }
 
@@ -320,6 +330,33 @@ function tratarMensagemNoJogador(msg) {
       }
       break
     }
+
+    case "SOLICITAR_SYNC_FICHA": {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("sessao-solicitar-sync-ficha", {
+          detail: msg.fichaId || null
+        }))
+      }
+      break
+    }
+  }
+}
+
+// Mestre solicita que o jogador reenvie o snapshot da ficha
+export function solicitarSyncFicha(fichaId = null) {
+  if (sessaoEstado.papel === "mestre") {
+    conexoes.forEach(conn => {
+      if (conn.open) {
+        try {
+          conn.send({
+            tipo: "SOLICITAR_SYNC_FICHA",
+            fichaId
+          })
+        } catch (e) {
+          console.warn("Erro ao solicitar sync:", e)
+        }
+      }
+    })
   }
 }
 

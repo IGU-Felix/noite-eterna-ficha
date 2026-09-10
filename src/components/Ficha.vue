@@ -1,5 +1,5 @@
 <template>
-  <div class="ficha-container">
+  <div class="ficha-container" :class="{ 'ficha-somente-leitura': somenteLeitura }">
     <div class="ficha">
 
       <!-- ==================================================== -->

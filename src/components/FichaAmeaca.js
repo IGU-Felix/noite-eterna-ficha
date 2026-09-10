@@ -1,5 +1,5 @@
-import { ref, reactive, computed, nextTick } from "vue"
-import { configurarPersistencia, exportarFichaJson, importarFichaJson } from "../services/fichaPersistencia.js"
+import { ref, reactive, computed, watch, nextTick } from "vue"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../services/fichaPersistencia.js"
 import RolagemDados from "./RolagemDados.vue"
 
 let proximoId = 1
@@ -9,7 +9,9 @@ function gerarId() {
 
 export default {
   props: {
-    persistKey: { type: String, default: "ficha-ameaca" }
+    persistKey: { type: String, default: "ficha-ameaca" },
+    dadosRemotos: { type: Object, default: null },
+    somenteLeitura: { type: Boolean, default: false }
   },
   components: { RolagemDados },
   setup(props) {
@@ -19,6 +21,7 @@ export default {
     const inputNome = ref(null)
 
     function ativarEdicaoNome() {
+      if (props.somenteLeitura) return
       editandoNome.value = true
       nextTick(() => {
         inputNome.value?.focus()
@@ -31,6 +34,7 @@ export default {
     const inputFile = ref(null)
 
     function abrirUpload() {
+      if (props.somenteLeitura) return
       inputFile.value.click()
     }
 
@@ -54,6 +58,7 @@ export default {
     })
 
     function alterarVida(valor) {
+      if (props.somenteLeitura) return
       vidaAtual.value = Math.max(0, Math.min(vidaMax.value, vidaAtual.value + valor))
     }
 
@@ -288,10 +293,18 @@ function alternarCarga(bloco, i) {
       salvarPersistencia()
     }
 
+    estado.somenteLeitura = computed(() => props.somenteLeitura)
     estado.exportarJson = exportarJson
     estado.importarJson = importarJson
+    estado.obterSnapshot = () => criarSnapshot(estado)
 
-    const salvarPersistencia = configurarPersistencia(props.persistKey, estado)
+    watch(() => props.dadosRemotos, (novosDados) => {
+      if (novosDados) {
+        aplicarSnapshot(estado, novosDados)
+      }
+    }, { deep: true, immediate: true })
+
+    const salvarPersistencia = configurarPersistencia(props.persistKey, estado, !props.dadosRemotos)
     estado.salvarAgora = salvarPersistencia
     return estado
   }
