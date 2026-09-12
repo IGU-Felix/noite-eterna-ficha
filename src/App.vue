@@ -1,7 +1,8 @@
 <template>
   <div class="app-root">
     <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente"
-      @abrir-sessao="sessaoAberta = true" />
+      @abrir-sessao="sessaoAberta = true" @abrir-mapa="mapaAberto = true" />
+    <MapaEditor v-if="mapaAberto" @fechar="mapaAberto = false" />
 
     <SeletorFichas v-if="seletorAberto" :fichas="fichasSessao" :tipo-inicial="tipoSeletor"
       @fechar="seletorAberto = false" @abrir="abrirFichaSessao" @criar="criarFicha" @importar="importarFicha" />
@@ -28,6 +29,7 @@ import Assistente from "./components/Assistente.vue"
 import FichaFlutuante from "./components/FichaFlutuante.vue"
 import SeletorFichas from "./components/SeletorFichas.vue"
 import SessaoOnline from "./components/SessaoOnline.vue"
+import MapaEditor from "./components/MapaEditor.vue"
 import { watch } from "vue"
 import { sessaoEstado, enviarSyncFichaParaMestre } from "./services/sessaoP2P.js"
 
@@ -39,6 +41,7 @@ const tipoSeletor = ref("todas")
 const importacaoPendente = ref(null)
 const assistenteAberto = ref(false)
 const sessaoAberta = ref(false)
+const mapaAberto = ref(false)
 const janelaAtiva = ref(null)
 const janelaEmFrente = ref(null)
 const todasJanelas = computed(() => [

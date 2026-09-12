@@ -16,7 +16,7 @@
 
             <div class="intro-rodape">
                 <div class="intro-icones">
-                    <button class="intro-icone" title="Mundo">
+                    <button class="intro-icone" title="Mundo" @click.stop="abrirMapa">
                         <img src="/buttons/map-btn.svg" alt="Mundo" />
                     </button>
                     <button class="intro-icone" title="Ameaças" @click.stop="abrirAmeaca">
@@ -41,8 +41,12 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const emit = defineEmits(["entrar", "abrir-ameaca", "consultar",  "abrir-sessao"])
+const emit = defineEmits(["entrar", "abrir-ameaca", "consultar", "abrir-sessao", "abrir-mapa"])
 const mostrarDica = ref(false)
+
+function abrirMapa() {
+  emit("abrir-mapa")
+}
 
 function entrar() {
     emit("entrar")
