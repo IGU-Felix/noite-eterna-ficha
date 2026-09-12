@@ -1,9 +1,9 @@
 <template>
-  <div class="janela-flutuante mapa-editor" :class="{ minimizada: false }" :style="estiloJanela" @mousedown.capture="ativarJanelaNoTopo">
+  <div class="janela-flutuante mapa-editor" :class="{ minimizada: false }" :style="estiloJanela"
+    @mousedown.capture="ativarJanelaNoTopo">
     <div class="janela-barra" @mousedown="iniciarArraste">
       <span class="janela-titulo">🌐︎</span>
       <div class="janela-acoes">
-        <button class="janela-btn" @click.stop="expandirMapa" title="Expandir">+ 5</button>
         <button class="janela-btn" @click.stop="alternarTelaCheia" title="Tela cheia">
           {{ modo === 'tela-cheia' ? '⤢' : '⛶' }}
         </button>
@@ -15,12 +15,12 @@
     </div>
     <div class="paleta-terrenos" @mousedown.stop>
       <button v-for="ferramenta in ferramentas" :key="ferramenta.id" class="ferramenta-btn"
-        :class="[`ferramenta-${ferramenta.id}`, { selecionado: ferramentaSelecionada === ferramenta.id }]" :title="ferramenta.nome"
-        @click="selecionarFerramenta(ferramenta.id)">
+        :class="[`ferramenta-${ferramenta.id}`, { selecionado: ferramentaSelecionada === ferramenta.id }]"
+        :title="ferramenta.nome" @click="selecionarFerramenta(ferramenta.id)">
         <img :src="ferramenta.icone" :alt="ferramenta.nome" />
       </button>
-      <button class="amostras-toggle" :class="{ aberto: mostrarAmostras }"
-        title="Mostrar amostras" @click="mostrarAmostras = !mostrarAmostras">
+      <button class="amostras-toggle" :class="{ aberto: mostrarAmostras }" title="Mostrar amostras"
+        @click="mostrarAmostras = !mostrarAmostras">
         <img src="/map_tools_icons/palet_icon.svg" alt="Amostras" />
       </button>
       <label class="controle-cor" title="Cor do terreno selecionado">
@@ -34,29 +34,44 @@
       </label>
       <div v-if="mostrarAmostras" class="pasta-amostras" aria-label="Pasta de amostras">
         <button v-for="terreno in terrenos" :key="terreno.id" class="legenda-item"
-          :class="{ selecionado: terrenoSelecionado === terreno.id }"
-          :title="`Selecionar ${terreno.nome}`" @click="selecionarTerreno(terreno)">
+          :class="{ selecionado: terrenoSelecionado === terreno.id }" :title="`Selecionar ${terreno.nome}`"
+          @click="selecionarTerreno(terreno)">
           <span class="terreno-amostra" :style="{ background: terreno.cor }"></span>
           <span>{{ terreno.nome }}</span>
-          <span v-if="terreno.personalizado" class="amostra-remover"
-            title="Remover amostra" @click.stop="removerAmostra(terreno)">×</span>
+          <span v-if="terreno.personalizado" class="amostra-remover" title="Remover amostra"
+            @click.stop="removerAmostra(terreno)">×</span>
         </button>
         <div class="nova-amostra">
           <input v-model="nomeNovaAmostra" class="nome-amostra" placeholder="Nome da amostra" maxlength="18" />
           <button class="adicionar-amostra" title="Adicionar amostra personalizada" @click="adicionarAmostra">+</button>
         </div>
       </div>
+      <div v-if="mostrarObjetos" class="pasta-objetos" aria-label="Objetos criados">
+        <div class="pasta-objetos-titulo">Objetos</div>
+        <button v-for="objeto in objetosCriados" :key="objeto.id" class="objeto-amostra"
+          :class="{ selecionado: objetoAtual?.id === objeto.id }" :title="`${objeto.nome} - duplo clique para editar`"
+          @click="selecionarObjetoAmostra(objeto)" @dblclick.stop="abrirEditorAmostra(objeto)">
+          <img v-if="objeto.imagem" :src="objeto.imagem" :alt="objeto.nome" />
+          <span v-else>◇</span>
+          <small>{{ objeto.nome }}</small>
+        </button>
+        <span v-if="!objetosCriados.length" class="objetos-vazio">Crie um objeto em um quadrado.</span>
+      </div>
     </div>
-    <div class="janela-corpo">
-      <div class="grid" :class="{ isometrico: editorMode }" :style="gridStyle"
-            @mousedown="iniciarPan" @wheel.prevent="ajustarZoom">
-          <div v-for="cell in celulasVisiveis" :key="cell.id" class="cell" :data-id="cell.id"
-            :style="{ ...posicaoCelula(cell), background: cell.cor || undefined }"
-              :class="`terreno-${cell.terreno}`" @mousedown.stop="iniciarInteracao($event, cell)"
-              @mouseenter="continuarPintura(cell)"></div>
+    <div class="janela-corpo" :class="{ 'mao-ativa': ferramentaSelecionada === 'mao' }" @mousedown="iniciarPanNoCorpo">
+      <div class="grid" :class="{ isometrico: editorMode }" :style="gridStyle" @mousedown="iniciarPan"
+        @wheel.prevent="ajustarZoom">
+        <div v-for="cell in celulasVisiveis" :key="cell.id" class="cell" :data-id="cell.id" :style="estiloCelula(cell)"
+          :class="`terreno-${cell.terreno}`" @mousedown.stop="iniciarInteracao($event, cell)"
+          @mouseenter="continuarPintura(cell)" @dblclick.stop="abrirEditorCelula(cell)">
+          <div v-if="imagemObjeto(cell)" class="objeto-celula"
+            :class="[{ 'objeto-arrastavel': ferramentaSelecionada === 'objeto' }, { 'objeto-parede': cell.orientacao === 'parede' }]"
+            :style="estiloObjeto(cell)" @pointerdown.stop.prevent="iniciarArrasteObjeto($event, cell)">
+            <img :src="imagemObjeto(cell)" :alt="cell.objetoNome || 'Objeto'" />
+          </div>
+        </div>
         <template v-if="editorMode">
-          <div v-for="unidade in unidades" :key="unidade.id"
-            class="unidade-combate" :class="`unidade-${unidade.tipo}`"
+          <div v-for="unidade in unidades" :key="unidade.id" class="unidade-combate" :class="`unidade-${unidade.tipo}`"
             :style="posicaoUnidade(unidade)" :title="`${unidade.nome} - arraste para mover`"
             @pointerdown.stop.prevent="iniciarArrasteUnidade($event, unidade)">
             {{ unidade.icone }}
@@ -64,11 +79,84 @@
         </template>
       </div>
     </div>
+    <div v-if="editorQuadradoAberto" class="editor-quadrado janela-flutuante" @mousedown.stop>
+      <div class="editor-quadrado-barra">
+        <span>Editar quadrado</span>
+        <button class="janela-btn" @click="fecharEditorQuadrado">X</button>
+      </div>
+      <div class="editor-quadrado-corpo">
+        <div class="visualizador-controles">
+          <button :class="{ ativo: modoVisualizador === '2d' }" @click="modoVisualizador = '2d'">2D</button>
+          <button :class="{ ativo: modoVisualizador === 'iso' }" @click="modoVisualizador = 'iso'">ISO</button>
+          <button :class="{ ativo: modoVisualizador === 'desenho' }"
+            @click="modoVisualizador = 'desenho'">Desenhar</button>
+        </div>
+        <div v-if="modoVisualizador !== 'desenho'" class="objeto-visualizador">
+          <div class="celula-visualizador" :class="{ 'visualizador-iso': modoVisualizador === 'iso' }">
+            <img v-if="imagemVisualizador" :src="imagemVisualizador" alt="Visualização do objeto"
+              :style="estiloVisualizador" />
+            <span v-else>Sem imagem</span>
+          </div>
+        </div>
+        <canvas v-show="modoVisualizador === 'desenho'" ref="canvasTextura" width="240" height="240"
+          class="canvas-textura" @pointerdown="iniciarDesenhoTextura" @pointermove="desenharTextura"
+          @pointerup="pararDesenhoTextura" @pointerleave="pararDesenhoTextura"></canvas>
+        <div class="objeto-editor">
+          <input v-model="nomeObjetoEditado" class="objeto-nome" placeholder="Nome do objeto" maxlength="24" />
+          <div class="objeto-arquivos">
+            <input ref="inputObjeto2d" type="file" accept="image/*" hidden
+              @change="carregarObjeto($event, 'objeto2d')" />
+            <input ref="inputObjetoIso" type="file" accept="image/*" hidden
+              @change="carregarObjeto($event, 'objetoIso')" />
+            <button @click="inputObjeto2d?.click()">Ícone 2D</button>
+            <button @click="inputObjetoIso?.click()">Modelo ISO</button>
+          </div>
+          <div class="objeto-orientacao">
+            <button :class="{ ativo: orientacaoObjetoEditada === 'chao' }"
+              @click="orientacaoObjetoEditada = 'chao'">Chão</button>
+            <button :class="{ ativo: orientacaoObjetoEditada === 'parede' }"
+              @click="orientacaoObjetoEditada = 'parede'">Parede</button>
+          </div>
+          <label v-if="orientacaoObjetoEditada === 'parede'" class="altura-objeto">
+            Altura {{ alturaObjetoEditada }}x
+            <input v-model.number="alturaObjetoEditada" type="range" min="1" max="4" step="0.5" />
+          </label>
+          <div v-if="orientacaoObjetoEditada === 'parede'" class="lado-parede">
+            <button v-for="lado in ladosParede" :key="lado.id" :class="{ ativo: ladoParedeEditada === lado.id }"
+              @click="ladoParedeEditada = lado.id">{{ lado.nome }}</button>
+          </div>
+          <div class="objeto-previews">
+            <img v-if="objeto2dEditado" :src="objeto2dEditado" alt="Prévia 2D" />
+            <img v-if="objetoIsoEditado" :src="objetoIsoEditado" alt="Prévia semi 3D" />
+          </div>
+          <div class="objeto-exemplo">
+            <span>Exemplo no mapa</span>
+            <div class="exemplo-cenarios">
+              <div class="exemplo-cenario">
+                <img v-if="objeto2dEditado" :src="objeto2dEditado" alt="Exemplo 2D" />
+                <span v-else>2D</span>
+              </div>
+              <div class="exemplo-cenario exemplo-iso">
+                <img v-if="objetoIsoEditado || objeto2dEditado" :src="objetoIsoEditado || objeto2dEditado"
+                  alt="Exemplo isométrico" />
+                <span v-else>ISO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="editor-quadrado-acoes">
+          <input ref="inputTextura" type="file" accept="image/*" hidden @change="carregarTextura" />
+          <button @click="inputTextura?.click()">Imagem</button>
+          <button @click="limparTextura">Limpar</button>
+          <button class="aplicar-textura" @click="aplicarTextura">Aplicar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 
 // Emits for closing the window
 const emit = defineEmits(['fechar'])
@@ -84,6 +172,30 @@ const zoom = ref(1)
 const tamanhoPincel = ref(1)
 const mostrarAmostras = ref(false)
 const mostrarTamanhoPincel = ref(false)
+const mostrarObjetos = ref(false)
+const editorQuadradoAberto = ref(false)
+const celulaEditada = ref(null)
+const canvasTextura = ref(null)
+const inputTextura = ref(null)
+const inputObjeto2d = ref(null)
+const inputObjetoIso = ref(null)
+const nomeObjetoEditado = ref('')
+const objeto2dEditado = ref(null)
+const objetoIsoEditado = ref(null)
+const orientacaoObjetoEditada = ref('chao')
+const alturaObjetoEditada = ref(1)
+const ladoParedeEditada = ref('norte')
+const ladosParede = [
+  { id: 'norte', nome: 'N' },
+  { id: 'leste', nome: 'L' },
+  { id: 'sul', nome: 'S' },
+  { id: 'oeste', nome: 'O' }
+]
+const modoVisualizador = ref('visualizador')
+const objetoAtual = ref(null)
+const amostraObjetoEditada = ref(null)
+const assinaturaObjetoOriginal = ref('')
+let desenhandoTextura = false
 const unidades = ref([
   { id: 'jogador', nome: 'Investigador', tipo: 'aliado', icone: '◆', linha: INICIO_MAPA + 1, coluna: INICIO_MAPA },
   { id: 'ameaca', nome: 'Ameaça', tipo: 'inimigo', icone: '◇', linha: INICIO_MAPA + 1, coluna: INICIO_MAPA + 2 }
@@ -93,12 +205,262 @@ const ferramentas = [
   { id: 'lapis', nome: 'Lápis', icone: '/map_tools_icons/pencil_icon.svg' },
   { id: 'borracha', nome: 'Borracha', icone: '/map_tools_icons/eraser_icon.svg' },
   { id: 'balde', nome: 'Balde', icone: '/map_tools_icons/bucket_icon.svg' },
-  { id: 'mao', nome: 'Mão', icone: '/map_tools_icons/hand_icon.svg' }
+  { id: 'mao', nome: 'Mão', icone: '/map_tools_icons/hand_icon.svg' },
+  { id: 'objeto', nome: 'Objeto', icone: '/map_tools_icons/object_icon.svg' }
 ]
 
 function selecionarFerramenta(id) {
   ferramentaSelecionada.value = id
   mostrarTamanhoPincel.value = id === 'lapis'
+  mostrarObjetos.value = id === 'objeto'
+}
+
+function estiloCelula(cell) {
+  return {
+    ...posicaoCelula(cell),
+    background: cell.cor || undefined,
+    backgroundImage: cell.textura ? `url(${cell.textura})` : undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+  }
+}
+
+function estiloObjeto(cell) {
+  const estilo = {}
+  if (cell.orientacao === 'parede') {
+    const lado = cell.ladoParede || 'norte'
+    estilo.position = 'absolute'
+    estilo.height = `${(cell.altura || 2) * 100}%`
+    estilo.width = '84%'
+    estilo.transform = transformacaoParede(lado)
+    estilo.transformOrigin = origemParede(lado)
+    Object.assign(estilo, posicaoParede(lado))
+  }
+  return estilo
+}
+
+function posicaoParede(lado) {
+  const posicoes = {
+    norte: { left: '8%', bottom: '0' },
+    sul: { left: '8%', top: '0' },
+    leste: { right: '0', bottom: '0' },
+    oeste: { left: '0', bottom: '0' }
+  }
+  return posicoes[lado] || posicoes.norte
+}
+
+function transformacaoParede(lado) {
+  const transformacoes = {
+    norte: 'rotateX(-90deg)',
+    leste: 'rotateY(90deg)',
+    sul: 'rotateX(90deg)',
+    oeste: 'rotateY(-90deg)'
+  }
+  return transformacoes[lado] || transformacoes.norte
+}
+
+function origemParede(lado) {
+  const origens = {
+    norte: 'bottom left',
+    leste: 'bottom right',
+    sul: 'top left',
+    oeste: 'bottom left'
+  }
+  return origens[lado] || origens.norte
+}
+
+const imagemVisualizador = computed(() => modoVisualizador.value === 'iso'
+  ? (objetoIsoEditado.value || objeto2dEditado.value)
+  : objeto2dEditado.value)
+
+const estiloVisualizador = computed(() => {
+  const estilo = { objectFit: 'contain', transform: 'none' }
+  if (orientacaoObjetoEditada.value === 'parede') {
+    estilo.position = 'absolute'
+    estilo.height = `${alturaObjetoEditada.value * 100}%`
+    estilo.width = '84%'
+    Object.assign(estilo, posicaoParede(ladoParedeEditada.value))
+  }
+  return estilo
+})
+
+function imagemObjeto(cell) {
+  return editorMode.value
+    ? (cell.objetoIso || cell.objeto2d)
+    : (cell.objeto2d || cell.objetoIso)
+}
+
+function abrirEditorUltimaCelula() {
+  const celula = celulasVisiveis.value.find(cell => cell.terreno !== 'vazio') || celulasVisiveis.value[0]
+  if (celula) abrirEditorCelula(celula)
+}
+
+async function abrirEditorCelula(cell) {
+  amostraObjetoEditada.value = null
+  assinaturaObjetoOriginal.value = ''
+  celulaEditada.value = cell
+  nomeObjetoEditado.value = cell.objetoNome || ''
+  objeto2dEditado.value = cell.objeto2d || null
+  objetoIsoEditado.value = cell.objetoIso || null
+  orientacaoObjetoEditada.value = cell.orientacao || 'chao'
+  alturaObjetoEditada.value = cell.altura || 1
+  ladoParedeEditada.value = cell.ladoParede || 'norte'
+  modoVisualizador.value = 'visualizador'
+  objetoAtual.value = cell.objetoNome || cell.objeto2d || cell.objetoIso
+    ? {
+      nome: cell.objetoNome || 'Objeto',
+      objeto2d: cell.objeto2d || null,
+      objetoIso: cell.objetoIso || null,
+      orientacao: cell.orientacao || 'chao',
+      altura: cell.altura || 1,
+      ladoParede: cell.ladoParede || 'norte'
+    }
+    : null
+  editorQuadradoAberto.value = true
+  await nextTick()
+  desenharTexturaExistente()
+}
+
+async function abrirEditorAmostra(objeto) {
+  const celula = cells.value.find(cell => {
+    const assinatura = `${cell.objetoNome}|${cell.objeto2d || ''}|${cell.objetoIso || ''}`
+    return assinatura === objeto.id
+  })
+  if (!celula) return
+
+  amostraObjetoEditada.value = objeto
+  assinaturaObjetoOriginal.value = objeto.id
+  celulaEditada.value = { ...celula }
+  nomeObjetoEditado.value = objeto.nome || ''
+  objeto2dEditado.value = objeto.objeto2d || null
+  objetoIsoEditado.value = objeto.objetoIso || null
+  orientacaoObjetoEditada.value = objeto.orientacao || 'chao'
+  alturaObjetoEditada.value = objeto.altura || 1
+  ladoParedeEditada.value = objeto.ladoParede || 'norte'
+  modoVisualizador.value = 'visualizador'
+  editorQuadradoAberto.value = true
+  await nextTick()
+  desenharTexturaExistente()
+}
+
+function fecharEditorQuadrado() {
+  editorQuadradoAberto.value = false
+  celulaEditada.value = null
+  amostraObjetoEditada.value = null
+  assinaturaObjetoOriginal.value = ''
+}
+
+function contextoTextura() {
+  return canvasTextura.value?.getContext('2d') || null
+}
+
+function desenharTexturaExistente() {
+  const contexto = contextoTextura()
+  if (!contexto) return
+  contexto.clearRect(0, 0, 240, 240)
+  if (!celulaEditada.value?.textura) return
+  const imagem = new Image()
+  imagem.onload = () => contexto.drawImage(imagem, 0, 0, 240, 240)
+  imagem.src = celulaEditada.value.textura
+}
+
+function pontoCanvas(event) {
+  const retangulo = canvasTextura.value.getBoundingClientRect()
+  return {
+    x: (event.clientX - retangulo.left) * (240 / retangulo.width),
+    y: (event.clientY - retangulo.top) * (240 / retangulo.height)
+  }
+}
+
+function iniciarDesenhoTextura(event) {
+  desenhandoTextura = true
+  canvasTextura.value.setPointerCapture(event.pointerId)
+  desenharTextura(event)
+}
+
+function desenharTextura(event) {
+  if (!desenhandoTextura) return
+  const contexto = contextoTextura()
+  const ponto = pontoCanvas(event)
+  contexto.fillStyle = corSelecionada.value
+  contexto.beginPath()
+  contexto.arc(ponto.x, ponto.y, Math.max(2, tamanhoPincel.value * 3), 0, Math.PI * 2)
+  contexto.fill()
+}
+
+function pararDesenhoTextura() {
+  desenhandoTextura = false
+}
+
+function limparTextura() {
+  const contexto = contextoTextura()
+  if (!contexto) return
+  contexto.clearRect(0, 0, 240, 240)
+}
+
+function carregarObjeto(event, tipo) {
+  const arquivo = event.target.files?.[0]
+  if (!arquivo) return
+  const leitor = new FileReader()
+  leitor.onload = () => {
+    if (tipo === 'objeto2d') objeto2dEditado.value = leitor.result
+    else objetoIsoEditado.value = leitor.result
+  }
+  leitor.readAsDataURL(arquivo)
+  event.target.value = ''
+}
+
+function carregarTextura(event) {
+  const arquivo = event.target.files?.[0]
+  if (!arquivo) return
+  const leitor = new FileReader()
+  leitor.onload = () => {
+    const imagem = new Image()
+    imagem.onload = () => contextoTextura()?.drawImage(imagem, 0, 0, 240, 240)
+    imagem.src = leitor.result
+  }
+  leitor.readAsDataURL(arquivo)
+  event.target.value = ''
+}
+
+function aplicarTextura() {
+  if (!celulaEditada.value || !canvasTextura.value) return
+  const textura = canvasTextura.value.toDataURL('image/png')
+  const nome = nomeObjetoEditado.value.trim()
+  const desenhoObjeto = canvasTextura.value.toDataURL('image/png')
+  const objeto2dFinal = objeto2dEditado.value || desenhoObjeto
+  const objetoIsoFinal = objetoIsoEditado.value || desenhoObjeto
+  if (amostraObjetoEditada.value) {
+    cells.value.forEach(cell => {
+      const assinatura = `${cell.objetoNome}|${cell.objeto2d || ''}|${cell.objetoIso || ''}`
+      if (assinatura !== assinaturaObjetoOriginal.value) return
+      cell.textura = textura
+      cell.objetoNome = nome
+      cell.objeto2d = objeto2dFinal
+      cell.objetoIso = objetoIsoFinal
+      cell.orientacao = orientacaoObjetoEditada.value
+      cell.altura = alturaObjetoEditada.value
+      cell.ladoParede = ladoParedeEditada.value
+    })
+  } else {
+    celulaEditada.value.textura = textura
+    celulaEditada.value.objetoNome = nome
+    celulaEditada.value.objeto2d = objeto2dFinal
+    celulaEditada.value.objetoIso = objetoIsoFinal
+    celulaEditada.value.orientacao = orientacaoObjetoEditada.value
+    celulaEditada.value.altura = alturaObjetoEditada.value
+    celulaEditada.value.ladoParede = ladoParedeEditada.value
+  }
+  objetoAtual.value = {
+    nome: celulaEditada.value.objetoNome || 'Objeto',
+    objeto2d: objeto2dFinal,
+    objetoIso: objetoIsoFinal,
+    orientacao: orientacaoObjetoEditada.value,
+    altura: alturaObjetoEditada.value
+    , ladoParede: ladoParedeEditada.value
+  }
+  celulaEditada.value.revelada = true
+  fecharEditorQuadrado()
 }
 const terrenoSelecionado = ref('floresta')
 const terrenos = ref([
@@ -151,6 +513,12 @@ const cells = ref(
     coluna: id % LIMITE_MAPA,
     terreno: 'vazio',
     cor: null,
+    objetoNome: '',
+    objeto2d: null,
+    objetoIso: null,
+    orientacao: 'chao',
+    altura: 1,
+    ladoParede: 'norte',
     revelada: Math.floor(id / LIMITE_MAPA) >= INICIO_MAPA
       && Math.floor(id / LIMITE_MAPA) < INICIO_MAPA + 3
       && id % LIMITE_MAPA >= INICIO_MAPA
@@ -192,6 +560,27 @@ const celulasVisiveis = computed(() => {
   return visiveis
 })
 
+const objetosCriados = computed(() => {
+  const unicos = new Map()
+  cells.value.forEach(cell => {
+    if (!cell.objetoNome && !cell.objeto2d && !cell.objetoIso) return
+    const id = `${cell.objetoNome}|${cell.objeto2d || ''}|${cell.objetoIso || ''}`
+    if (!unicos.has(id)) {
+      unicos.set(id, {
+        id,
+        nome: cell.objetoNome || 'Objeto',
+        imagem: cell.objeto2d || cell.objetoIso,
+        objeto2d: cell.objeto2d,
+        objetoIso: cell.objetoIso,
+        orientacao: cell.orientacao || 'chao',
+        altura: cell.altura || 1,
+        ladoParede: cell.ladoParede || 'norte'
+      })
+    }
+  })
+  return [...unicos.values()]
+})
+
 const limitesMapa = computed(() => {
   const visiveis = celulasVisiveis.value
   if (!visiveis.length) return { minLinha: 0, maxLinha: 0, minColuna: 0, maxColuna: 0 }
@@ -220,6 +609,8 @@ function posicaoUnidade(unidade) {
 let pintando = false
 
 let unidadeArrastada = null
+let objetoArrastado = null
+let objetoDestino = null
 
 function iniciarArrasteUnidade(event, unidade) {
   if (!editorMode.value || event.button !== 0) return
@@ -247,16 +638,100 @@ function pararArrasteUnidade() {
   window.removeEventListener('pointermove', moverUnidade)
 }
 
+function iniciarArrasteObjeto(event, cell) {
+  if (ferramentaSelecionada.value !== 'objeto' || event.button !== 0) return
+  selecionarObjeto(cell)
+  objetoArrastado = cell
+  objetoDestino = cell
+  window.addEventListener('pointermove', moverObjeto)
+  window.addEventListener('pointerup', pararArrasteObjeto, { once: true })
+}
+
+function moverObjeto(event) {
+  if (!objetoArrastado) return
+  const elemento = document.elementFromPoint(event.clientX, event.clientY)
+  const celulaDestino = elemento?.closest('.cell')
+  if (!celulaDestino) return
+
+  const destino = cells.value[Number(celulaDestino.dataset.id)]
+  if (!destino || destino === objetoArrastado) return
+  objetoDestino = destino
+}
+
+function pararArrasteObjeto() {
+  if (objetoArrastado && objetoDestino && objetoDestino !== objetoArrastado) {
+    objetoDestino.objetoNome = objetoArrastado.objetoNome
+    objetoDestino.objeto2d = objetoArrastado.objeto2d
+    objetoDestino.objetoIso = objetoArrastado.objetoIso
+    objetoDestino.orientacao = objetoArrastado.orientacao
+    objetoDestino.altura = objetoArrastado.altura
+    objetoDestino.ladoParede = objetoArrastado.ladoParede
+    objetoDestino.textura = objetoArrastado.textura
+    objetoDestino.cor = objetoArrastado.cor
+    objetoDestino.terreno = objetoArrastado.terreno
+    objetoDestino.revelada = true
+
+    objetoArrastado.objetoNome = ''
+    objetoArrastado.objeto2d = null
+    objetoArrastado.objetoIso = null
+    objetoArrastado.textura = null
+  }
+  objetoArrastado = null
+  objetoDestino = null
+  window.removeEventListener('pointermove', moverObjeto)
+}
+
 function iniciarInteracao(event, cell) {
   if (event.button !== 0) return
 
-  if (ferramentaSelecionada.value === 'mao') {
+  if (ferramentaSelecionada.value === 'objeto') {
+    colocarObjeto(cell)
+  } else if (ferramentaSelecionada.value === 'mao') {
     iniciarPan(event, 0)
   } else if (ferramentaSelecionada.value === 'balde') {
     preencherArea(cell)
   } else {
     iniciarPintura(cell)
   }
+}
+
+function colocarObjeto(cell) {
+  if (cell.objeto2d || cell.objetoIso || cell.objetoNome) {
+    selecionarObjeto(cell)
+    return
+  }
+  if (!objetoAtual.value) {
+    abrirEditorCelula(cell)
+    return
+  }
+  cell.objetoNome = objetoAtual.value.nome
+  cell.objeto2d = objetoAtual.value.objeto2d
+  cell.objetoIso = objetoAtual.value.objetoIso
+  cell.orientacao = objetoAtual.value.orientacao || 'chao'
+  cell.altura = objetoAtual.value.altura || 1
+  cell.ladoParede = objetoAtual.value.ladoParede || 'norte'
+  cell.revelada = true
+  objetoAtual.value = null
+}
+
+function selecionarObjeto(cell) {
+  objetoAtual.value = {
+    id: `${cell.objetoNome}|${cell.objeto2d || ''}|${cell.objetoIso || ''}`,
+    nome: cell.objetoNome || 'Objeto',
+    objeto2d: cell.objeto2d || null,
+    objetoIso: cell.objetoIso || null,
+    orientacao: cell.orientacao || 'chao',
+    altura: cell.altura || 1,
+    ladoParede: cell.ladoParede || 'norte'
+  }
+}
+
+function selecionarObjetoAmostra(objeto) {
+  objetoAtual.value = objeto
+}
+
+function iniciarPanNoCorpo(event) {
+  if (ferramentaSelecionada.value === 'mao') iniciarPan(event, 0)
 }
 
 function iniciarPintura(cell) {
@@ -600,10 +1075,10 @@ onBeforeUnmount(() => {
   transition: filter 0.2s ease;
 }
 
-.ferramenta-btn > span:last-child,
-.amostras-toggle > span:last-child,
-.controle-cor > span,
-.controle-pincel > span {
+.ferramenta-btn>span:last-child,
+.amostras-toggle>span:last-child,
+.controle-cor>span,
+.controle-pincel>span {
   display: none;
 }
 
@@ -628,18 +1103,24 @@ onBeforeUnmount(() => {
 }
 
 @keyframes botao-selecionado-pulsar {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.06);
   }
 }
 
 @keyframes icone-selecionado-pulsar {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: brightness(1.12) drop-shadow(0 0 -1px rgba(219, 218, 216, 0.274));
   }
+
   50% {
     filter: brightness(1.42) drop-shadow(0 0 4px rgba(250, 249, 249, 0.87));
   }
@@ -712,7 +1193,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.controle-cor > img {
+.controle-cor>img {
   position: relative;
   z-index: 2;
   display: block;
@@ -722,8 +1203,8 @@ onBeforeUnmount(() => {
   transition: filter 0.2s ease;
 }
 
-.controle-cor:hover > img,
-.controle-cor:focus-within > img {
+.controle-cor:hover>img,
+.controle-cor:focus-within>img {
   filter: brightness(1.25) drop-shadow(0 0 7px rgba(255, 255, 255, 0.55));
 }
 
@@ -754,7 +1235,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
 }
 
-.controle-pincel > span {
+.controle-pincel>span {
   display: block;
   color: #d9a441;
 }
@@ -778,6 +1259,67 @@ onBeforeUnmount(() => {
   background: #181818;
   border: 1px solid #3a3a3a;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.pasta-objetos {
+  position: absolute;
+  top: 118px;
+  left: calc(100% + 5px);
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(2, 70px);
+  gap: 5px;
+  width: 150px;
+  padding: 7px;
+  background: #181818;
+  border: 1px solid #3a3a3a;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.pasta-objetos-titulo,
+.objetos-vazio {
+  grid-column: 1 / -1;
+  color: #d9a441;
+  font: 10px "Aubrey", system-ui;
+}
+
+.objetos-vazio {
+  color: #777;
+  line-height: 1.3;
+}
+
+.objeto-amostra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  padding: 4px;
+  background: #242424;
+  border: 1px solid #454545;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.objeto-amostra:hover,
+.objeto-amostra.selecionado {
+  border-color: #d9a441;
+  color: #f3be58;
+}
+
+.objeto-amostra img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.objeto-amostra small {
+  max-width: 62px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
 }
 
 .legenda-item {
@@ -850,7 +1392,8 @@ onBeforeUnmount(() => {
 
 .janela-corpo {
   flex: 1;
-  overflow: hidden; /* Changed from auto */
+  overflow: hidden;
+  /* Changed from auto */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -859,9 +1402,317 @@ onBeforeUnmount(() => {
   margin-left: 48px;
 }
 
+.editor-quadrado {
+  position: absolute;
+  top: 76px;
+  left: 190px;
+  z-index: 50;
+  width: 292px;
+  min-width: 0;
+  min-height: 0;
+  background: #171717;
+  border: 1px solid #454545;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+}
+
+.editor-quadrado-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 7px 0 10px;
+  color: #d9a441;
+  font-size: 11px;
+  border-bottom: 1px solid #333;
+}
+
+.editor-quadrado-barra .janela-btn {
+  width: 22px;
+  height: 22px;
+}
+
+.editor-quadrado-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.canvas-textura {
+  display: block;
+  width: 240px;
+  height: 240px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.visualizador-controles {
+  display: flex;
+  gap: 5px;
+}
+
+.visualizador-controles button {
+  flex: 1;
+  padding: 4px;
+  background: #292929;
+  border: 1px solid #454545;
+  color: #aaa;
+  font: 10px "Aubrey", system-ui;
+  cursor: pointer;
+}
+
+.visualizador-controles button.ativo,
+.visualizador-controles button:hover {
+  border-color: #d9a441;
+  color: #f3be58;
+}
+
+.objeto-visualizador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 240px;
+  height: 240px;
+  background: #111;
+  border: 1px solid #444;
+}
+
+.celula-visualizador {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  overflow: visible;
+  background: #254d35;
+  border: 1px solid #536d5d;
+  color: #777;
+  font-size: 10px;
+}
+
+.celula-visualizador.visualizador-iso {
+  background: #242424;
+  transform: rotateX(60deg) rotateZ(-45deg);
+  transform-style: preserve-3d;
+}
+
+.celula-visualizador img {
+  position: absolute;
+  left: 8%;
+  bottom: 8%;
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+
+
+.editor-quadrado-acoes {
+  display: flex;
+  gap: 5px;
+}
+
+.objeto-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px;
+  background: #202020;
+  border: 1px solid #3a3a3a;
+}
+
+.objeto-nome {
+  height: 24px;
+  padding: 0 6px;
+  background: #151515;
+  border: 1px solid #454545;
+  color: #eee;
+  font: 10px "Aubrey", system-ui;
+}
+
+.objeto-arquivos,
+.objeto-previews {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.objeto-arquivos button {
+  flex: 1;
+  padding: 4px;
+  background: #292929;
+  border: 1px solid #454545;
+  color: #bbb;
+  font: 10px "Aubrey", system-ui;
+  cursor: pointer;
+}
+
+.objeto-arquivos button:hover {
+  border-color: #d9a441;
+  color: #f3be58;
+}
+
+.objeto-orientacao {
+  display: flex;
+  gap: 5px;
+}
+
+.objeto-orientacao button {
+  flex: 1;
+  padding: 4px;
+  background: #292929;
+  border: 1px solid #454545;
+  color: #aaa;
+  font: 10px "Aubrey", system-ui;
+  cursor: pointer;
+}
+
+.objeto-orientacao button.ativo,
+.objeto-orientacao button:hover {
+  border-color: #d9a441;
+  color: #f3be58;
+}
+
+.altura-objeto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #aaa;
+  font-size: 10px;
+}
+
+.altura-objeto input {
+  flex: 1;
+  accent-color: #d9a441;
+}
+
+.lado-parede {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.lado-parede button {
+  padding: 4px 0;
+  background: #292929;
+  border: 1px solid #454545;
+  color: #aaa;
+  font: 10px "Aubrey", system-ui;
+  cursor: pointer;
+}
+
+.lado-parede button.ativo,
+.lado-parede button:hover {
+  border-color: #d9a441;
+  color: #f3be58;
+}
+
+.objeto-previews {
+  min-height: 42px;
+}
+
+.objeto-previews img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  background: #111;
+  border: 1px solid #454545;
+}
+
+.objeto-exemplo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #d9a441;
+  font-size: 10px;
+}
+
+.exemplo-cenarios {
+  display: flex;
+  gap: 8px;
+}
+
+.exemplo-cenario {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 82px;
+  height: 62px;
+  overflow: hidden;
+  background: #254d35;
+  border: 1px solid #454545;
+  color: #777;
+  font-size: 9px;
+}
+
+.exemplo-cenario img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+}
+
+.exemplo-iso {
+  background: #242424;
+  transform: perspective(120px) rotateX(12deg);
+}
+
+.editor-quadrado-acoes button {
+  flex: 1;
+  padding: 5px 6px;
+  background: #242424;
+  border: 1px solid #454545;
+  color: #aaa;
+  font: 10px "Aubrey", system-ui;
+  cursor: pointer;
+}
+
+.editor-quadrado-acoes button:hover,
+.editor-quadrado-acoes .aplicar-textura {
+  border-color: #d9a441;
+  color: #f3be58;
+}
+
+.editor-quadrado-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.editor-quadrado-btn:hover {
+  color: #f3be58;
+}
+
+.editor-quadrado-btn.selecionado {
+  color: #f3be58;
+  animation: botao-selecionado-pulsar 1.8s ease-in-out infinite;
+}
+
+.janela-corpo.mao-ativa {
+  cursor: grab;
+}
+
+.janela-corpo.mao-ativa:active {
+  cursor: grabbing;
+}
+
 .grid {
   background: transparent;
   border: 0;
+  transform-style: preserve-3d;
 }
 
 .cell {
@@ -869,6 +1720,52 @@ onBeforeUnmount(() => {
   height: 100%;
   border: 0.1px solid #333;
   cursor: pointer;
+  position: relative;
+  overflow: visible;
+  transform-style: preserve-3d;
+}
+
+.objeto-celula {
+  position: absolute;
+  inset: 8%;
+  z-index: 3;
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: bottom center;
+}
+
+.objeto-celula>img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.objeto-celula.objeto-parede {
+  inset: auto;
+  max-height: none;
+}
+
+.objeto-celula.objeto-arrastavel {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.objeto-celula.objeto-arrastavel:active {
+  cursor: grabbing;
+}
+
+.isometrico .objeto-celula {
+  inset: -18% 2% 2%;
+  width: 96%;
+  height: 116%;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.55));
 }
 
 .unidade-combate {
@@ -923,4 +1820,3 @@ onBeforeUnmount(() => {
   background: #9a7a45;
 }
 </style>
-
