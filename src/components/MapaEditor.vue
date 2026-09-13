@@ -85,70 +85,94 @@
         <button class="janela-btn" @click="fecharEditorQuadrado">X</button>
       </div>
       <div class="editor-quadrado-corpo">
+
         <div class="visualizador-controles">
           <button :class="{ ativo: modoVisualizador === '2d' }" @click="modoVisualizador = '2d'">2D</button>
           <button :class="{ ativo: modoVisualizador === 'iso' }" @click="modoVisualizador = 'iso'">ISO</button>
-          <button :class="{ ativo: modoVisualizador === 'desenho' }"
-            @click="modoVisualizador = 'desenho'">Desenhar</button>
         </div>
-        <div v-if="modoVisualizador !== 'desenho'" class="objeto-visualizador">
+
+        <div class="objeto-visualizador objeto-visualizador-longe">
           <div class="celula-visualizador" :class="{ 'visualizador-iso': modoVisualizador === 'iso' }">
-            <img v-if="imagemVisualizador" :src="imagemVisualizador" alt="Visualização do objeto"
-              :style="estiloVisualizador" />
+            <div v-if="imagemVisualizador" class="objeto-visualizador-item"
+              :class="{ 'objeto-parede': orientacaoObjetoEditada === 'parede' }" :style="estiloVisualizador">
+              <img :src="imagemVisualizador" alt="Visualização do objeto" />
+            </div>
             <span v-else>Sem imagem</span>
           </div>
         </div>
-        <canvas v-show="modoVisualizador === 'desenho'" ref="canvasTextura" width="240" height="240"
-          class="canvas-textura" @pointerdown="iniciarDesenhoTextura" @pointermove="desenharTextura"
-          @pointerup="pararDesenhoTextura" @pointerleave="pararDesenhoTextura"></canvas>
+
         <div class="objeto-editor">
           <input v-model="nomeObjetoEditado" class="objeto-nome" placeholder="Nome do objeto" maxlength="24" />
+
           <div class="objeto-arquivos">
             <input ref="inputObjeto2d" type="file" accept="image/*" hidden
               @change="carregarObjeto($event, 'objeto2d')" />
             <input ref="inputObjetoIso" type="file" accept="image/*" hidden
               @change="carregarObjeto($event, 'objetoIso')" />
-            <button @click="inputObjeto2d?.click()">Ícone 2D</button>
-            <button @click="inputObjetoIso?.click()">Modelo ISO</button>
+
+            <button class="objeto-arquivo-btn" @click="inputObjeto2d?.click()">
+              <img v-if="objeto2dEditado" :src="objeto2dEditado" alt="Prévia 2D" class="objeto-arquivo-thumb" />
+              Ícone 2D
+            </button>
+            <button class="objeto-arquivo-btn" @click="inputObjetoIso?.click()">
+              <img v-if="objetoIsoEditado" :src="objetoIsoEditado" alt="Prévia ISO" class="objeto-arquivo-thumb" />
+              Modelo ISO
+            </button>
           </div>
+
           <div class="objeto-orientacao">
             <button :class="{ ativo: orientacaoObjetoEditada === 'chao' }"
               @click="orientacaoObjetoEditada = 'chao'">Chão</button>
             <button :class="{ ativo: orientacaoObjetoEditada === 'parede' }"
               @click="orientacaoObjetoEditada = 'parede'">Parede</button>
           </div>
+
           <label v-if="orientacaoObjetoEditada === 'parede'" class="altura-objeto">
             Altura {{ alturaObjetoEditada }}x
             <input v-model.number="alturaObjetoEditada" type="range" min="1" max="4" step="0.5" />
           </label>
+
           <div v-if="orientacaoObjetoEditada === 'parede'" class="lado-parede">
             <button v-for="lado in ladosParede" :key="lado.id" :class="{ ativo: ladoParedeEditada === lado.id }"
               @click="ladoParedeEditada = lado.id">{{ lado.nome }}</button>
           </div>
-          <div class="objeto-previews">
-            <img v-if="objeto2dEditado" :src="objeto2dEditado" alt="Prévia 2D" />
-            <img v-if="objetoIsoEditado" :src="objetoIsoEditado" alt="Prévia semi 3D" />
-          </div>
-          <div class="objeto-exemplo">
-            <span>Exemplo no mapa</span>
-            <div class="exemplo-cenarios">
-              <div class="exemplo-cenario">
-                <img v-if="objeto2dEditado" :src="objeto2dEditado" alt="Exemplo 2D" />
-                <span v-else>2D</span>
-              </div>
-              <div class="exemplo-cenario exemplo-iso">
-                <img v-if="objetoIsoEditado || objeto2dEditado" :src="objetoIsoEditado || objeto2dEditado"
-                  alt="Exemplo isométrico" />
-                <span v-else>ISO</span>
-              </div>
-            </div>
-          </div>
+
+          <label class="controle-escala">
+            Tamanho {{ Math.round(escalaObjetoEditada * 100) }}%
+            <input v-model.number="escalaObjetoEditada" type="range" min="0.1" max="3" step="0.05" />
+          </label>
+
+          <label class="controle-offset">
+            Pos X {{ offsetXObjetoEditada > 0 ? '+' : '' }}{{ Math.round(offsetXObjetoEditada * 100) }}%
+            <input v-model.number="offsetXObjetoEditada" type="range" min="-0.9" max="0.9" step="0.05" />
+          </label>
+
+          <label class="controle-offset">
+            Pos Y {{ offsetYObjetoEditada > 0 ? '+' : '' }}{{ Math.round(offsetYObjetoEditada * 100) }}%
+            <input v-model.number="offsetYObjetoEditada" type="range" min="-0.9" max="0.9" step="0.05" />
+          </label>
         </div>
+
         <div class="editor-quadrado-acoes">
-          <input ref="inputTextura" type="file" accept="image/*" hidden @change="carregarTextura" />
-          <button @click="inputTextura?.click()">Imagem</button>
+          <button @click="abrirEditorTextura">Pintar textura</button>
+          <button @click="limparObjeto">Limpar objeto</button>
+          <button class="aplicar-textura" @click="aplicarObjeto">Aplicar</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div v-if="editorTexturaAberto" class="editor-textura janela-flutuante" @mousedown.stop>
+      <div class="editor-quadrado-barra">
+        <span>Textura do quadrado</span>
+        <button class="janela-btn" @click="editorTexturaAberto = false">X</button>
+      </div>
+      <div class="editor-quadrado-corpo">
+        <canvas ref="canvasTextura" width="240" height="240" class="canvas-textura" @pointerdown="iniciarDesenhoTextura"
+          @pointermove="desenharTextura" @pointerup="pararDesenhoTextura" @pointerleave="pararDesenhoTextura"></canvas>
+        <div class="editor-quadrado-acoes">
           <button @click="limparTextura">Limpar</button>
-          <button class="aplicar-textura" @click="aplicarTextura">Aplicar</button>
+          <button class="aplicar-textura" @click="aplicarTexturaCanvas">Aplicar</button>
         </div>
       </div>
     </div>
@@ -174,6 +198,7 @@ const mostrarAmostras = ref(false)
 const mostrarTamanhoPincel = ref(false)
 const mostrarObjetos = ref(false)
 const editorQuadradoAberto = ref(false)
+const editorTexturaAberto = ref(false)
 const celulaEditada = ref(null)
 const canvasTextura = ref(null)
 const inputTextura = ref(null)
@@ -185,13 +210,18 @@ const objetoIsoEditado = ref(null)
 const orientacaoObjetoEditada = ref('chao')
 const alturaObjetoEditada = ref(1)
 const ladoParedeEditada = ref('norte')
+const escalaObjetoEditada = ref(1)
+const offsetXObjetoEditada = ref(0)
+const offsetYObjetoEditada = ref(0)
+const rotacaoObjetoEditada = ref(0)
+const alturaChaoObjetoEditada = ref(1)
 const ladosParede = [
   { id: 'norte', nome: 'N' },
   { id: 'leste', nome: 'L' },
   { id: 'sul', nome: 'S' },
   { id: 'oeste', nome: 'O' }
 ]
-const modoVisualizador = ref('visualizador')
+const modoVisualizador = ref('iso')
 const objetoAtual = ref(null)
 const amostraObjetoEditada = ref(null)
 const assinaturaObjetoOriginal = ref('')
@@ -227,14 +257,24 @@ function estiloCelula(cell) {
 
 function estiloObjeto(cell) {
   const estilo = {}
+  const escala = cell.escala || 1
+  const ox = (cell.offsetX || 0) * 100
+  const oy = (cell.offsetY || 0) * 100
+
   if (cell.orientacao === 'parede') {
     const lado = cell.ladoParede || 'norte'
     estilo.position = 'absolute'
     estilo.height = `${(cell.altura || 2) * 100}%`
     estilo.width = '84%'
-    estilo.transform = transformacaoParede(lado)
+    estilo.transform = `${transformacaoParede(lado)} scale(${escala})`
     estilo.transformOrigin = origemParede(lado)
     Object.assign(estilo, posicaoParede(lado))
+  } else {
+    estilo.position = 'absolute'
+    estilo.width = `${escala * 100}%`
+    estilo.height = `${escala * 100}%`
+    estilo.left = `${(1 - escala) * 50 + ox}%`
+    estilo.top = `${(1 - escala) * 50 + oy}%`
   }
   return estilo
 }
@@ -274,12 +314,24 @@ const imagemVisualizador = computed(() => modoVisualizador.value === 'iso'
   : objeto2dEditado.value)
 
 const estiloVisualizador = computed(() => {
-  const estilo = { objectFit: 'contain', transform: 'none' }
+  const estilo = {}
+  const escala = escalaObjetoEditada.value || 1
+  const ox = (offsetXObjetoEditada.value || 0) * 100
+  const oy = (offsetYObjetoEditada.value || 0) * 100
+
   if (orientacaoObjetoEditada.value === 'parede') {
     estilo.position = 'absolute'
     estilo.height = `${alturaObjetoEditada.value * 100}%`
     estilo.width = '84%'
+    estilo.transform = `${transformacaoParede(ladoParedeEditada.value)} scale(${escala})`
+    estilo.transformOrigin = origemParede(ladoParedeEditada.value)
     Object.assign(estilo, posicaoParede(ladoParedeEditada.value))
+  } else {
+    estilo.position = 'absolute'
+    estilo.width = `${escala * 100}%`
+    estilo.height = `${escala * 100}%`
+    estilo.left = `${(1 - escala) * 50 + ox}%`
+    estilo.top = `${(1 - escala) * 50 + oy}%`
   }
   return estilo
 })
@@ -295,6 +347,12 @@ function abrirEditorUltimaCelula() {
   if (celula) abrirEditorCelula(celula)
 }
 
+async function abrirEditorTextura() {
+  editorTexturaAberto.value = true
+  await nextTick()
+  desenharTexturaExistente()
+}
+
 async function abrirEditorCelula(cell) {
   amostraObjetoEditada.value = null
   assinaturaObjetoOriginal.value = ''
@@ -305,7 +363,10 @@ async function abrirEditorCelula(cell) {
   orientacaoObjetoEditada.value = cell.orientacao || 'chao'
   alturaObjetoEditada.value = cell.altura || 1
   ladoParedeEditada.value = cell.ladoParede || 'norte'
-  modoVisualizador.value = 'visualizador'
+  escalaObjetoEditada.value = cell.escala ?? 1
+  offsetXObjetoEditada.value = cell.offsetX ?? 0
+  offsetYObjetoEditada.value = cell.offsetY ?? 0
+  modoVisualizador.value = 'iso'
   objetoAtual.value = cell.objetoNome || cell.objeto2d || cell.objetoIso
     ? {
       nome: cell.objetoNome || 'Objeto',
@@ -317,8 +378,6 @@ async function abrirEditorCelula(cell) {
     }
     : null
   editorQuadradoAberto.value = true
-  await nextTick()
-  desenharTexturaExistente()
 }
 
 async function abrirEditorAmostra(objeto) {
@@ -337,10 +396,11 @@ async function abrirEditorAmostra(objeto) {
   orientacaoObjetoEditada.value = objeto.orientacao || 'chao'
   alturaObjetoEditada.value = objeto.altura || 1
   ladoParedeEditada.value = objeto.ladoParede || 'norte'
-  modoVisualizador.value = 'visualizador'
+  escalaObjetoEditada.value = objeto.escala ?? 1
+  offsetXObjetoEditada.value = objeto.offsetX ?? 0
+  offsetYObjetoEditada.value = objeto.offsetY ?? 0
+  modoVisualizador.value = 'iso'
   editorQuadradoAberto.value = true
-  await nextTick()
-  desenharTexturaExistente()
 }
 
 function fecharEditorQuadrado() {
@@ -423,45 +483,72 @@ function carregarTextura(event) {
   event.target.value = ''
 }
 
-function aplicarTextura() {
-  if (!celulaEditada.value || !canvasTextura.value) return
-  const textura = canvasTextura.value.toDataURL('image/png')
+function aplicarObjeto() {
+  if (!celulaEditada.value) return
   const nome = nomeObjetoEditado.value.trim()
-  const desenhoObjeto = canvasTextura.value.toDataURL('image/png')
-  const objeto2dFinal = objeto2dEditado.value || desenhoObjeto
-  const objetoIsoFinal = objetoIsoEditado.value || desenhoObjeto
+  const objeto2dFinal = objeto2dEditado.value || null
+  const objetoIsoFinal = objetoIsoEditado.value || null
+
   if (amostraObjetoEditada.value) {
     cells.value.forEach(cell => {
       const assinatura = `${cell.objetoNome}|${cell.objeto2d || ''}|${cell.objetoIso || ''}`
       if (assinatura !== assinaturaObjetoOriginal.value) return
-      cell.textura = textura
       cell.objetoNome = nome
       cell.objeto2d = objeto2dFinal
       cell.objetoIso = objetoIsoFinal
       cell.orientacao = orientacaoObjetoEditada.value
       cell.altura = alturaObjetoEditada.value
       cell.ladoParede = ladoParedeEditada.value
+      cell.escala = escalaObjetoEditada.value
+      cell.offsetX = offsetXObjetoEditada.value
+      cell.offsetY = offsetYObjetoEditada.value
     })
   } else {
-    celulaEditada.value.textura = textura
     celulaEditada.value.objetoNome = nome
     celulaEditada.value.objeto2d = objeto2dFinal
     celulaEditada.value.objetoIso = objetoIsoFinal
     celulaEditada.value.orientacao = orientacaoObjetoEditada.value
     celulaEditada.value.altura = alturaObjetoEditada.value
     celulaEditada.value.ladoParede = ladoParedeEditada.value
+    celulaEditada.value.escala = escalaObjetoEditada.value
+    celulaEditada.value.offsetX = offsetXObjetoEditada.value
+    celulaEditada.value.offsetY = offsetYObjetoEditada.value
   }
+
   objetoAtual.value = {
-    nome: celulaEditada.value.objetoNome || 'Objeto',
+    nome: nome || 'Objeto',
     objeto2d: objeto2dFinal,
     objetoIso: objetoIsoFinal,
     orientacao: orientacaoObjetoEditada.value,
-    altura: alturaObjetoEditada.value
-    , ladoParede: ladoParedeEditada.value
+    altura: alturaObjetoEditada.value,
+    ladoParede: ladoParedeEditada.value,
+    escala: escalaObjetoEditada.value,
+    offsetX: offsetXObjetoEditada.value,
+    offsetY: offsetYObjetoEditada.value
   }
   celulaEditada.value.revelada = true
   fecharEditorQuadrado()
 }
+
+function limparObjeto() {
+  nomeObjetoEditado.value = ''
+  objeto2dEditado.value = null
+  objetoIsoEditado.value = null
+  orientacaoObjetoEditada.value = 'chao'
+  alturaObjetoEditada.value = 1
+  ladoParedeEditada.value = 'norte'
+  escalaObjetoEditada.value = 1
+  offsetXObjetoEditada.value = 0
+  offsetYObjetoEditada.value = 0
+}
+
+function aplicarTexturaCanvas() {
+  if (!celulaEditada.value || !canvasTextura.value) return
+  celulaEditada.value.textura = canvasTextura.value.toDataURL('image/png')
+  celulaEditada.value.revelada = true
+  editorTexturaAberto.value = false
+}
+
 const terrenoSelecionado = ref('floresta')
 const terrenos = ref([
   { id: 'vazio', nome: 'Vazio', cor: '#1a1a1a' },
@@ -519,6 +606,9 @@ const cells = ref(
     orientacao: 'chao',
     altura: 1,
     ladoParede: 'norte',
+    escala: 1,
+    offsetX: 0,
+    offsetY: 0,
     revelada: Math.floor(id / LIMITE_MAPA) >= INICIO_MAPA
       && Math.floor(id / LIMITE_MAPA) < INICIO_MAPA + 3
       && id % LIMITE_MAPA >= INICIO_MAPA
@@ -666,6 +756,9 @@ function pararArrasteObjeto() {
     objetoDestino.orientacao = objetoArrastado.orientacao
     objetoDestino.altura = objetoArrastado.altura
     objetoDestino.ladoParede = objetoArrastado.ladoParede
+    objetoDestino.escala = objetoArrastado.escala ?? 1
+    objetoDestino.offsetX = objetoArrastado.offsetX ?? 0
+    objetoDestino.offsetY = objetoArrastado.offsetY ?? 0
     objetoDestino.textura = objetoArrastado.textura
     objetoDestino.cor = objetoArrastado.cor
     objetoDestino.terreno = objetoArrastado.terreno
@@ -710,6 +803,9 @@ function colocarObjeto(cell) {
   cell.orientacao = objetoAtual.value.orientacao || 'chao'
   cell.altura = objetoAtual.value.altura || 1
   cell.ladoParede = objetoAtual.value.ladoParede || 'norte'
+  cell.escala = objetoAtual.value.escala ?? 1
+  cell.offsetX = objetoAtual.value.offsetX ?? 0
+  cell.offsetY = objetoAtual.value.offsetY ?? 0
   cell.revelada = true
   objetoAtual.value = null
 }
@@ -722,7 +818,10 @@ function selecionarObjeto(cell) {
     objetoIso: cell.objetoIso || null,
     orientacao: cell.orientacao || 'chao',
     altura: cell.altura || 1,
-    ladoParede: cell.ladoParede || 'norte'
+    ladoParede: cell.ladoParede || 'norte',
+    escala: cell.escala ?? 1,
+    offsetX: cell.offsetX ?? 0,
+    offsetY: cell.offsetY ?? 0
   }
 }
 
@@ -1438,6 +1537,19 @@ onBeforeUnmount(() => {
   padding: 10px;
 }
 
+.editor-textura {
+  position: absolute;
+  top: 76px;
+  left: 500px;
+  z-index: 51;
+  width: 260px;
+  min-width: 0;
+  min-height: 0;
+  background: #171717;
+  border: 1px solid #454545;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+}
+
 .canvas-textura {
   display: block;
   width: 240px;
@@ -1484,18 +1596,19 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 150px;
-  height: 150px;
+  width: 30px;
+  height: 30px;
   overflow: visible;
-  background: #254d35;
-  border: 1px solid #536d5d;
+  background: #383838;
+  border: 1px solid #4d4d4d;
   color: #777;
   font-size: 10px;
+  zoom: 3.0;
 }
 
 .celula-visualizador.visualizador-iso {
   background: #242424;
-  transform: rotateX(60deg) rotateZ(-45deg);
+  transform: rotateX(60deg) rotateZ(-45deg) scale(0.8);
   transform-style: preserve-3d;
 }
 
@@ -1503,8 +1616,8 @@ onBeforeUnmount(() => {
   position: absolute;
   left: 8%;
   bottom: 8%;
-  width: 84%;
-  height: 84%;
+  width: 60%;
+  height: 60%;
   object-fit: contain;
   pointer-events: none;
 }
@@ -1727,14 +1840,15 @@ onBeforeUnmount(() => {
 
 .objeto-celula {
   position: absolute;
-  inset: 8%;
+  inset: 0;
   z-index: 3;
-  width: 84%;
-  height: 84%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  transform-origin: bottom center;
+  transform-origin: center center;
+  overflow: visible;
 }
 
 .objeto-celula>img {
@@ -1762,9 +1876,6 @@ onBeforeUnmount(() => {
 }
 
 .isometrico .objeto-celula {
-  inset: -18% 2% 2%;
-  width: 96%;
-  height: 116%;
   filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.55));
 }
 
@@ -1818,5 +1929,77 @@ onBeforeUnmount(() => {
 
 .terreno-estrada {
   background: #9a7a45;
+}
+
+.objeto-visualizador-longe {
+  padding: 70px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editor-textura {
+  width: 300px;
+}
+
+.objeto-arquivo-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.objeto-arquivo-thumb {
+  width: 18px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.objeto-visualizador-item {
+  position: absolute;
+  inset: 8%;
+  width: 84%;
+  height: 84%;
+  transform-origin: bottom center;
+}
+
+.objeto-visualizador-item > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: none;
+  display: block;
+}
+
+.visualizador-iso .objeto-visualizador-item {
+  inset: -18% 2% 2%;
+  width: 96%;
+  height: 116%;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.55));
+}
+
+.visualizador-iso .objeto-visualizador-item.objeto-parede {
+  inset: auto;
+  width: 84%;
+  filter: none;
+}
+
+.controle-escala,
+.controle-offset {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #aaa;
+  padding: 4px 0;
+}
+
+.controle-escala input,
+.controle-offset input {
+  width: 100%;
+  accent-color: #6a8ca5;
 }
 </style>
