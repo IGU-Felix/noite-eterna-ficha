@@ -553,18 +553,26 @@ export default {
     }
 
     function abrirRolagemAtaque(ataque) {
-      const periciaLutar = pericias.value.find(p => p.nome === "Lutar")
+      // 1. Lê a sua nova opção do HTML (assume 'POD' se estiver vazio)
+      const atributoSelecionado = ataque.atributoAtaque === 'PRE' ? 'PRE' : 'POD'
+      const periciaNome = atributoSelecionado === 'PRE' ? 'Mirar' : 'Lutar'
+
+      // 2. Busca a perícia dinamicamente na ficha
+      const periciaUsada = pericias.value.find(p => p.nome === periciaNome)
+
       const quantidade = Math.max(1, Number(ataque.qtdDados) || 1)
       const tipoDado = Math.max(2, Number(ataque.tipoDado) || 6)
       const dadosDano = Array.from({ length: quantidade }, () => Math.floor(Math.random() * tipoDado) + 1)
       const danoBase = dadosDano.reduce((total, dado) => total + dado, 0)
 
-      atributoPeriodAtual = primeiroAtributo(periciaLutar?.atributo || "POD")
-      rolagemConfig.dados = valorAtributo(atributoPeriodAtual) || 1
-      rolagemConfig.modificador = periciaLutar?.mod || 0
-      rolagemConfig.titulo = `Teste de Lutar · ${ataque.nome || "Ataque"}`
-      rolagemConfig.periciaNome = "Lutar"
+      // 3. Configura a rolagem baseada na sua escolha
+      atributoPeriodAtual = atributoSelecionado
+      rolagemConfig.dados = valorAtributo(atributoSelecionado) || 1
+      rolagemConfig.modificador = periciaUsada?.mod || 0
+      rolagemConfig.titulo = `Teste de ${periciaNome} · ${ataque.nome || "Ataque"}`
+      rolagemConfig.periciaNome = periciaNome
       rolagemConfig.autoRolar = true
+
       resultadoDano.value = {
         nome: ataque.nome || "Ataque",
         dados: dadosDano,
@@ -697,6 +705,7 @@ export default {
           tipoDado: 6,
           tipoDano: "Nenhum",
           efeito: "",
+          modificador: "",
           editando: true,
           expandido: false
         })
@@ -757,6 +766,7 @@ export default {
         qtdDados: 1,
         tipoDado: 6,
         tipoDano: "Físico",
+        modificador: "",
         efeito: `Alcance: ${truque.alcance} · Dado: ${truque.dado} · ${truque.desc}`,
         editando: false,
         expandido: false

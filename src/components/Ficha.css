@@ -1202,7 +1202,7 @@ button {
 .ataque-editor {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .ataque-caixa {
@@ -1230,11 +1230,13 @@ button {
 
 .ataque-form-linha {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .ataque-caixa-dano,
-.ataque-caixa-tipo {
+.ataque-caixa-tipo,
+.ataque-caixa {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1261,6 +1263,8 @@ button {
   font-size: 11px;
   padding: 3px 4px;
   outline: none;
+  width: 100%;
+  margin-bottom: 3px;
 }
 
 .ataque-select-qtd {
@@ -1282,7 +1286,7 @@ button {
   border: 1px solid #262626;
   color: #ccc;
   font-size: 11px;
-  padding: 4px 6px;
+  padding: 6px 8px;
   outline: none;
   width: 100%;
   word-break: break-word;
@@ -1292,14 +1296,16 @@ button {
 .ataque-efeito {
   color: #c9a227;
   resize: vertical;
-  min-height: 40px;
+  min-height: 50px;
   font-family: inherit;
+  padding: 8px;
 }
 
 .ataque-editor-acoes {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 4px;
 }
 
 .btn-salvar-ataque {
@@ -1561,6 +1567,7 @@ button {
 .ameaca-corpo .status-lista {
   max-height: 360px;
 }
+
 .ameaca-coluna-direita {
   display: flex;
   flex-direction: column;

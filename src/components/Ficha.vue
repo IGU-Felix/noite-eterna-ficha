@@ -229,8 +229,9 @@
               </div>
 
               <div class="pericia-nome">
-                <span class="pericia-nome-texto" @click="abrirOuRolarPericia(p)" title="Rolar teste de perícia / Rolar novamente">{{
-                  p.nome
+                <span class="pericia-nome-texto" @click="abrirOuRolarPericia(p)"
+                  title="Rolar teste de perícia / Rolar novamente">{{
+                    p.nome
                   }}</span>
                 <input v-if="p.especializacao !== undefined" class="pericia-especializacao"
                   v-model="p.especializacao" />
@@ -342,6 +343,16 @@
                   </div>
 
                   <div class="ataque-form-linha">
+                    <div class="ataque-caixa">
+                      <span class="ataque-caixa-label">Atributo de Ataque</span>
+                      <select class="ataque-select" v-model="item.atributoAtaque">
+                        <option value="POD">POD</option>
+                        <option value="PRE">PRE</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="ataque-form-linha">
                     <div class="ataque-caixa ataque-caixa-dano">
                       <span class="ataque-caixa-label">Dado de Dano</span>
                       <div class="ataque-dado-controles">
@@ -374,12 +385,14 @@
                   </div>
                 </div>
 
+
                 <!-- MODO RESUMO -->
                 <div v-else class="ataque-resumo">
                   <div class="ataque-resumo-topo">
                     <span class="ataque-resumo-nome">{{ item.nome || 'Ataque sem nome' }}</span>
                     <div class="ataque-resumo-acoes">
-                      <button class="btn-rolar-ataque" @click="abrirRolagemAtaque(item)" title="rolar ataque">Atacar</button>
+                      <button class="btn-rolar-ataque" @click="abrirRolagemAtaque(item)"
+                        title="rolar ataque">Atacar</button>
                       <button class="btn-editar" @click="editarAtaque(item)" title="editar">✎</button>
                       <button v-if="item.efeito" class="btn-expandir" :class="{ aberto: item.expandido }"
                         @click="toggleExpandido(item)" title="mostrar/ocultar efeito">▾</button>
@@ -406,7 +419,7 @@
                 <select class="select-truque" @change="adicionarTruque($event.target.value); $event.target.value = ''">
                   <option value="">Escolher um truque...</option>
                   <option v-for="t in truquesFeiticeiro" :key="t.nome" :value="t.nome">{{ t.nome }} (nível {{ t.nivel
-                    }})</option>
+                  }})</option>
                 </select>
               </div>
 
@@ -448,6 +461,8 @@
                     </div>
                   </div>
 
+                  <input class="ataque-modificador" v-model="item.modificador"
+                    placeholder="modificador (ex: + MEN, × ROB)" />
                   <textarea class="ataque-efeito" v-model="item.efeito"
                     placeholder="alcance, tempo de conjuração, efeito..."></textarea>
 
@@ -461,7 +476,8 @@
                   <div class="ataque-resumo-topo">
                     <span class="ataque-resumo-nome">{{ item.nome || 'Magia sem nome' }}</span>
                     <div class="ataque-resumo-acoes">
-                      <button class="btn-rolar-ataque" @click="abrirRolagemMagia(item)" title="rolar magia">Conjurar</button>
+                      <button class="btn-rolar-ataque" @click="abrirRolagemMagia(item)"
+                        title="rolar magia">Conjurar</button>
                       <button class="btn-editar" @click="editarMagia(item)" title="editar">✎</button>
                       <button v-if="item.efeito" class="btn-expandir" :class="{ aberto: item.expandido }"
                         @click="toggleExpandido(item)" title="mostrar/ocultar efeito">▾</button>
@@ -469,7 +485,8 @@
                     </div>
                   </div>
                   <div class="ataque-resumo-linha">
-                    <span class="ataque-badge">{{ item.qtdDados }}d{{ item.tipoDado }} · Nível {{ item.nivel }} · {{ item.custoMana }} mana</span>
+                    <span class="ataque-badge">{{ item.qtdDados }}d{{ item.tipoDado }} · Nível {{ item.nivel }} · {{
+                      item.custoMana }} mana</span>
                     <span class="ataque-badge ataque-badge-tipo">{{ item.tipoDano }}</span>
                   </div>
                   <p v-if="item.efeito && item.expandido" class="ataque-resumo-efeito">{{ item.efeito }}</p>
@@ -516,11 +533,8 @@
                     <option value="cena">Cena</option>
                     <option value="mana">Mana</option>
                   </select>
-                  <input 
-                    type="number" 
-                    class="habilidade-select" 
-                    v-model.number="item.modificadorHabilidade" 
-                    placeholder="Modificador (+/-)"/>
+                  <input type="number" class="habilidade-select" v-model.number="item.modificadorHabilidade"
+                    placeholder="Modificador (+/-)" />
                   <select class="habilidade-select" v-model="item.periciaVinculada">
                     <option value="">Não vinculada a perícia</option>
                     <option v-for="p in pericias" :key="p.id" :value="p.nome">{{ p.nome }}</option>
@@ -605,12 +619,13 @@
       </div> <!-- FECHA col-direita -->
 
     </div> <!-- FECHA ficha -->
-    <RolagemDados v-if="rolagemAberta" :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador + disparadorRolagem"
+    <RolagemDados v-if="rolagemAberta"
+      :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador + disparadorRolagem"
       :dados-iniciais="rolagemConfig.dados" :modificador-inicial="rolagemConfig.modificador"
       :titulo-teste="rolagemConfig.titulo" :pericia-nome="rolagemConfig.periciaNome"
-      :auto-rolar="rolagemConfig.autoRolar" :resultado-dano="resultadoDano"
-      :habilidades="itensCombate.Habilidades" :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao"
-      :valor-atributo="obterValorAtributoAtual" :rolar-novamente="rolarPericia" :disparador-rolagem="disparadorRolagem"
+      :auto-rolar="rolagemConfig.autoRolar" :resultado-dano="resultadoDano" :habilidades="itensCombate.Habilidades"
+      :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao" :valor-atributo="obterValorAtributoAtual"
+      :rolar-novamente="rolarPericia" :disparador-rolagem="disparadorRolagem"
       :habilidades-gastas-rolagem="habilidadesGastasRolagem" :marcar-habilidade-gasta="marcarHabilidadeGasta"
       @fechar="fecharRolagem" />
   </div> <!-- FECHA ficha-container -->
