@@ -158,9 +158,7 @@ export default {
     function usarHabilidade(h) {
       // Verifica se é descanso ou cena
       if (h.tipoAcao === "descanso" || h.tipoAcao === "cena") {
-        // Verifica se já foi gasta nesta rolagem
         if (props.habilidadesGastasRolagem.includes(h.id)) {
-          // Já foi gasta, não faz nada
           return
         }
         // Marca como gasta nesta rolagem
@@ -172,7 +170,6 @@ export default {
       
       // Adiciona modificador da habilidade ao modificador total
       if (h.modificadorHabilidade) {
-        // Se já usou na rolagem anterior, reseta o flag
         if (modificadorUsadoNaRolagem.value) {
           modificadorUsadoNaRolagem.value = false
           modificadorTotal.value = modificadorInicial + h.modificadorHabilidade
