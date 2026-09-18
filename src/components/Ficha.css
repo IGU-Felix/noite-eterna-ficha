@@ -26,7 +26,7 @@ button {
   align-items: flex-start;
   padding: 24px 12px;
   font-family: "Aubrey", system-ui;
-  zoom: 1.15;
+  zoom: 1.22;
 }
 
 .ficha {
@@ -211,7 +211,7 @@ button {
 
 .linha-raca-classe {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   margin-bottom: 6px;
 }
 
@@ -221,8 +221,8 @@ button {
   background: #0e0e0e;
   border: 1px solid #333;
   color: #ccc;
-  font-size: 10px;
-  padding: 2px 3px;
+  font-size: 9px;
+  padding: 2px;
 }
 
 .select-rcs:disabled {
@@ -257,6 +257,7 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
+  padding-top: 2px;
 }
 
 .racial-linha {
@@ -267,9 +268,45 @@ button {
   cursor: default;
 }
 
+.racial-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
 .racial-nome {
   font-size: 11px;
   color: #ddd;
+}
+
+.racial-usar {
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 1px solid #8f6a22;
+  background: transparent;
+  color: #d9a441;
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.racial-usar:hover:not(:disabled) {
+  background: rgba(217, 164, 65, 0.14);
+}
+
+.racial-usar.usada,
+.racial-usar:disabled {
+  border-color: #444;
+  color: #666;
+  cursor: default;
+}
+
+.racial-descricao {
+  margin: 4px 0 1px;
+  color: #aaa;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .divisor-habilidades {
@@ -928,14 +965,14 @@ button {
   display: block;
   width: 100%;
   border-top: 1px solid #262626;
-  color: #888;
+  color: #d9a441;
   text-align: center;
-  font-size: 8px;
+  font-size: 9px;
   line-height: 1.6;
 }
 
 .pericia-nome {
-  font-size: 10px;
+  font-size: 11px;
   color: #ddd;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -944,17 +981,18 @@ button {
 
 .pericia-atributo {
   color: #666;
-  font-size: 9px;
+  font-size: 10px;
   text-transform: none;
-  margin-left: 1px;
+  margin-left: 5px;
 }
 
 .pericia-especializacao {
   width: 48px;
+  margin-left: 3px;
   background: transparent;
   border: none;
   border-bottom: 1px solid #333;
-  font-size: 10px;
+  font-size: 11px;
   outline: none;
 }
 
@@ -1030,6 +1068,22 @@ button {
   font-size: 12px;
   font-weight: bold;
   outline: none;
+}
+
+.habilidade-resumo-nome {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habilidade-resumo-detalhe {
+  margin-top: 4px;
+}
+
+.habilidade-resumo-meta {
+  margin-top: 4px;
 }
 
 .combate-detalhe {
@@ -1619,17 +1673,77 @@ button {
 
 .habilidade-vinculos {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.habilidade-opcoes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 6px;
-  margin: 4px 0;
+}
+
+.habilidade-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  color: #888;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.habilidade-campo-numero {
+  grid-column: span 2;
+}
+
+.habilidade-pericias {
+  border-top: 1px solid #292929;
+  padding-top: 7px;
+}
+
+.habilidade-pericias-titulo {
+  display: block;
+  margin-bottom: 5px;
+  color: #aaa;
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.habilidade-pericias-lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px;
+  max-height: 116px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.habilidade-pericia-opcao {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: #c5c0b8;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.habilidade-pericia-opcao input {
+  accent-color: #d9a441;
+  flex: 0 0 auto;
 }
 
 .habilidade-select {
-  flex: 1;
+  width: 100%;
   background: #111;
   border: 1px solid #333;
   color: #ccc;
   font-size: 10px;
-  padding: 3px 4px;
+  padding: 4px;
 }
 
 /* =====================================================

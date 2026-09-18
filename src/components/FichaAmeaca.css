@@ -4,7 +4,12 @@
   display: flex;
   flex-direction: column;
   width: 700px;
+  max-width: 100%;
   gap: 3px;
+}
+
+.ameaca-container {
+  overflow-x: hidden;
 }
 
 .ameaca-topo {
@@ -62,7 +67,7 @@
 
 .ameaca-corpo {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
   gap: 10px;
   margin-top: 14px;
   padding-top: 14px;
@@ -75,6 +80,10 @@
   flex-direction: column;
   gap: 10px;
   min-height: 0;
+  min-width: 0;
+}
+
+.ameaca-col-pericias {
   min-width: 0;
 }
 
@@ -118,7 +127,13 @@
   gap: 3px;
   max-height: 500px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
   margin-bottom: 5px;
+}
+
+.ameaca-pericias-lista::-webkit-scrollbar {
+  display: none;
 }
 
 .ameaca-pericia-nome-input {
@@ -134,7 +149,7 @@
 }
 
 .ameaca-pericia-attr-input {
-  width: 34px;
+  width: 30px;
   flex-shrink: 0;
   background: transparent;
   border: none;
@@ -143,6 +158,11 @@
   color: #666;
   font-size: 9px;
   text-align: center;
+}
+
+.ameaca .btn-rolar-pericia {
+  padding: 2px 4px;
+  flex-shrink: 0;
 }
 
 .ameaca-corpo .combate-painel {

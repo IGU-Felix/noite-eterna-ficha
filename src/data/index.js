@@ -1,6 +1,8 @@
 // Ponto único de acesso ao "banco de dados" do Sistema Noite Eterna, extraído do livro
 // de regras. Cada arquivo cobre uma parte do livro; importe daqui em vez de duplicar dados.
 export { racas } from "./racas.js"
+export { racasLivro } from "./racasLivro.js"
+export { origensLivro } from "./origensLivro.js"
 export { classes } from "./classes.js"
 export { subclassesDados } from "./subclasses.js"
 export { vantagens } from "./vantagens.js"

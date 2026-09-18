@@ -154,7 +154,7 @@ export default {
     const cargasMax_2 = ref(3)
     const tipoCarga_2 = ref("Fúria")
 
-    const cargasBlocos = reactive([
+const cargasBlocos = reactive([
   { tipo: "Fúria", atual: 0, max: 3 },
   { tipo: "Fúria", atual: 0, max: 3 }
 ])

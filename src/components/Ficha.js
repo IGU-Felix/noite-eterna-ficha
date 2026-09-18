@@ -1,5 +1,5 @@
 import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
-import { racas, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
+import { racasLivro as racas, origensLivro as origens, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
 import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../services/fichaPersistencia.js"
 import RolagemDados from "./RolagemDados.vue"
 
@@ -7,6 +7,16 @@ import RolagemDados from "./RolagemDados.vue"
 let proximoId = 1
 function gerarId() {
   return proximoId++
+}
+
+const NOMES_ACAO = {
+  padrao: "Ação Padrão",
+  bonus: "Ação Bônus",
+  movimento: "Movimento",
+  reacao: "Reação",
+  descanso: "Descanso",
+  cena: "Cena",
+  mana: "Mana"
 }
 
 export default {
@@ -52,8 +62,33 @@ export default {
     ]
 
     const racaSelecionada = ref("")
+    const origemSelecionada = ref("")
     const classeSelecionada = ref("")
     const subclasseSelecionada = ref("")
+
+    const nomesRacaLegados = {
+      Sereia: "Oceânico",
+      Ratman: "Homem Rato"
+    }
+
+    watch(racaSelecionada, valor => {
+      const nomeCanonico = nomesRacaLegados[valor]
+      if (nomeCanonico) racaSelecionada.value = nomeCanonico
+    })
+
+    const racaAtiva = computed(() => racas.find(raca => raca.nome === racaSelecionada.value) || null)
+    const mecanicasRaciaisAtivas = computed(() =>
+      (racaAtiva.value?.habilidades || []).map(habilidade => habilidade.mecanica).filter(Boolean)
+    )
+    const bonusPvRacial = computed(() => mecanicasRaciaisAtivas.value.reduce((total, mecanica) =>
+      total + (mecanica.pvInicial || 0) + (mecanica.pvPorNivel || 0) * Math.max(0, Number(nivel.value) - 1), 0
+    ))
+    const ataquesRaciais = computed(() => mecanicasRaciaisAtivas.value
+      .filter(mecanica => mecanica.ataque)
+      .map(mecanica => ({ ...mecanica.ataque, id: `racial-ataque-${mecanica.ataque.nome}`, editando: false, expandido: true })))
+    const magiasRaciais = computed(() => mecanicasRaciaisAtivas.value
+      .filter(mecanica => mecanica.magia)
+      .map(mecanica => ({ ...mecanica.magia, id: `racial-magia-${mecanica.magia.nome}`, editando: false, expandido: true })))
 
     const classeInfo = computed(() =>
       classes.find(c => c.nome === classeSelecionada.value) || null
@@ -99,11 +134,10 @@ export default {
     // livro: PV = (Dado Inicial × ROB) + (Dado por Nível × ROB × (Nível - 1))
     // cada classe tem seus próprios multiplicadores (ex: Guerreiro 10/7, Mago 10/4...)
     const vidaMax = computed(() => {
-      if (vidaMaxEditada.value !== null) return vidaMaxEditada.value
       const info = classeInfo.value
-      if (!info) return vidaMaxBase.value
+      if (!info) return vidaMaxBase.value + bonusPvRacial.value
       const rob = valorAtributo("ROB")
-      return (info.dadoInicial + rob) + (info.dadoPorNivel + rob) * (nivel.value - 1)
+      return (info.dadoInicial + rob) + (info.dadoPorNivel + rob) * (nivel.value - 1) + bonusPvRacial.value
     })
 
     const vidaMaxEditavel = computed({
@@ -137,7 +171,6 @@ export default {
     const manaMaxEditada = ref(null)
 
     const manaMax = computed(() => {
-      if (manaMaxEditada.value !== null) return manaMaxEditada.value
       const info = classeInfo.value
       if (!info) return manaMaxBase.value
       const men = valorAtributo("MEN")
@@ -311,6 +344,8 @@ export default {
         if (num < 0) num = 0
         if (num > 6) num = 6 // livro: atributo pode chegar no máximo a 6 P.A.
         attr.valor = num
+        if (attr.nome === "ROB") vidaMaxEditada.value = null
+        if (attr.nome === "MEN") manaMaxEditada.value = null
       }
     }
 
@@ -374,6 +409,7 @@ export default {
 
     // ===== INSANIDADE E CARGAS =====
     const tiposCarga = computed(() => [
+      { nome: "...", max: 0},
       { nome: "Absurdo", max: calcularValorComAtributos("CAR") },
       { nome: "Adaptação", max: 10 },  // o livro não define um máximo fixo, mas 10 é o valor sugerido
       { nome: "Cadavéricas", max: calcularValorComAtributos("MEN") },
@@ -392,25 +428,25 @@ export default {
       { nome: "Veneno", max: 5 }
     ])
 
-    const tipoSelecionado_1 = ref("Fúria")
-    const tipoSelecionado_2 = ref("Fúria")
-    const tipoSelecionado_3 = ref("Fúria")
+    const tipoSelecionado_1 = ref("...")
+    const tipoSelecionado_2 = ref("...")
+    const tipoSelecionado_3 = ref("...")
 
     const insanidadeAtual = ref(0)
     // livro: "O Valor padrão de SAN é 20 + modificador de Mente (MEN) do personagem"
-    const insanidadeMax = computed(() => 20 + valorAtributo("MEN"))
+    const insanidadeMax = computed(() => 20)
 
     // Cargas: o livro mostra que o máximo real varia por classe/nível (ex: Cargas de Pacto =
     // nível + MEN), então em vez de travar num valor fixo por tipo, o valor inicial da lista
     // abaixo é só uma sugestão de partida — o número fica editável na ficha.
     const cargasAtual_1 = ref(0)
-    const cargasMax_1 = ref(6)
+    const cargasMax_1 = ref(0)
 
     const cargasAtual_2 = ref(0)
-    const cargasMax_2 = ref(6)
+    const cargasMax_2 = ref(0)
 
     const cargasAtual_3 = ref(0)
-    const cargasMax_3 = ref(6)
+    const cargasMax_3 = ref(0)
 
     function definirMaxSugerido(tipoNome, maxRef) {
       const tipo = tiposCarga.value.find(t => t.nome === tipoNome)
@@ -434,7 +470,7 @@ export default {
     watch(tipoSelecionado_2, (novo) => { cargasAtual_2.value = 0; definirMaxSugerido(novo, cargasMax_2) })
     watch(tipoSelecionado_3, (novo) => { cargasAtual_3.value = 0; definirMaxSugerido(novo, cargasMax_3) })
 
-    watch([classeSelecionada, nivel, () => valorAtributo("ROB")], () => {
+    watch([racaSelecionada, classeSelecionada, nivel, () => valorAtributo("ROB")], () => {
       vidaMaxEditada.value = null
     })
 
@@ -474,14 +510,17 @@ export default {
     // "valor" = grau/rank da perícia, "mod" = modificador final que vai pro teste
     const pericias = ref([
       { id: gerarId(), nome: "Acrobacia", atributo: "PRE", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Adestramento", atributo: "MEN", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Arcanismo", atributo: "MEN", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Armeiro", atributo: "MEN/PRE", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Artes", atributo: "MEN/PRE", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Atletismo", atributo: "POD", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Bloqueio", atributo: "ROB", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Ciências Ocultas", atributo: "MEN", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Conhecimentos", atributo: "MEN", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Conjuração", atributo: "MEN", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Consertos", atributo: "MEN/PRE", valor: 1, mod: 0 },
+      { id: gerarId(), nome: "Crime", atributo: "CAR/PRE", valor: 1, mod: 0 },
 
       { id: gerarId(), nome: "Furtividade", atributo: "PRE", valor: 1, mod: 0 },
       { id: gerarId(), nome: "Herbalismo", atributo: "MEN", valor: 1, mod: 0 },
@@ -504,6 +543,22 @@ export default {
       { id: gerarId(), nome: "Ofício", atributo: "MEN/PRE", valor: 1, mod: 0, especializacao: "Caça" }
     ])
 
+    const origemAtiva = computed(() => origens.find(origem => origem.nome === origemSelecionada.value) || null)
+    const habilidadesOrigem = computed(() => origemAtiva.value?.habilidades || [])
+
+    watch(origemSelecionada, novaOrigem => {
+      const periciaOficio = pericias.value.find(pericia => pericia.nome === "Ofício")
+      if (!periciaOficio) return
+      if (!novaOrigem) {
+        periciaOficio.especializacao = ""
+        periciaOficio.atributo = "MEN/PRE"
+        return
+      }
+      const origem = origens.find(item => item.nome === novaOrigem)
+      periciaOficio.especializacao = origem?.oficio || ""
+      periciaOficio.atributo = origem?.atributoOficio || "MEN/PRE"
+    }, { immediate: true })
+
     // livro: "cada 2 pontos de Perícia permitem aumentar em 1 o valor de um dado" —
     // então o "mod" não é digitado à parte, ele é sempre derivado do valor investido na perícia.
     function atualizarPericia(item, valorBruto) {
@@ -513,6 +568,12 @@ export default {
 
       item.valor = num
       item.mod = Math.floor(num / 2)
+    }
+
+    function obterModificadorPericia(pericia) {
+      const modificador = Math.floor(Math.max(0, Number(pericia?.valor) || 0) / 2)
+      if (pericia) pericia.mod = modificador
+      return modificador
     }
     // ===== ROLAGEM DE DADOS (clique no nome da perícia) =====
     const disparadorRolagem = ref(0)
@@ -530,7 +591,7 @@ export default {
       const sigla = primeiroAtributo(p.atributo)
       atributoPeriodAtual = sigla
       rolagemConfig.dados = valorAtributo(sigla) || 1
-      rolagemConfig.modificador = p.mod || 0
+      rolagemConfig.modificador = obterModificadorPericia(p)
       rolagemConfig.titulo = `Teste de ${p.nome}`
       rolagemConfig.periciaNome = p.nome
       rolagemConfig.autoRolar = false
@@ -669,6 +730,10 @@ export default {
     const abasCombate = ["Combate", "Habilidades", "Magias", "Vantagens", "Desvantagens", "Progressão"]
     const abaCombateAtiva = ref("Combate")
 
+    function abrirAbaCombate(aba) {
+      abaCombateAtiva.value = aba
+    }
+
     const itensCombate = reactive({
       Combate: [],
       Habilidades: [],
@@ -676,6 +741,38 @@ export default {
       Vantagens: [],
       Desvantagens: []
     })
+
+    const habilidadesRaciaisRolagem = computed(() => {
+      const raca = racaAtiva.value
+      return (raca?.habilidades || [])
+        .filter(item => !item.id.startsWith("escolha-de-pericia-"))
+        .filter(item => (item.efeitoDado || item.modificadorHabilidade) && (item.periciasVinculadas?.length || item.atributosVinculados?.length))
+        .map(item => ({
+          ...item,
+          id: `racial-${raca.id}-${item.id}`,
+          racial: true,
+          detalhe: item.descricao,
+          tipoAcao: "",
+          efeitoDado: item.efeitoDado || (item.modificadorHabilidade ? "modificador" : ""),
+          modificadorHabilidade: item.modificadorHabilidade || 0,
+          periciasVinculadas: [
+            ...(item.periciasVinculadas || []),
+            ...(item.atributosVinculados || []).flatMap(atributo =>
+              pericias.value
+                .filter(pericia => String(pericia.atributo || "").split("/").includes(atributo))
+                .map(pericia => pericia.nome)
+            )
+          ]
+        }))
+    })
+
+    const habilidadesParaRolagem = computed(() => [
+      ...itensCombate.Habilidades,
+      ...habilidadesRaciaisRolagem.value
+    ])
+
+    const ataquesExibidos = computed(() => [...ataquesRaciais.value, ...itensCombate.Combate])
+    const magiasExibidas = computed(() => [...magiasRaciais.value, ...itensCombate.Magias])
 
     function adicionarItemCombate() {
       const aba = abaCombateAtiva.value
@@ -718,9 +815,14 @@ export default {
           nome: "",
           detalhe: "",
           tipoAcao: "",
+          efeitoDado: "",
+          valorAlvoDado: "6",
           modificadorHabilidade: 0,
           periciaVinculada: "",
-          expandido: false
+          periciasVinculadas: [],
+          expandido: true,
+          descricaoInicializada: true,
+          editando: true
         })
         return
       }
@@ -736,9 +838,82 @@ export default {
       item.editando = true
     }
 
+    function salvarHabilidade(item) {
+      item.editando = false
+    }
+
+    function nomeAcao(tipo) {
+      return NOMES_ACAO[tipo] || ""
+    }
+
     function toggleExpandido(item) {
       item.expandido = !item.expandido
     }
+
+    const racasExpandidas = reactive({})
+    const racasUsadas = reactive({})
+
+    function toggleRacialExpandida(habilidade) {
+      racasExpandidas[habilidade.id] = racasExpandidas[habilidade.id] === false
+    }
+
+    function habilidadeRacialFoiUsada(habilidade) {
+      return racasUsadas[`${racaSelecionada.value}:${habilidade.id}`] === true
+    }
+
+    function usarHabilidadeRacial(habilidade) {
+      const mecanica = habilidade.mecanica
+      if (!mecanica?.uso || habilidadeRacialFoiUsada(habilidade)) return
+
+      const chave = `${racaSelecionada.value}:${habilidade.id}`
+      racasUsadas[chave] = true
+
+      if (mecanica.armadura) {
+        armadura.value += mecanica.armadura
+      }
+
+      if (mecanica.status) {
+        status.value.push({
+          id: gerarId(),
+          nome: habilidade.nome,
+          duracao: mecanica.uso === "cena" ? "Até o fim da cena" : "Até descanso",
+          efeito: mecanica.status,
+          editando: false,
+          expandido: true,
+          racial: true
+        })
+      }
+    }
+
+    function obterPericiasVinculadas(habilidade) {
+      if (Array.isArray(habilidade.periciasVinculadas)) return habilidade.periciasVinculadas
+      if (habilidade.periciaVinculada) return [habilidade.periciaVinculada]
+      return []
+    }
+
+    function habilidadeTemPericia(habilidade, pericia) {
+      return obterPericiasVinculadas(habilidade).includes(pericia)
+    }
+
+    function alternarPericiaVinculada(habilidade, pericia, vinculada) {
+      const vinculadas = obterPericiasVinculadas(habilidade).filter(item => item !== "TODAS")
+      if (vinculada && !vinculadas.includes(pericia)) vinculadas.push(pericia)
+      if (!vinculada) habilidade.periciasVinculadas = vinculadas.filter(item => item !== pericia)
+      else habilidade.periciasVinculadas = vinculadas
+      habilidade.periciaVinculada = habilidade.periciasVinculadas.length === 1
+        ? habilidade.periciasVinculadas[0]
+        : ""
+    }
+
+    function prepararDescricoesHabilidades() {
+      itensCombate.Habilidades.forEach(habilidade => {
+        if (habilidade.descricaoInicializada) return
+        habilidade.expandido = true
+        habilidade.descricaoInicializada = true
+      })
+    }
+
+    watch(() => itensCombate.Habilidades.length, prepararDescricoesHabilidades, { immediate: true })
 
     function resumoAtaque(item) {
       const mod = item.modificador ? ` ${item.modificador}` : ""
@@ -799,6 +974,12 @@ export default {
       racas,
       classes,
       racaSelecionada,
+      origemSelecionada,
+      origens,
+      origemAtiva,
+      habilidadesOrigem,
+      racaAtiva,
+      bonusPvRacial,
       classeSelecionada,
       subclasseSelecionada,
       classeInfo,
@@ -887,10 +1068,23 @@ export default {
 
       pericias,
       atualizarPericia,
+      obterModificadorPericia,
 
       abasCombate,
       abaCombateAtiva,
+      abrirAbaCombate,
       itensCombate,
+      ataquesRaciais,
+      ataquesExibidos,
+      magiasRaciais,
+      magiasExibidas,
+      habilidadesRaciaisRolagem,
+      habilidadesParaRolagem,
+      racasExpandidas,
+      toggleRacialExpandida,
+      racasUsadas,
+      habilidadeRacialFoiUsada,
+      usarHabilidadeRacial,
       adicionarItemCombate,
       removerItemCombate,
 
@@ -904,6 +1098,8 @@ export default {
       tiposDano,
       tiposMagia,
       salvarAtaque,
+      salvarHabilidade,
+      nomeAcao,
       editarAtaque,
       resumoAtaque,
       abrirRolagemAtaque,
@@ -920,6 +1116,9 @@ export default {
       salvarMagia,
       editarMagia,
       toggleExpandido,
+      obterPericiasVinculadas,
+      habilidadeTemPericia,
+      alternarPericiaVinculada,
       tabelaAcertos,
       linhaAcertoAtiva,
       requisitoAcerto,

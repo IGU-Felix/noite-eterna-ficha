@@ -31,6 +31,11 @@
                 <option value="" disabled>Raça</option>
                 <option v-for="r in racas" :key="r.nome" :value="r.nome">{{ r.nome }}</option>
               </select>
+              <select v-model="origemSelecionada" class="select-rcs"
+                :title="origemAtiva?.resumo || ''">
+                <option value="" disabled>Origem</option>
+                <option v-for="origem in origens" :key="origem.id" :value="origem.nome">{{ origem.nome }}</option>
+              </select>
               <select v-model="classeSelecionada" class="select-rcs"
                 :title="classeInfo ? 'Dado de Vida: ' + classeInfo.dadoVida : ''">
                 <option value="" disabled>Classe</option>
@@ -77,7 +82,7 @@
                   <div class="centro">
                     <input class="input-barra recurso-input" type="number" v-model.number="vidaAtual" />
                     <span class="barra-separador">/</span>
-                    <input class="input-barra recurso-input" type="number" v-model.number="vidaMaxEditavel" />
+                    <input class="input-barra recurso-input" type="number" v-model.number="vidaMaxEditavel" readonly />
                   </div>
 
                   <button class="btn-dir" @click="alterarVida(5)">+5</button>
@@ -95,7 +100,7 @@
                   <div class="centro">
                     <input class="input-barra recurso-input" type="number" v-model.number="manaAtual" />
                     <span class="barra-separador">/</span>
-                    <input class="input-barra recurso-input" type="number" v-model.number="manaMaxEditavel" />
+                    <input class="input-barra recurso-input" type="number" v-model.number="manaMaxEditavel" readonly />
                   </div>
 
                   <button class="btn-dir" @click="alterarMana(5)">+5</button>
@@ -315,7 +320,7 @@
 
           <div class="abas-combate">
             <button v-for="aba in abasCombate" :key="aba" class="aba-btn" :class="{ ativa: abaCombateAtiva === aba }"
-              @click="abaCombateAtiva = aba">{{ aba }}</button>
+              @click.stop="abrirAbaCombate(aba)">{{ aba }}</button>
           </div>
 
           <div class="combate-lista">
@@ -334,10 +339,10 @@
                  habilidades raciais automaticamente, quando uma raça foi escolhida) -->
             <!-- ABA COMBATE: editor de ataque -->
             <template v-else-if="abaCombateAtiva === 'Combate'">
-              <div class="ataque-item" v-for="item in itensCombate.Combate" :key="item.id">
+              <div class="ataque-item" v-for="item in ataquesExibidos" :key="item.id">
 
                 <!-- MODO EDIÇÃO -->
-                <div v-if="item.editando" class="ataque-editor">
+                <div v-if="item.editando && !item.racial" class="ataque-editor">
                   <div class="ataque-caixa">
                     <input class="ataque-nome-input" v-model="item.nome" placeholder="Nome do Ataque" />
                   </div>
@@ -393,10 +398,10 @@
                     <div class="ataque-resumo-acoes">
                       <button class="btn-rolar-ataque" @click="abrirRolagemAtaque(item)"
                         title="rolar ataque">Atacar</button>
-                      <button class="btn-editar" @click="editarAtaque(item)" title="editar">✎</button>
+                      <button v-if="!item.racial" class="btn-editar" @click="editarAtaque(item)" title="editar">✎</button>
                       <button v-if="item.efeito" class="btn-expandir" :class="{ aberto: item.expandido }"
                         @click="toggleExpandido(item)" title="mostrar/ocultar efeito">▾</button>
-                      <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                      <button v-if="!item.racial" class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                     </div>
                   </div>
                   <div class="ataque-resumo-linha">
@@ -408,7 +413,7 @@
 
               </div>
 
-              <p v-if="itensCombate.Combate.length === 0" class="lista-vazia">Nenhum ataque cadastrado ainda.</p>
+              <p v-if="ataquesExibidos.length === 0" class="lista-vazia">Nenhum ataque cadastrado ainda.</p>
             </template>
 
             <!-- ABA MAGIAS: editor de magia + seletor de truques (se Feiticeiro) -->
@@ -423,9 +428,9 @@
                 </select>
               </div>
 
-              <div class="ataque-item" v-for="item in itensCombate.Magias" :key="item.id">
+              <div class="ataque-item" v-for="item in magiasExibidas" :key="item.id">
 
-                <div v-if="item.editando" class="ataque-editor">
+                <div v-if="item.editando && !item.racial" class="ataque-editor">
                   <div class="ataque-caixa">
                     <input class="ataque-nome-input" v-model="item.nome" placeholder="Nome da Magia" />
                   </div>
@@ -478,10 +483,10 @@
                     <div class="ataque-resumo-acoes">
                       <button class="btn-rolar-ataque" @click="abrirRolagemMagia(item)"
                         title="rolar magia">Conjurar</button>
-                      <button class="btn-editar" @click="editarMagia(item)" title="editar">✎</button>
+                      <button v-if="!item.racial" class="btn-editar" @click="editarMagia(item)" title="editar">✎</button>
                       <button v-if="item.efeito" class="btn-expandir" :class="{ aberto: item.expandido }"
                         @click="toggleExpandido(item)" title="mostrar/ocultar efeito">▾</button>
-                      <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
+                      <button v-if="!item.racial" class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                     </div>
                   </div>
                   <div class="ataque-resumo-linha">
@@ -494,7 +499,7 @@
 
               </div>
 
-              <p v-if="itensCombate.Magias.length === 0" class="lista-vazia">Nenhuma magia cadastrada ainda.</p>
+              <p v-if="magiasExibidas.length === 0" class="lista-vazia">Nenhuma magia cadastrada ainda.</p>
             </template>
 
             <!-- DEMAIS ABAS: continuam como listas livres -->
@@ -506,9 +511,27 @@
                 <div v-else class="racial-bloco">
                   <div class="racial-titulo">Raça: {{ racaSelecionada }}</div>
                   <div class="racial-linha"
-                    v-for="h in (racas.find(r => r.nome === racaSelecionada)?.habilidades || [])" :key="h.nome"
-                    :title="h.desc">
-                    <span class="racial-nome">{{ h.nome }}</span>
+                    v-for="h in (racas.find(r => r.nome === racaSelecionada)?.habilidades || []).filter(item => !item.id.startsWith('escolha-de-pericia-'))" :key="h.nome"
+                    :title="h.descricao">
+                    <div class="racial-cabecalho">
+                      <span class="racial-nome">{{ h.nome }}</span>
+                      <button v-if="h.mecanica?.uso" class="racial-usar" :class="{ usada: habilidadeRacialFoiUsada(h) }"
+                        :disabled="habilidadeRacialFoiUsada(h)" @click="usarHabilidadeRacial(h)"
+                        :title="habilidadeRacialFoiUsada(h) ? 'Habilidade já utilizada' : 'Usar habilidade racial'">
+                        {{ habilidadeRacialFoiUsada(h) ? 'Usada' : 'Usar' }}
+                      </button>
+                      <button class="btn-expandir" :class="{ aberto: racasExpandidas[h.id] !== false }"
+                        @click="toggleRacialExpandida(h)" title="mostrar/ocultar descrição">▾</button>
+                    </div>
+                    <p v-if="racasExpandidas[h.id] !== false" class="racial-descricao">{{ h.descricao }}</p>
+                  </div>
+                  <div v-if="habilidadesOrigem.length" class="racial-titulo origem-titulo">Origem: {{ origemSelecionada }}</div>
+                  <div v-for="h in habilidadesOrigem" :key="`origem-${h.id}`" class="racial-linha"
+                    :title="h.descricao">
+                    <div class="racial-cabecalho">
+                      <span class="racial-nome">{{ h.nome }}</span>
+                    </div>
+                    <p v-if="h.descricao" class="racial-descricao">{{ h.descricao }}</p>
                   </div>
                 </div>
                 <div class="divisor-habilidades" v-if="racaSelecionada">Outras habilidades</div>
@@ -516,33 +539,83 @@
 
               <div class="combate-item" v-for="item in itensCombate[abaCombateAtiva]" :key="item.id">
                 <div class="combate-item-topo">
-                  <input class="combate-nome" v-model="item.nome" placeholder="nome" />
-                  <button class="btn-expandir" :class="{ aberto: item.expandido }" @click="toggleExpandido(item)"
-                    title="mostrar/ocultar descrição">▾</button>
+                  <input v-if="item.editando !== false" class="combate-nome" v-model="item.nome" placeholder="nome" />
+                  <span v-else class="combate-nome habilidade-resumo-nome">{{ item.nome || 'Habilidade sem nome' }}</span>
+                  <button v-if="item.editando !== false" class="btn-expandir" :class="{ aberto: item.expandido !== false }"
+                    @click="toggleExpandido(item)" title="mostrar/ocultar descrição">▾</button>
+                  <button v-if="item.editando !== false" class="btn-salvar-ataque" @click="salvarHabilidade(item)"
+                    title="salvar habilidade">Salvar</button>
+                  <button v-else class="btn-editar" @click="item.editando = true" title="editar habilidade">✎</button>
                   <button class="btn-remover" @click="removerItemCombate(item.id)" title="remover">×</button>
                 </div>
 
-                <div v-if="abaCombateAtiva === 'Habilidades'" class="habilidade-vinculos">
-                  <select class="habilidade-select" v-model="item.tipoAcao">
-                    <option value="">Sem custo de ação</option>
-                    <option value="padrao">Ação Padrão</option>
-                    <option value="bonus">Ação Bônus</option>
-                    <option value="movimento">Movimento</option>
-                    <option value="reacao">Reação</option>
-                    <option value="descanso">Descanso</option>
-                    <option value="cena">Cena</option>
-                    <option value="mana">Mana</option>
-                  </select>
-                  <input type="number" class="habilidade-select" v-model.number="item.modificadorHabilidade"
-                    placeholder="Modificador (+/-)" />
-                  <select class="habilidade-select" v-model="item.periciaVinculada">
-                    <option value="">Não vinculada a perícia</option>
-                    <option v-for="p in pericias" :key="p.id" :value="p.nome">{{ p.nome }}</option>
-                  </select>
+                <div v-if="item.editando === false && item.tipoAcao" class="ataque-resumo-linha habilidade-resumo-meta">
+                  <span class="ataque-badge ataque-badge-tipo">{{ nomeAcao(item.tipoAcao) }}</span>
                 </div>
 
-                <textarea v-show="item.expandido" class="combate-detalhe" v-model="item.detalhe"
+                <div v-if="abaCombateAtiva === 'Habilidades' && item.editando !== false" class="habilidade-vinculos">
+                  <div class="habilidade-opcoes">
+                    <label class="habilidade-campo">
+                      <span>Ação</span>
+                      <select class="habilidade-select" v-model="item.tipoAcao">
+                        <option value="">Sem custo</option>
+                        <option value="padrao">Ação Padrão</option>
+                        <option value="bonus">Ação Bônus</option>
+                        <option value="movimento">Movimento</option>
+                        <option value="reacao">Reação</option>
+                        <option value="descanso">Descanso</option>
+                        <option value="cena">Cena</option>
+                        <option value="mana">Mana</option>
+                      </select>
+                    </label>
+                    <label class="habilidade-campo">
+                      <span>Efeito</span>
+                      <select class="habilidade-select" v-model="item.efeitoDado">
+                        <option value="">Sem efeito</option>
+                        <option value="rerolar">Rerolar 1 dado (⟳)</option>
+                        <option value="mudar_valor">Mudar valor de 1 dado (→)</option>
+                        <option value="modificador">Modificador</option>
+                      </select>
+                    </label>
+                    <label v-if="item.efeitoDado === 'mudar_valor' || item.efeitoDado === 'mudar6' || item.efeitoDado === 'ambos'"
+                      class="habilidade-campo">
+                      <span>Valor alvo</span>
+                      <select class="habilidade-select" v-model="item.valorAlvoDado">
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="qualquer">Escolher na hora</option>
+                      </select>
+                    </label>
+                    <label v-if="item.efeitoDado === 'modificador' || item.modificadorHabilidade"
+                      class="habilidade-campo habilidade-campo-numero">
+                      <span>Modificador</span>
+                      <input type="number" class="habilidade-select" v-model.number="item.modificadorHabilidade" />
+                    </label>
+                  </div>
+                  <div class="habilidade-pericias">
+                    <span class="habilidade-pericias-titulo">Perícias vinculadas</span>
+                    <div class="habilidade-pericias-lista">
+                      <label class="habilidade-pericia-opcao">
+                        <input type="checkbox" :checked="habilidadeTemPericia(item, 'TODAS')"
+                          @change="alternarPericiaVinculada(item, 'TODAS', $event.target.checked)" />
+                        Todas
+                      </label>
+                      <label v-for="p in pericias" :key="p.id" class="habilidade-pericia-opcao">
+                        <input type="checkbox" :checked="habilidadeTemPericia(item, p.nome)"
+                          @change="alternarPericiaVinculada(item, p.nome, $event.target.checked)" />
+                        {{ p.nome }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <textarea v-if="item.editando !== false && item.expandido !== false" class="combate-detalhe" v-model="item.detalhe"
                   placeholder="dano, custo, efeito, descrição..."></textarea>
+                <p v-else-if="item.detalhe" class="ataque-resumo-efeito habilidade-resumo-detalhe">{{ item.detalhe }}</p>
               </div>
 
               <p v-if="itensCombate[abaCombateAtiva].length === 0" class="lista-vazia">
@@ -623,7 +696,7 @@
       :key="rolagemConfig.titulo + rolagemConfig.dados + rolagemConfig.modificador + disparadorRolagem"
       :dados-iniciais="rolagemConfig.dados" :modificador-inicial="rolagemConfig.modificador"
       :titulo-teste="rolagemConfig.titulo" :pericia-nome="rolagemConfig.periciaNome"
-      :auto-rolar="rolagemConfig.autoRolar" :resultado-dano="resultadoDano" :habilidades="itensCombate.Habilidades"
+      :auto-rolar="rolagemConfig.autoRolar" :resultado-dano="resultadoDano" :habilidades="habilidadesParaRolagem"
       :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao" :valor-atributo="obterValorAtributoAtual"
       :rolar-novamente="rolarPericia" :disparador-rolagem="disparadorRolagem"
       :habilidades-gastas-rolagem="habilidadesGastasRolagem" :marcar-habilidade-gasta="marcarHabilidadeGasta"

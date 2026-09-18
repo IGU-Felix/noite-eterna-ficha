@@ -1,6 +1,6 @@
 import { isReadonly, isRef, onBeforeUnmount, onMounted, watch } from "vue"
 
-const camposIgnorados = new Set(["inputNome", "inputFile", "audio"])
+const camposIgnorados = new Set(["inputNome", "inputFile", "audio", "vidaMaxEditada", "manaMaxEditada"])
 
 export function criarSnapshot(estado) {
   const campos = Object.entries(estado).filter(([nome, valor]) =>
@@ -58,13 +58,6 @@ export function aplicarSnapshot(estado, dados) {
     }
   })
 
-  // Garante valores explícitos de vida/mana editadas se estiverem no snapshot
-  if ("vidaMaxEditada" in dados && estado.vidaMaxEditada && isRef(estado.vidaMaxEditada)) {
-    estado.vidaMaxEditada.value = dados.vidaMaxEditada
-  }
-  if ("manaMaxEditada" in dados && estado.manaMaxEditada && isRef(estado.manaMaxEditada)) {
-    estado.manaMaxEditada.value = dados.manaMaxEditada
-  }
   if ("vidaAtual" in dados && estado.vidaAtual && isRef(estado.vidaAtual)) {
     estado.vidaAtual.value = dados.vidaAtual
   }
