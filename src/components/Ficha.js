@@ -126,6 +126,9 @@ export default {
       return partes.length ? partes.join(" - ") : "Escolha raça, classe e subclasse"
     })
 
+    // Status ficam disponíveis para os cálculos de vida e defesa.
+    const status = ref([])
+
     // ===== VIDA =====
     const vidaAtual = ref(10)
     const vidaMaxBase = ref(10) // usado só enquanto nenhuma classe foi escolhida
@@ -140,13 +143,36 @@ export default {
       return (info.dadoInicial + rob) + (info.dadoPorNivel + rob) * (nivel.value - 1) + bonusPvRacial.value
     })
 
+    const vidaTemporaria = ref(0)
+    const vidaTemporariaStatus = computed(() =>
+      (status.value || []).reduce((total, item) =>
+        total + (item.recursoTipo === "vidaTemporaria" ? Math.max(0, Number(item.recursoValor) || 0) : 0), 0
+      )
+    )
+    const vidaTemporariaTotal = computed(() => vidaTemporaria.value + vidaTemporariaStatus.value)
+    const vidaTemporariaEditavel = computed({
+      get: () => vidaTemporariaTotal.value,
+      set: valor => {
+        let restante = Math.max(0, Number(valor) || 0)
+
+        status.value.forEach(item => {
+          if (item.recursoTipo !== "vidaTemporaria") return
+          const atual = Math.max(0, Number(item.recursoValor) || 0)
+          item.recursoValor = Math.min(atual, restante)
+          restante -= item.recursoValor
+        })
+
+        vidaTemporaria.value = restante
+      }
+    })
+
     const vidaMaxEditavel = computed({
       get: () => vidaMax.value,
       set: valor => { vidaMaxEditada.value = Math.max(0, Number(valor) || 0) }
     })
 
     const vidaPercent = computed(() =>
-      (vidaAtual.value / vidaMax.value) * 100
+      Math.min(100, ((vidaAtual.value + vidaTemporariaTotal.value) / vidaMax.value) * 100)
     )
 
     const classeVida = computed(() => {
@@ -162,6 +188,22 @@ export default {
 
     function alterarVida(valor) {
       if (props.somenteLeitura) return
+      if (valor < 0) {
+        let danoRestante = Math.abs(valor)
+
+        status.value.forEach(item => {
+          if (danoRestante <= 0 || item.recursoTipo !== "vidaTemporaria") return
+          const temporaria = Math.max(0, Number(item.recursoValor) || 0)
+          const absorvido = Math.min(temporaria, danoRestante)
+          item.recursoValor = temporaria - absorvido
+          danoRestante -= absorvido
+        })
+
+        const absorvidoManual = Math.min(vidaTemporaria.value, danoRestante)
+        vidaTemporaria.value -= absorvidoManual
+        vidaAtual.value -= danoRestante - absorvidoManual
+        return
+      }
       vidaAtual.value += valor
     }
 
@@ -207,6 +249,10 @@ export default {
     watch(vidaAtual, (v) => {
       if (v > vidaMax.value) vidaAtual.value = vidaMax.value
       if (v < 0) vidaAtual.value = 0
+    })
+
+    watch(vidaTemporaria, (v) => {
+      if (v < 0 || !Number.isFinite(v)) vidaTemporaria.value = 0
     })
 
     // a vida máxima pode mudar sozinha (trocar de classe, subir de nível, editar ROB) —
@@ -295,7 +341,10 @@ export default {
     const defesa = computed(() => {
       const base = 5 + valorAtributo("ROB")
       const bonusNivel = Math.floor((Number(nivel.value) || 0) / 2)
-      return base + bonusNivel + (Number(armadura.value) || 0)
+      const armaduraStatus = (status.value || []).reduce((total, item) =>
+        total + (item.recursoTipo === "armadura" ? Math.max(0, Number(item.recursoValor) || 0) : 0), 0
+      )
+      return base + bonusNivel + (Number(armadura.value) || 0) + armaduraStatus
     })
 
     const tabelaAcertos = [
@@ -501,14 +550,14 @@ export default {
 
     // ===== STATUS =====
     // lista livre de condições/efeitos ativos na personagem (ex: "Fragmentado: Penumbra")
-    const status = ref([])
-
     function adicionarStatus() {
       status.value.push({
         id: gerarId(),
         nome: "",
         duracao: "",
         efeito: "",
+        recursoTipo: "",
+        recursoValor: 0,
         editando: true,
         expandido: false
       })
@@ -884,21 +933,35 @@ export default {
 
     function usarHabilidadeRacial(habilidade) {
       const mecanica = habilidade.mecanica
-      if (!mecanica?.uso || habilidadeRacialFoiUsada(habilidade)) return
+      const ehVitalidadeEfemera = habilidade.id === "vitalidade-efemera"
+      if (!mecanica?.uso && !ehVitalidadeEfemera) return
 
       const chave = `${racaSelecionada.value}:${habilidade.id}`
       racasUsadas[chave] = true
 
-      if (mecanica.armadura) {
-        armadura.value += mecanica.armadura
+      let recursoTipo = ""
+      let recursoValor = 0
+      let duracao = mecanica?.uso === "cena" ? "Até o fim da cena" : "Até descanso"
+
+      if (ehVitalidadeEfemera) {
+        recursoTipo = "vidaTemporaria"
+        recursoValor = Math.floor(Math.random() * 6) + 1 + valorAtributo("ROB")
+        duracao = "Até o fim da cena"
+      } else if (mecanica.armadura) {
+        recursoTipo = "armadura"
+        recursoValor = mecanica.armadura
       }
 
-      if (mecanica.status) {
+      if (mecanica?.status || ehVitalidadeEfemera) {
         status.value.push({
           id: gerarId(),
           nome: habilidade.nome,
-          duracao: mecanica.uso === "cena" ? "Até o fim da cena" : "Até descanso",
-          efeito: mecanica.status,
+          duracao,
+          efeito: ehVitalidadeEfemera
+            ? `Recebeu ${recursoValor} PV temporários nesta cena.`
+            : mecanica.status,
+          recursoTipo,
+          recursoValor,
           editando: false,
           expandido: true,
           racial: true
@@ -1010,6 +1073,9 @@ export default {
       linhaClasse,
 
       vidaAtual,
+      vidaTemporaria,
+      vidaTemporariaTotal,
+      vidaTemporariaEditavel,
       vidaMax,
       vidaMaxEditada,
       vidaMaxEditavel,

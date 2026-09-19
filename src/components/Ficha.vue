@@ -83,6 +83,12 @@
                     <input class="input-barra recurso-input" type="number" v-model.number="vidaAtual" />
                     <span class="barra-separador">/</span>
                     <input class="input-barra recurso-input" type="number" v-model.number="vidaMaxEditavel" readonly />
+                    <template v-if="vidaTemporariaTotal > 0">
+                      <span class="barra-separador vida-temporaria-sinal">+</span>
+                      <input class="input-barra recurso-input vida-temporaria-input" type="number" min="0"
+                        v-model.number="vidaTemporariaEditavel" aria-label="Pontos de vida temporários"
+                        title="Pontos de vida temporários" />
+                    </template>
                   </div>
 
                   <button class="btn-dir" @click="alterarVida(5)">+5</button>
@@ -180,6 +186,16 @@
 
                 <textarea class="ataque-efeito" v-model="s.efeito" placeholder="efeito da condição..."></textarea>
 
+                <div class="status-recurso-linha">
+                  <select class="ataque-select status-recurso-tipo" v-model="s.recursoTipo">
+                    <option value="">Sem bônus numérico</option>
+                    <option value="vidaTemporaria">Vida temporária</option>
+                    <option value="armadura">Armadura</option>
+                  </select>
+                  <input v-if="s.recursoTipo" class="ataque-select status-recurso-valor" type="number" min="0"
+                    v-model.number="s.recursoValor" placeholder="valor" />
+                </div>
+
                 <div class="ataque-editor-acoes">
                   <button class="btn-remover" @click="removerStatus(s.id)" title="remover">×</button>
                   <button class="btn-salvar-ataque" @click="salvarStatus(s)">Salvar</button>
@@ -199,6 +215,11 @@
                 </div>
                 <div class="ataque-resumo-linha" v-if="s.duracao">
                   <span class="ataque-badge ataque-badge-tipo">{{ s.duracao }}</span>
+                </div>
+                <div class="ataque-resumo-linha" v-if="s.recursoTipo && s.recursoValor">
+                  <span class="ataque-badge ataque-badge-recurso">
+                    +{{ s.recursoValor }} {{ s.recursoTipo === 'armadura' ? 'armadura' : 'PV temporários' }}
+                  </span>
                 </div>
                 <p v-if="s.efeito && s.expandido" class="ataque-resumo-efeito">{{ s.efeito }}</p>
               </div>
@@ -515,10 +536,9 @@
                     :title="h.descricao">
                     <div class="racial-cabecalho">
                       <span class="racial-nome">{{ h.nome }}</span>
-                      <button v-if="h.mecanica?.uso" class="racial-usar" :class="{ usada: habilidadeRacialFoiUsada(h) }"
-                        :disabled="habilidadeRacialFoiUsada(h)" @click="usarHabilidadeRacial(h)"
-                        :title="habilidadeRacialFoiUsada(h) ? 'Habilidade já utilizada' : 'Usar habilidade racial'">
-                        {{ habilidadeRacialFoiUsada(h) ? 'Usada' : 'Usar' }}
+                      <button v-if="h.mecanica?.uso || h.id === 'vitalidade-efemera'" class="racial-usar"
+                        @click="usarHabilidadeRacial(h)" title="Usar habilidade racial">
+                        Usar
                       </button>
                       <button class="btn-expandir" :class="{ aberto: racasExpandidas[h.id] !== false }"
                         @click="toggleRacialExpandida(h)" title="mostrar/ocultar descrição">▾</button>

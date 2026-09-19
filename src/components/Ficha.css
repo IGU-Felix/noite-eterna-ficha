@@ -291,15 +291,8 @@ button {
   cursor: pointer;
 }
 
-.racial-usar:hover:not(:disabled) {
+.racial-usar:hover {
   background: rgba(217, 164, 65, 0.14);
-}
-
-.racial-usar.usada,
-.racial-usar:disabled {
-  border-color: #444;
-  color: #666;
-  cursor: default;
 }
 
 .racial-descricao {
@@ -436,6 +429,38 @@ button {
 .recurso-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.barra-separador.vida-temporaria-sinal {
+  color: #d9a441;
+  margin-left: 1px;
+}
+
+.vida-temporaria-input {
+  color: #ffa600;
+}
+
+.vida-temporaria-valor {
+  color: #ffa600;
+  font-weight: bold;
+}
+
+.status-recurso-linha {
+  display: flex;
+  gap: 6px;
+}
+
+.status-recurso-tipo {
+  flex: 1;
+}
+
+.status-recurso-valor {
+  max-width: 80px;
+  text-align: center;
+}
+
+.ataque-badge-recurso {
+  color: #76b9d6;
 }
 
 .barra-separador {
