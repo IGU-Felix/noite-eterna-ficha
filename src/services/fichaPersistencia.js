@@ -1,6 +1,16 @@
 import { isReadonly, isRef, onBeforeUnmount, onMounted, watch } from "vue"
 
-const camposIgnorados = new Set(["inputNome", "inputFile", "audio", "vidaMaxEditada", "manaMaxEditada"])
+const camposIgnorados = new Set([
+  "inputNome", "inputFile", "audio", "vidaMaxEditada", "manaMaxEditada",
+  // Dados fixos do sistema, já disponíveis no código da aplicação.
+  "racas", "classes", "origens", "subclassesDados", "truquesFeiticeiro",
+  "condicoesComuns", "duracoesComuns", "dadosOptions", "tiposDano", "tiposMagia",
+  "tabelaAcertos", "abasCombate", "abas", "tiposCarga", "cargasBlocos",
+  // Estado temporário da interface e das rolagens.
+  "editandoNome", "abaCombateAtiva", "abaAtiva", "rolagemAberta", "disparadorRolagem",
+  "rolagemConfig", "resultadoDano", "acoesGastas", "habilidadesGastasRolagem",
+  "racasExpandidas", "somenteLeitura"
+])
 
 export function criarSnapshot(estado) {
   const campos = Object.entries(estado).filter(([nome, valor]) =>
@@ -23,7 +33,10 @@ export function aplicarSnapshot(estado, dados) {
   if (!dados || typeof dados !== "object") return
 
   // Campos estruturais prioritários para calcular limites antes de aplicar valores customizados
-  const prioridades = ["racaSelecionada", "classeSelecionada", "subclasseSelecionada", "nivel", "atributos"]
+  const prioridades = [
+    "racaSelecionada", "classeSelecionada", "subclasseSelecionada", "nivel", "atributos",
+    "tipoSelecionado_1", "tipoSelecionado_2", "tipoSelecionado_3"
+  ]
   const chaves = [
     ...prioridades.filter(k => k in dados),
     ...Object.keys(dados).filter(k => !prioridades.includes(k))
@@ -39,7 +52,21 @@ export function aplicarSnapshot(estado, dados) {
 
     if (isRef(estadoAtual)) {
       if (Array.isArray(estadoAtual.value) && Array.isArray(valorSalvo)) {
-        estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
+        if (nome === "pericias" && estadoAtual.value.some(pericia => pericia.nome === "Ofício")) {
+          const salvasPorNome = new Map(
+            valorSalvo.filter(pericia => pericia?.nome).map(pericia => [pericia.nome, pericia])
+          )
+          const nomesAtuais = new Set(estadoAtual.value.map(pericia => pericia.nome))
+          const periciasAtuais = estadoAtual.value.map(pericia =>
+            salvasPorNome.has(pericia.nome)
+              ? { ...pericia, ...salvasPorNome.get(pericia.nome) }
+              : pericia
+          )
+          const periciasPersonalizadas = valorSalvo.filter(pericia => !nomesAtuais.has(pericia.nome))
+          estadoAtual.value = [...periciasAtuais, ...periciasPersonalizadas]
+        } else {
+          estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
+        }
       } else if (estadoAtual.value && typeof estadoAtual.value === "object" && valorSalvo && typeof valorSalvo === "object") {
         estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
       } else {

@@ -283,8 +283,7 @@ export default {
     // ===== STATS SECUNDÁRIOS =====
     // livro: "Iniciativa Base ... soma de seus atributos de Pressa (PRE) e Mente (MEN)" + 1d6 na hora da rolagem
     // livro: "Defesa = Base + ⌊Nível / 2⌋ + Armadura" onde "Base = 5 + ROB"
-    // livro: "A cada 5 níveis... recebem Pontos de Vantagem" — 3 pontos por marco (confirmado nas
-    // tabelas de progressão de todas as classes: níveis 5, 10, 15 e 20 sempre concedem 3 P.Van)
+    // livro: começa com 3 Pontos de Vantagem e recebe mais 5 a cada 5 níveis.
     const nivel = ref(1)
     const armadura = ref(0)
 
@@ -313,9 +312,15 @@ export default {
 
     const requisitoAcerto = computed(() => linhaAcertoAtiva.value.requisito)
 
-    const pVan = computed(() => {
-      const pontos = Math.floor((Number(nivel.value) || 0) / 5) * 3
-      return String(pontos).padStart(2, "0")
+    const pVan = ref(3)
+    let ultimoMarcoPVan = Math.floor((Number(nivel.value) || 0) / 5)
+
+    watch(nivel, (novoNivel) => {
+      const marcoAtual = Math.floor((Number(novoNivel) || 0) / 5)
+      if (marcoAtual > ultimoMarcoPVan) {
+        pVan.value += (marcoAtual - ultimoMarcoPVan) * 5
+      }
+      ultimoMarcoPVan = marcoAtual
     })
 
     // ===== ATRIBUTOS =====
@@ -448,16 +453,32 @@ export default {
     const cargasAtual_3 = ref(0)
     const cargasMax_3 = ref(0)
 
-    function definirMaxSugerido(tipoNome, maxRef) {
+    const maximosCargasManuais = [false, false, false]
+    const ultimosMaximosSugeridos = [0, 0, 0]
+
+    function definirMaxSugerido(tipoNome, maxRef, indice) {
+      if (maximosCargasManuais[indice]) return
       const tipo = tiposCarga.value.find(t => t.nome === tipoNome)
-      maxRef.value = tipo ? tipo.max : 0
+      const maximo = tipo ? tipo.max : 0
+      ultimosMaximosSugeridos[indice] = maximo
+      maxRef.value = maximo
     }
 
     const atualizarMaximosCargas = () => {
-      definirMaxSugerido(tipoSelecionado_1.value, cargasMax_1)
-      definirMaxSugerido(tipoSelecionado_2.value, cargasMax_2)
-      definirMaxSugerido(tipoSelecionado_3.value, cargasMax_3)
+      definirMaxSugerido(tipoSelecionado_1.value, cargasMax_1, 0)
+      definirMaxSugerido(tipoSelecionado_2.value, cargasMax_2, 1)
+      definirMaxSugerido(tipoSelecionado_3.value, cargasMax_3, 2)
     }
+
+    watch(cargasMax_1, novoValor => {
+      if (novoValor !== ultimosMaximosSugeridos[0]) maximosCargasManuais[0] = true
+    }, { flush: "sync" })
+    watch(cargasMax_2, novoValor => {
+      if (novoValor !== ultimosMaximosSugeridos[1]) maximosCargasManuais[1] = true
+    }, { flush: "sync" })
+    watch(cargasMax_3, novoValor => {
+      if (novoValor !== ultimosMaximosSugeridos[2]) maximosCargasManuais[2] = true
+    }, { flush: "sync" })
 
     watch(() => valorAtributo("ROB"), atualizarMaximosCargas)
     watch(() => valorAtributo("POD"), atualizarMaximosCargas)
@@ -466,9 +487,9 @@ export default {
     watch(() => valorAtributo("CAR"), atualizarMaximosCargas)
     watch(nivel, atualizarMaximosCargas)
 
-    watch(tipoSelecionado_1, (novo) => { cargasAtual_1.value = 0; definirMaxSugerido(novo, cargasMax_1) })
-    watch(tipoSelecionado_2, (novo) => { cargasAtual_2.value = 0; definirMaxSugerido(novo, cargasMax_2) })
-    watch(tipoSelecionado_3, (novo) => { cargasAtual_3.value = 0; definirMaxSugerido(novo, cargasMax_3) })
+    watch(tipoSelecionado_1, (novo) => { cargasAtual_1.value = 0; definirMaxSugerido(novo, cargasMax_1, 0) }, { flush: "sync" })
+    watch(tipoSelecionado_2, (novo) => { cargasAtual_2.value = 0; definirMaxSugerido(novo, cargasMax_2, 1) }, { flush: "sync" })
+    watch(tipoSelecionado_3, (novo) => { cargasAtual_3.value = 0; definirMaxSugerido(novo, cargasMax_3, 2) }, { flush: "sync" })
 
     watch([racaSelecionada, classeSelecionada, nivel, () => valorAtributo("ROB")], () => {
       vidaMaxEditada.value = null

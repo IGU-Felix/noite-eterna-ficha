@@ -667,6 +667,27 @@ button {
   outline: none;
 }
 
+.stat-valor-pvan {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #d9a441;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  outline: none;
+}
+
+.pvan-input {
+  -moz-appearance: textfield;
+}
+
+.pvan-input::-webkit-outer-spin-button,
+.pvan-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .stat-valor-calc {
   display: block;
   width: 100%;

@@ -145,9 +145,9 @@
                   </div>
                 </div>
               </div>
-              <div class="stat-box" title="Calculado: 3 pontos a cada 5 níveis">
+              <div class="stat-box" title="Valor editável; sugestão inicial: 3 pontos a cada 5 níveis">
                 <span class="stat-label">P. Van</span>
-                <span class="stat-valor-calc">{{ pVan }}</span>
+                <input class="stat-valor-pvan  pvan-input" type="number" min="0" v-model.number="pVan" />
               </div>
             </div>
 
