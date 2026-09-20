@@ -269,7 +269,16 @@ const mecanicasRaciais = {
   "nucleo-ressonante": {
     uso: "descanso",
     magia: { nome: "Rajada Mística", nivel: 1, qtdDados: 1, tipoDado: 4, custoMana: 0, tipoDano: "Psiônico", efeito: "Uma vez por descanso: inimigos em 3m sofrem 1d4 de dano psiônico.", racial: true }
-  }
+  },
+  "arma-natural-homem-rato": {
+   ataque: { nome: "Arma Natural", atributoAtaque: "POD", qtdDados: 1, tipoDado: 6, tipoDano: "Cortante", efeito: "Ação: Dentes e unhas contam como arma natural e causam 1d6 de dano cortante.", racial: true }
+  },
+  "arma-natural-aquatica": {
+   ataque: { nome: "Arma Natural", atributoAtaque: "POD", qtdDados: 1, tipoDado: 6, tipoDano: "Cortante", efeito: "Ação: Cauda ou nadadeiras causam 1d6 contundente, ou 1d10 na agua. Recebe +2 de Defesa enquanto luta submerso.", racial: true }
+  },
+    "sangue-luminescente": {
+   ataque: { nome: "Sangue Luminescente", atributoAtaque: "POD", qtdDados: 1, tipoDado: 4, tipoDano: "Radiante", efeito: "Ação: Ao sofrer dano corpo a corpo, causa 1d4 de dano Radiante ao atacante por 1d6 rodadas. Se o inimigo morrer sob o efeito, recupera 1d6 PV.", racial: true }
+  },
 }
 
 const efeitosDeRolagem = {
@@ -296,7 +305,7 @@ const efeitosDeRolagem = {
   "saltos-ritmados": { efeitoDado: "mudar_valor", valorAlvoDado: "qualquer", periciasVinculadas: ["Acrobacia", "Atletismo"] },
   "toque-etereo": { efeitoDado: "mudar_valor", valorAlvoDado: "qualquer", periciasVinculadas: ["TODAS"] },
   "olhos-da-colonia": { modificadorHabilidade: 1, atributosVinculados: ["MEN"] },
-  "caminhar-da-noite": { efeitoDado: "mudar_valor", valorAlvoDado: "qualquer", periciasVinculadas: ["Furtividade"] }
+  "caminhar-da-noite": { modificadorHabilidade: 1, valorAlvoDado: "qualquer", periciasVinculadas: ["Furtividade"] }
 }
 
 racasLivro.forEach(raca => {
