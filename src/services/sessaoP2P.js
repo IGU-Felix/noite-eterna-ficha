@@ -11,7 +11,8 @@ export const sessaoEstado = reactive({
   nomeUsuario: localStorage.getItem("noite-eterna-usuario") || "Jogador",
   jogadores: [],
   fichasRemotas: {},
-  fichaVinculadaId: null
+  fichaVinculadaId: null,
+  ultimoResetDescanso: null
 })
 
 // Marca qual ficha local (janela aberta) deve ser reenviada ao Mestre sempre que mudar
@@ -23,6 +24,25 @@ let peer = null
 let conexoes = [] // array de conns para o mestre
 let connMestre = null // conn para o mestre quando for jogador
 let intervalPing = null
+const CHAVE_SESSAO = "noite-eterna-sessao"
+
+function salvarSessaoParaRestaurar(dados = {}) {
+  try {
+    localStorage.setItem(CHAVE_SESSAO, JSON.stringify({
+      papel: sessaoEstado.papel,
+      codigoSessao: sessaoEstado.codigoSessao,
+      nomeUsuario: sessaoEstado.nomeUsuario,
+      fichaVinculadaId: sessaoEstado.fichaVinculadaId,
+      ...dados
+    }))
+  } catch (e) {
+    console.warn("Não foi possível salvar a sessão online", e)
+  }
+}
+
+function limparSessaoParaRestaurar() {
+  try { localStorage.removeItem(CHAVE_SESSAO) } catch (e) { }
+}
 
 function gerarCodigoSala() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -51,7 +71,7 @@ function salvarUsuario(nome) {
 // MESTRE: CRIAR SESSÃO
 // ==========================================
 export async function criarSessao(nomeMestre, codigoPersonalizado = "") {
-  desconectarSessao()
+  desconectarSessao({ preservarSessao: true })
   salvarUsuario(nomeMestre || "Mestre")
 
   sessaoEstado.conectando = true
@@ -71,6 +91,8 @@ export async function criarSessao(nomeMestre, codigoPersonalizado = "") {
     peer.on("open", (id) => {
       sessaoEstado.conectado = true
       sessaoEstado.conectando = false
+      salvarSessaoParaRestaurar()
+      salvarSessaoParaRestaurar()
       sessaoEstado.jogadores = [
         {
           id: peer.id,
@@ -241,7 +263,7 @@ function removerJogadorConexao(peerId) {
 // JOGADOR: ENTRAR EM SESSÃO
 // ==========================================
 export async function entrarSessao(nomeJogador, codigoSessao, fichaAtual = null) {
-  desconectarSessao()
+  desconectarSessao({ preservarSessao: true })
   salvarUsuario(nomeJogador || "Jogador")
 
   const codigo = (codigoSessao || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
@@ -262,14 +284,17 @@ export async function entrarSessao(nomeJogador, codigoSessao, fichaAtual = null)
       debug: 1
     })
 
-    peer.on("open", () => {
-      connMestre = peer.connect(peerMestreId, {
-        reliable: true
-      })
+    function conectarAoMestre() {
+      if (!peer || peer.destroyed || connMestre?.open) return
+      connMestre = peer.connect(peerMestreId, { reliable: true })
 
       connMestre.on("open", () => {
         sessaoEstado.conectado = true
         sessaoEstado.conectando = false
+        salvarSessaoParaRestaurar({ fichaVinculadaId: fichaAtual?.id || sessaoEstado.fichaVinculadaId || null })
+        salvarSessaoParaRestaurar({
+          fichaVinculadaId: fichaAtual?.id || sessaoEstado.fichaVinculadaId || null
+        })
 
         // Envia identificação
         connMestre.send({
@@ -293,7 +318,13 @@ export async function entrarSessao(nomeJogador, codigoSessao, fichaAtual = null)
 
       connMestre.on("close", () => {
         sessaoEstado.conectado = false
-        sessaoEstado.erro = "Conexão com o Mestre encerrada."
+        connMestre = null
+        if (peer && !peer.destroyed) {
+          sessaoEstado.conectando = true
+          setTimeout(conectarAoMestre, 500)
+        } else {
+          sessaoEstado.erro = "Conexão com o Mestre encerrada."
+        }
       })
 
       connMestre.on("error", (err) => {
@@ -301,6 +332,12 @@ export async function entrarSessao(nomeJogador, codigoSessao, fichaAtual = null)
         sessaoEstado.conectado = false
         sessaoEstado.erro = "Não foi possível conectar ao Mestre da sessão."
       })
+    }
+
+    peer.on("open", conectarAoMestre)
+
+    peer.on("disconnected", () => {
+      if (peer && !peer.destroyed) peer.reconnect()
     })
 
     peer.on("error", (err) => {
@@ -319,6 +356,43 @@ export async function entrarSessao(nomeJogador, codigoSessao, fichaAtual = null)
   }
 }
 
+export async function restaurarSessao() {
+  let salva = null
+  try {
+    salva = JSON.parse(localStorage.getItem(CHAVE_SESSAO) || "null")
+  } catch (e) {
+    salva = null
+  }
+
+  if (!salva?.papel || !salva.codigoSessao || sessaoEstado.conectado || sessaoEstado.conectando) return
+
+  if (salva.papel === "mestre") {
+    await criarSessao(salva.nomeUsuario, salva.codigoSessao)
+    return
+  }
+
+  await entrarSessao(salva.nomeUsuario, salva.codigoSessao, salva.fichaVinculadaId
+    ? { id: salva.fichaVinculadaId, tipo: "personagem", nome: "" }
+    : null)
+}
+
+export function resetarDescanso(alvoPeerId = null) {
+  if (sessaoEstado.papel !== "mestre") return
+
+  const mensagem = {
+    tipo: "RESET_DESCANSO",
+    comandoId: `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  }
+  const destinatarios = alvoPeerId
+    ? conexoes.filter(conn => conn.peer === alvoPeerId)
+    : conexoes
+
+  destinatarios.forEach(conn => {
+    if (!conn.open) return
+    try { conn.send(mensagem) } catch (e) { console.warn("Erro ao enviar reset de descanso:", e) }
+  })
+}
+
 function tratarMensagemNoJogador(msg) {
   if (!msg || typeof msg !== "object") return
 
@@ -335,6 +409,16 @@ function tratarMensagemNoJogador(msg) {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("sessao-solicitar-sync-ficha", {
           detail: msg.fichaId || null
+        }))
+      }
+      break
+    }
+
+    case "RESET_DESCANSO": {
+      sessaoEstado.ultimoResetDescanso = msg.comandoId || Date.now()
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("sessao-reset-descanso", {
+          detail: sessaoEstado.ultimoResetDescanso
         }))
       }
       break
@@ -379,7 +463,7 @@ export function enviarSyncFichaParaMestre(ficha) {
 }
 
 // Desconectar tudo
-export function desconectarSessao() {
+export function desconectarSessao(opcoes = {}) {
   if (connMestre) {
     try { connMestre.close() } catch (e) { }
     connMestre = null
@@ -401,4 +485,6 @@ export function desconectarSessao() {
   sessaoEstado.jogadores = []
   sessaoEstado.erro = null
   sessaoEstado.fichaVinculadaId = null
+  sessaoEstado.ultimoResetDescanso = null
+  if (!opcoes.preservarSessao) limparSessaoParaRestaurar()
 }

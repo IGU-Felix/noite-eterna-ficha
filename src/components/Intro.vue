@@ -16,7 +16,7 @@
 
             <div class="intro-rodape">
                 <div class="intro-icones">
-                    <button class="intro-icone" title="Mundo" @click.stop="abrirMapa">
+                    <button class="intro-icone" title="Mundo"> <!-- @click.stop="abrirMapa" -->
                         <img src="/buttons/map-btn.svg" alt="Mundo" />
                     </button>
                     <button class="intro-icone" title="Ameaças" @click.stop="abrirAmeaca">

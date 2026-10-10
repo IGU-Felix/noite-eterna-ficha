@@ -48,10 +48,10 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue"
 import Assistente from "./Assistente.vue"
-import Ficha from "./Ficha.vue"
-import FichaAmeaca from "./FichaAmeaca.vue"
+import Ficha from "../ficha_personagem/Ficha.vue"
+import FichaAmeaca from "../ficha_ameaca/FichaAmeaca.vue"
 import FichaRemotaVisualizacao from "./FichaRemotaVisualizacao.vue"
-import { sessaoEstado, enviarSyncFichaParaMestre } from "../services/sessaoP2P.js"
+import { sessaoEstado, enviarSyncFichaParaMestre } from "../../services/sessaoP2P.js"
 
 const props = defineProps({
   fichas: { type: Array, default: () => [] },

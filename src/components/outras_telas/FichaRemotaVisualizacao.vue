@@ -62,9 +62,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue"
-import { sessaoEstado, solicitarSyncFicha } from "../services/sessaoP2P.js"
-import Ficha from "./Ficha.vue"
-import FichaAmeaca from "./FichaAmeaca.vue"
+import { sessaoEstado, solicitarSyncFicha } from "../../services/sessaoP2P.js"
+import Ficha from "../ficha_personagem/Ficha.vue"
+import FichaAmeaca from "../ficha_ameaca/FichaAmeaca.vue"
 
 const props = defineProps({
   fichaId: { type: String, default: null }

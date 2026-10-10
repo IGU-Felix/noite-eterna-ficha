@@ -1,6 +1,6 @@
 import { ref, reactive, computed, watch, nextTick } from "vue"
-import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../services/fichaPersistencia.js"
-import RolagemDados from "./RolagemDados.vue"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../../services/fichaPersistencia.js"
+import RolagemDados from "../outras_telas/dados/RolagemDados.vue"
 
 let proximoId = 1
 function gerarId() {

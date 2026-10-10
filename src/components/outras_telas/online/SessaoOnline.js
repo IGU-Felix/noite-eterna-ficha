@@ -4,11 +4,14 @@ import {
   criarSessao,
   entrarSessao,
   desconectarSessao,
+  resetarDescanso,
   enviarSyncFichaParaMestre,
   definirFichaVinculada
-} from "../services/sessaoP2P.js"
+} from "../../../services/sessaoP2P.js"
+import PlaylistMusicas from "../../bot_musica_python/PlaylistMusicas.vue"
 
 export default {
+  components: { PlaylistMusicas },
   props: {
     nomePersonagem: { type: String, default: "" },
     personagemDisponivel: { type: Boolean, default: false },
@@ -55,12 +58,21 @@ export default {
       modo.value = "menu"
     }
 
+    function cancelarConexao() {
+      desconectarSessao()
+      modo.value = "menu"
+    }
+
     function copiarCodigo() {
       if (!sessaoEstado.codigoSessao) return
       navigator.clipboard?.writeText(sessaoEstado.codigoSessao).then(() => {
         copiado.value = true
         setTimeout(() => { copiado.value = false }, 1500)
       }).catch(() => { })
+    }
+
+    function resetarDescansoJogador(id = null) {
+      resetarDescanso(id)
     }
 
     // ===== ARRASTAR =====
@@ -101,7 +113,8 @@ export default {
       modo, nomeInput, codigoPersonalizado, codigoParaEntrar, vincularFicha, copiado,
       ehMestre, ehJogador,
       irParaCriar, irParaEntrar, voltar,
-      confirmarCriarSessao, confirmarEntrarSessao, sair, copiarCodigo,
+      confirmarCriarSessao, confirmarEntrarSessao, sair, cancelarConexao, copiarCodigo,
+      resetarDescansoJogador,
       estiloJanela, iniciarArraste
     }
   }

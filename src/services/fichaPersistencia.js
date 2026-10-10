@@ -8,7 +8,7 @@ const camposIgnorados = new Set([
   "tabelaAcertos", "abasCombate", "abas", "tiposCarga", "cargasBlocos",
   // Estado temporário da interface e das rolagens.
   "editandoNome", "abaCombateAtiva", "abaAtiva", "rolagemAberta", "disparadorRolagem",
-  "rolagemConfig", "resultadoDano", "acoesGastas", "habilidadesGastasRolagem",
+  "rolagemConfig", "resultadoDano", "acoesGastas", "habilidadesGastasDescanso", "habilidadesGastasCena",
   "racasExpandidas", "somenteLeitura"
 ])
 

@@ -1,3 +1,5 @@
+
+Mapaeditor · VUE
 <template>
     <div class="janela-flutuante mapa-editor" :class="{ minimizada: false }" :style="estiloJanela"
         @mousedown.capture="ativarJanelaNoTopo">
@@ -67,12 +69,17 @@
                 <div v-for="cell in celulasVisiveis" :key="cell.id" class="cell" :data-id="cell.id"
                     :style="estiloCelula(cell)" :class="`terreno-${cell.terreno}`"
                     @mousedown.stop="iniciarInteracao($event, cell)" @mouseenter="continuarPintura(cell)"
+                    @mouseleave="limparHoverParede(cell)"
                     @dblclick.stop="ferramentaSelecionada === 'objeto' && abrirEditorCelula(cell)">
                     <div v-for="obj in objetosDaCelula(cell)" :key="obj.id" class="objeto-celula"
                         :class="{ 'objeto-parede': obj.orientacao === 'parede' }" :style="estiloObjeto(obj)">
                         <div class="objeto-giro" :style="estiloGiro(obj)">
-                            <img :src="imagemObjetoCamada(obj)" :alt="obj.nome || 'Objeto'" />
+                            <img v-if="imagemObjetoCamada(obj)" :src="imagemObjetoCamada(obj)" :alt="obj.nome || 'Objeto'" />
+                            <div v-else class="objeto-cor-solida" :style="{ backgroundColor: obj.corSolida || '#8a8a8a' }"></div>
                         </div>
+                    </div>
+                    <div v-if="ferramentaSelecionada === 'parede' && celulaHoverParede === cell"
+                        class="parede-fantasma" :style="estiloObjeto({ orientacao: 'parede', ladoParede: 'norte', altura: 2 })">
                     </div>
                 </div>
                 <template v-if="editorMode">
@@ -276,7 +283,8 @@ const ferramentas = [
     { id: 'borracha', nome: 'Borracha', icone: '/map_tools_icons/eraser_icon.svg' },
     { id: 'balde', nome: 'Balde', icone: '/map_tools_icons/bucket_icon.svg' },
     { id: 'mao', nome: 'Mão', icone: '/map_tools_icons/hand_icon.svg' },
-    { id: 'objeto', nome: 'Objeto', icone: '/map_tools_icons/object_icon.svg' }
+    { id: 'objeto', nome: 'Objeto', icone: '/map_tools_icons/object_icon.svg' },
+    { id: 'parede', nome: 'Parede', icone: '/map_tools_icons/object_icon.svg' }
 ]
 
 function selecionarFerramenta(id) {
@@ -308,10 +316,13 @@ function estiloObjeto(obj) {
         const extBaixo = obj.extBaixo || 0
         const extEsquerda = obj.extEsquerda || 0
         const extDireita = obj.extDireita || 0
+        const tamanhoParede = 0.72
 
         estilo.position = 'absolute'
-        estilo.height = `${((obj.altura || 2) + extCima + extBaixo) * 100}%`
-        estilo.width = `${(0.84 + extEsquerda + extDireita) * 100}%`
+        estilo.width = `${(tamanhoParede + extEsquerda + extDireita) * 100}%`
+        estilo.height = `${(tamanhoParede + extCima + extBaixo) * 100}%`
+        estilo.left = `${(1 - (tamanhoParede + extEsquerda + extDireita)) * 50 + 14}%`
+        estilo.top = `${(1 - (tamanhoParede + extCima + extBaixo)) * 50 + 10}%`
         estilo.transform = transformacaoParede(lado)
         estilo.transformOrigin = origemParede(lado)
         Object.assign(estilo, aplicarExtensoesParede(posicaoParede(lado), extCima, extBaixo, extEsquerda, extDireita))
@@ -837,7 +848,6 @@ function posicaoUnidade(unidade) {
 }
 
 let pintando = false
-
 let unidadeArrastada = null
 let objetoArrastado = null
 let objetoDestino = null
@@ -910,6 +920,8 @@ function iniciarInteracao(event, cell) {
 
     if (ferramentaSelecionada.value === 'objeto') {
         colocarObjeto(cell)
+    } else if (ferramentaSelecionada.value === 'parede') {
+        colocarParede(cell)
     } else if (ferramentaSelecionada.value === 'mao') {
         iniciarPan(event, 0)
     } else if (ferramentaSelecionada.value === 'balde') {
@@ -928,6 +940,34 @@ function colocarObjeto(cell) {
         return
     }
     abrirEditorCelula(cell)
+}
+
+// Ferramenta Parede: cria uma parede de cor sólida (sem precisar de imagem) e já
+// abre o editor nessa camada, pra você escolher o lado certo (N/L/S/O) com os
+// botões que já funcionam direitinho — evita adivinhar o lado pela posição do mouse.
+const celulaHoverParede = ref(null)
+
+function limparHoverParede(cell) {
+    if (celulaHoverParede.value === cell) celulaHoverParede.value = null
+}
+
+function colocarParede(cell) {
+    garantirObjetosCelula(cell)
+    const nova = {
+        ...novaCamadaVazia(),
+        orientacao: 'parede',
+        ladoParede: 'norte',
+        altura: 2,
+        corSolida: corSelecionada.value
+    }
+    cell.objetos.push(nova)
+    cell.revelada = true
+
+    celulaEditada.value = cell
+    camadasCelula.value = cell.objetos
+    selecionarCamada(nova.id)
+    modoVisualizador.value = 'iso'
+    editorQuadradoAberto.value = true
 }
 
 function selecionarObjeto(cell) {
@@ -961,6 +1001,9 @@ function iniciarPintura(cell) {
 }
 
 function continuarPintura(cell) {
+    if (ferramentaSelecionada.value === 'parede') {
+        celulaHoverParede.value = cell
+    }
     if (pintando && (ferramentaSelecionada.value === 'lapis' || ferramentaSelecionada.value === 'borracha')) {
         pintar(cell)
         atualizarTamanhoAposDesenho(cell)
@@ -1992,6 +2035,18 @@ onBeforeUnmount(() => {
     height: 100%;
     object-fit: contain;
     display: block;
+}
+
+.objeto-cor-solida {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.parede-fantasma {
+    background: rgba(217, 164, 65, 0.12);
+    border: 1px dashed rgba(217, 164, 65, 0.6);
+    pointer-events: none;
 }
 
 .objeto-celula.objeto-parede {

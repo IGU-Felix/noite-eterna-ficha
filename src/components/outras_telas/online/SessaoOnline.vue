@@ -56,6 +56,7 @@
       <!-- CONECTANDO -->
       <template v-if="sessaoEstado.conectando">
         <p class="sessao-status">Conectando...</p>
+        <button class="sessao-btn-cancelar" @click="cancelarConexao">Cancelar conexão</button>
       </template>
 
       <!-- CONECTADO -->
@@ -77,8 +78,18 @@
             <span class="sessao-jogador-nome">{{ j.nome }}</span>
             <span v-if="j.papel === 'mestre'" class="sessao-jogador-tag">Mestre</span>
             <span v-else-if="j.fichaNome" class="sessao-jogador-ficha">{{ j.fichaNome }}</span>
+            <button v-if="ehMestre && j.papel === 'jogador'" class="sessao-btn-reset"
+              @click="resetarDescansoJogador(j.id)" title="Resetar habilidades limitadas por descanso deste jogador">
+              Resetar descanso
+            </button>
           </div>
         </div>
+
+        <button v-if="ehMestre" class="sessao-btn-reset-todos" @click="resetarDescansoJogador()">
+          Resetar descanso de todos
+        </button>
+
+        <PlaylistMusicas v-show="ehMestre" />
 
         <button class="sessao-btn-sair" @click="sair">Sair da Sessão</button>
       </template>

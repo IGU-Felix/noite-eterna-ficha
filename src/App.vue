@@ -2,7 +2,8 @@
   <div class="app-root">
     <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente"
       @abrir-sessao="sessaoAberta = true" @abrir-mapa="mapaAberto = true" />
-    <MapaEditor v-if="mapaAberto" @fechar="mapaAberto = false" />
+    <MapaMundi v-if="mapaAberto" @fechar="mapaAberto = false" @abrir-interno="abrirMapaInterno" />
+    <MapaEditor v-if="mapaInternoAberto" @fechar="mapaInternoAberto = false" />
 
     <SeletorFichas v-if="seletorAberto" :fichas="fichasSessao" :tipo-inicial="tipoSeletor"
       @fechar="seletorAberto = false" @abrir="abrirFichaSessao" @criar="criarFicha" @importar="importarFicha" />
@@ -23,15 +24,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import Intro from "./components/Intro.vue"
-import Assistente from "./components/Assistente.vue"
-import FichaFlutuante from "./components/FichaFlutuante.vue"
-import SeletorFichas from "./components/SeletorFichas.vue"
-import SessaoOnline from "./components/SessaoOnline.vue"
-import MapaEditor from "./components/MapaEditor.vue"
+import Assistente from "./components/outras_telas/Assistente.vue"
+import FichaFlutuante from "./components/outras_telas/FichaFlutuante.vue"
+import SeletorFichas from "./components/outras_telas/SeletorFichas.vue"
+import SessaoOnline from "./components/outras_telas/online/SessaoOnline.vue"
+import MapaMundi from "./components/mapa/MapaMundi.vue"
+import MapaEditor from "./components/mapa/MapaEditor.vue"
 import { watch } from "vue"
-import { sessaoEstado, enviarSyncFichaParaMestre } from "./services/sessaoP2P.js"
+import { sessaoEstado, enviarSyncFichaParaMestre, restaurarSessao } from "./services/sessaoP2P.js"
 
 const personagensAbertos = ref([])
 const ameacasAbertas = ref([])
@@ -42,12 +44,43 @@ const importacaoPendente = ref(null)
 const assistenteAberto = ref(false)
 const sessaoAberta = ref(false)
 const mapaAberto = ref(false)
+const mapaInternoAberto = ref(false)
 const janelaAtiva = ref(null)
 const janelaEmFrente = ref(null)
 const todasJanelas = computed(() => [
   ...personagensAbertos.value.map(janela => ({ ...janela, tipo: "personagem" })),
   ...ameacasAbertas.value.map(janela => ({ ...janela, tipo: "ameaca" }))
 ])
+
+function restaurarSessaoAoVoltar() {
+  restaurarSessao()
+}
+
+let intervaloPresencaFicha = null
+
+function enviarPresencaFicha() {
+  fetch("/api/ficha/presenca", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      aberta: todasJanelas.value.some(janela => !janela.minimizada)
+    })
+  }).catch(() => { })
+}
+
+onMounted(() => {
+  restaurarSessaoAoVoltar()
+  enviarPresencaFicha()
+  intervaloPresencaFicha = setInterval(enviarPresencaFicha, 30_000)
+  window.addEventListener("pageshow", restaurarSessaoAoVoltar)
+  document.addEventListener("visibilitychange", restaurarSessaoAoVoltar)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(intervaloPresencaFicha)
+  window.removeEventListener("pageshow", restaurarSessaoAoVoltar)
+  document.removeEventListener("visibilitychange", restaurarSessaoAoVoltar)
+})
 const nomePersonagemAtual = computed(() => {
   const ativa = todasJanelas.value.find(janela => janela.id === janelaAtiva.value)
   if (ativa && ativa.tipo === "personagem") return ativa.nome
@@ -57,6 +90,11 @@ const nomePersonagemAtual = computed(() => {
 
 const personagemDisponivel = computed(() => personagensAbertos.value.length > 0)
 const primeiroPersonagemId = computed(() => personagensAbertos.value[0]?.id || null)
+
+function abrirMapaInterno() {
+  mapaAberto.value = false
+  mapaInternoAberto.value = true
+}
 
 function abrirPersonagem() {
   abrirSeletor("personagem")

@@ -40,7 +40,7 @@
 
 <script setup>
 import { ref, nextTick, computed, onMounted, onBeforeUnmount } from "vue"
-import { perguntarAoMestre } from "../services/gemini.js"
+import { perguntarAoMestre } from "../../services/gemini.js"
 
 const emit = defineEmits(["fechar", "topo"])
 

@@ -719,7 +719,8 @@
       :auto-rolar="rolagemConfig.autoRolar" :resultado-dano="resultadoDano" :habilidades="habilidadesParaRolagem"
       :acoes-gastas="acoesGastas" :alternar-acao="alternarAcao" :valor-atributo="obterValorAtributoAtual"
       :rolar-novamente="rolarPericia" :disparador-rolagem="disparadorRolagem"
-      :habilidades-gastas-rolagem="habilidadesGastasRolagem" :marcar-habilidade-gasta="marcarHabilidadeGasta"
+      :habilidades-gastas-descanso="habilidadesGastasDescanso" :habilidades-gastas-cena="habilidadesGastasCena"
+      :marcar-habilidade-gasta="marcarHabilidadeGasta"
       @fechar="fecharRolagem" />
   </div> <!-- FECHA ficha-container -->
 </template>

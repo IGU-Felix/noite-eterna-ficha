@@ -33,7 +33,8 @@ export default {
     rolarNovamente: { type: Function, default: () => { } },
     disparadorRolagem: { type: Number, default: 0 },
     resultadoDano: { type: Object, default: null },
-    habilidadesGastasRolagem: { type: Array, default: () => [] },
+    habilidadesGastasDescanso: { type: Array, default: () => [] },
+    habilidadesGastasCena: { type: Array, default: () => [] },
     marcarHabilidadeGasta: { type: Function, default: () => { } }
   },
   emits: ["fechar"],
@@ -355,7 +356,7 @@ function escolherValor(dado) {
           // Desativar / cancelar antes de usar no dado
           habilidadesAtivas.value.splice(index, 1)
 
-          if (h.tipoAcao) {
+          if (h.tipoAcao && h.tipoAcao !== "cena") {
             props.alternarAcao(h.tipoAcao)
           }
 
@@ -376,15 +377,12 @@ function escolherValor(dado) {
         // Ativar habilidade
         if (!podeUsarHabilidade(h)) return
 
-        if (h.tipoAcao === "descanso" || h.tipoAcao === "cena") {
-          if (props.habilidadesGastasRolagem.includes(h.id)) {
-            return
-          }
-          if (props.habilidadesGastasRolagem.includes(h.id)) return
-          props.marcarHabilidadeGasta(h.id)
+        if (h.tipoAcao === "descanso") {
+          if (habilidadeFoiGasta(h)) return
+          props.marcarHabilidadeGasta(h.id, h.tipoAcao)
         }
 
-        if (h.tipoAcao) {
+        if (h.tipoAcao && h.tipoAcao !== "cena") {
           props.alternarAcao(h.tipoAcao)
         }
 
@@ -418,13 +416,18 @@ function escolherValor(dado) {
           alternarUsoHabilidade(h)
         }
 
+        function habilidadeFoiGasta(h) {
+          return props.habilidadesGastasDescanso.includes(h.id)
+        }
+
         function podeUsarHabilidade(h) {
           // Se não tem tipo de ação, pode usar
           if (!h.tipoAcao) return true
-          // Se é descanso ou cena, só pode usar se não foi gasta nesta rolagem
-          if (h.tipoAcao === "descanso" || h.tipoAcao === "cena") {
-            return !props.habilidadesGastasRolagem.includes(h.id)
+          // Apenas descanso persiste até o mestre resetar; cena não bloqueia usos.
+          if (h.tipoAcao === "descanso") {
+            return !habilidadeFoiGasta(h)
           }
+          if (h.tipoAcao === "cena") return true
           // Outras ações podem ser usadas se a ação não foi gasta
           return !props.acoesGastas[h.tipoAcao]
         }

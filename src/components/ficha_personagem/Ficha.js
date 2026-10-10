@@ -1,7 +1,8 @@
-import { ref, reactive, computed, watch, onMounted, nextTick } from "vue"
-import { racasLivro as racas, origensLivro as origens, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../data/index.js"
-import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../services/fichaPersistencia.js"
-import RolagemDados from "./RolagemDados.vue"
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue"
+import { racasLivro as racas, origensLivro as origens, classes, subclassesDados, vantagens, moedas as moedasDb, formulasCombate, elementosFragmentacao, tabelaFragmentacao, referencia, truquesFeiticeiro } from "../../data/index.js"
+import { configurarPersistencia, exportarFichaJson, importarFichaJson, criarSnapshot, aplicarSnapshot } from "../../services/fichaPersistencia.js"
+import RolagemDados from "../outras_telas/dados/RolagemDados.vue"
+import { sessaoEstado } from "../../services/sessaoP2P.js"
 
 // gerador simples de ids únicos para itens de listas (status, inventário, combate...)
 let proximoId = 1
@@ -449,6 +450,11 @@ export default {
     onMounted(() => {
       audio.loop = true
       audio.volume = 0.25
+      window.addEventListener("sessao-reset-descanso", tratarResetDescansoRecebido)
+    })
+
+    onBeforeUnmount(() => {
+      window.removeEventListener("sessao-reset-descanso", tratarResetDescansoRecebido)
     })
 
     watch(vidaCritica, (critico) => {
@@ -774,12 +780,14 @@ export default {
     // ===== AÇÕES DE COMBATE (marcadas ao usar uma habilidade, ou manualmente) =====
     const acoesGastas = reactive({ padrao: false, bonus: false, movimento: false, reacao: false, descanso: false, cena: false, mana: false })
 
-    // Rastreia habilidades de descanso/cena que foram usadas nesta rolagem
-    const habilidadesGastasRolagem = ref([])
+    // Habilidades de descanso ficam bloqueadas até o mestre comandar um reset.
+    const habilidadesGastasDescanso = ref([])
+    const habilidadesGastasCena = ref([])
 
-    function marcarHabilidadeGasta(habilidadeId) {
-      if (!habilidadesGastasRolagem.value.includes(habilidadeId)) {
-        habilidadesGastasRolagem.value.push(habilidadeId)
+    function marcarHabilidadeGasta(habilidadeId, tipoAcao) {
+      const alvo = tipoAcao === "descanso" ? habilidadesGastasDescanso : habilidadesGastasCena
+      if (!alvo.value.includes(habilidadeId)) {
+        alvo.value.push(habilidadeId)
       }
     }
 
@@ -790,9 +798,24 @@ export default {
     function resetarAcoes() {
       Object.keys(acoesGastas).forEach(k => { acoesGastas[k] = false })
     }
+
+    function resetarDescanso() {
+      resetarAcoes()
+      habilidadesGastasDescanso.value.splice(0)
+      habilidadesGastasCena.value.splice(0)
+    }
+
+    watch(() => sessaoEstado.ultimoResetDescanso, comandoId => {
+      if (comandoId && !props.somenteLeitura) resetarDescanso()
+    }, { immediate: true })
+
+    function tratarResetDescansoRecebido() {
+      if (!props.somenteLeitura) resetarDescanso()
+    }
+
     function fecharRolagem() {
       rolagemAberta.value = false
-      habilidadesGastasRolagem.value = []
+      habilidadesGastasCena.value = []
       resultadoDano.value = null
       // Limpa o resultado ao fechar
     }
@@ -1196,7 +1219,9 @@ export default {
       acoesGastas,
       alternarAcao,
       resetarAcoes,
-      habilidadesGastasRolagem,
+      resetarDescanso,
+      habilidadesGastasDescanso,
+      habilidadesGastasCena,
       marcarHabilidadeGasta,
 
       truquesFeiticeiro,

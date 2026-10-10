@@ -294,5 +294,5 @@
 </template>
 
 <script src="./FichaAmeaca.js"></script>
-<style src="./Ficha.css"></style>
+<style src="../ficha_personagem/Ficha.css"></style>
 <style src="./FichaAmeaca.css"></style>

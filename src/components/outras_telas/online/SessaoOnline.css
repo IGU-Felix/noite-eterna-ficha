@@ -5,8 +5,8 @@
   left: 24px;
   bottom: 24px;
   z-index: 300;
-  width: 320px;
-  max-height: 82vh;
+  width: min(560px, calc(100vw - 32px));
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   background: #111;
@@ -168,6 +168,21 @@
   padding: 10px 0;
 }
 
+.sessao-btn-cancelar {
+  background: transparent;
+  border: 1px solid #7a1e1e;
+  color: #d97a7a;
+  font: inherit;
+  font-size: 11px;
+  padding: 7px;
+  cursor: pointer;
+}
+
+.sessao-btn-cancelar:hover {
+  background: #7a1e1e;
+  color: #fff;
+}
+
 /* ===== CONECTADO ===== */
 .sessao-info-conexao {
   display: flex;
@@ -276,6 +291,30 @@
 .sessao-jogador-ficha {
   font-size: 9px;
   color: #7fb3d9;
+}
+
+.sessao-btn-reset,
+.sessao-btn-reset-todos {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #6f4d25;
+  color: #d9a441;
+  font: inherit;
+  font-size: 9px;
+  padding: 3px 5px;
+  cursor: pointer;
+}
+
+.sessao-btn-reset:hover,
+.sessao-btn-reset-todos:hover {
+  background: #d9a441;
+  color: #111;
+}
+
+.sessao-btn-reset-todos {
+  margin-left: 0;
+  width: 100%;
+  padding: 7px;
 }
 
 .sessao-btn-sair {
