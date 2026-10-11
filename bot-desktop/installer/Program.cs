@@ -58,7 +58,11 @@ internal static class Program
             var archivePath = Path.Combine(temporaryDirectory, "project.zip");
             var extractDirectory = Path.Combine(temporaryDirectory, "extracted");
             using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
-            using var response = await client.GetAsync(ProjectUrl, HttpCompletionOption.ResponseHeadersRead);
+            client.DefaultRequestHeaders.CacheControl =
+                new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true };
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Noite-Eterna-Instalador/2.0");
+            var downloadUrl = ProjectUrl + "?download=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
             await using (var source = await response.Content.ReadAsStreamAsync())
             await using (var destination = File.Create(archivePath))
@@ -78,6 +82,11 @@ internal static class Program
 
             var fichaDirectory = Path.Combine(installDirectory, "noite-eterna-ficha");
             var auxiliaryDirectory = Path.Combine(installDirectory, "app-auxiliar");
+            RemoveLegacyInstallation(installDirectory, fichaDirectory, auxiliaryDirectory);
+            if (Directory.Exists(fichaDirectory))
+                Directory.Delete(fichaDirectory, true);
+            if (Directory.Exists(auxiliaryDirectory))
+                Directory.Delete(auxiliaryDirectory, true);
             Directory.CreateDirectory(Path.Combine(auxiliaryDirectory, "logs"));
             Directory.CreateDirectory(Path.Combine(auxiliaryDirectory, "cache"));
             CopyDirectory(projectDirectory, fichaDirectory);
@@ -287,20 +296,63 @@ internal static class Program
         Directory.Move(source, destination);
     }
 
+    private static void RemoveLegacyInstallation(
+        string root,
+        string fichaDirectory,
+        string auxiliaryDirectory)
+    {
+        var legacyMarker = Path.Combine(root, "package.json");
+        if (!File.Exists(legacyMarker))
+            return;
+
+        foreach (var directory in Directory.GetDirectories(root))
+        {
+            if (!PathEquals(directory, fichaDirectory) &&
+                !PathEquals(directory, auxiliaryDirectory))
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        foreach (var file in Directory.GetFiles(root))
+        {
+            if (!Path.GetFileName(file).Equals(".env", StringComparison.OrdinalIgnoreCase))
+                File.Delete(file);
+        }
+    }
+
+    private static bool PathEquals(string left, string right) =>
+        string.Equals(
+            Path.GetFullPath(left).TrimEnd(Path.DirectorySeparatorChar),
+            Path.GetFullPath(right).TrimEnd(Path.DirectorySeparatorChar),
+            StringComparison.OrdinalIgnoreCase);
+
     private static void LaunchApplication()
         {
             var root = Path.GetDirectoryName(Environment.ProcessPath!)!;
-            var script = Path.Combine(root, "app-auxiliar", "bot-desktop", "start.vbs");
-            if (!File.Exists(script))
+            var ficha = Path.Combine(root, "noite-eterna-ficha");
+            var host = Path.Combine(ficha, "server", "host.js");
+            var dist = Path.Combine(ficha, "dist", "index.html");
+            if (!File.Exists(host) || !File.Exists(dist))
             {
-                MessageBox.Show("A instalação está incompleta.", "Noite Eterna",
+                MessageBox.Show(
+                    "A instalação da ficha está incompleta. Execute o instalador novamente.",
+                    "Noite Eterna",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+
             Process.Start(new ProcessStartInfo
             {
-                FileName = script,
-                WorkingDirectory = Path.GetDirectoryName(script),
+                FileName = "node.exe",
+                Arguments = "\"server\\host.js\"",
+                WorkingDirectory = ficha,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "http://127.0.0.1:4173",
                 UseShellExecute = true
             });
         }
