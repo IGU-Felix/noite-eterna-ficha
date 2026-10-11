@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Noite-Eterna-Instalador")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d8b17c00b0146993a92b68b5cb139231f447c185")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2f770d58ae58eccab722260f37f04bb615a287f6")]
 [assembly: System.Reflection.AssemblyProductAttribute("Noite-Eterna-Instalador")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Noite-Eterna-Instalador")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
