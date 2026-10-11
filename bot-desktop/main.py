@@ -845,8 +845,9 @@ class BotApp:
         self.root.after(0, lambda: self._set_online_button_state(False))
         self.root.after(0, lambda: self.start_button.configure(state="normal"))
         self.root.after(0, lambda: self.stop_button.configure(state="disabled"))
-        self.root.after(0, lambda: self.online_button.configure(state="normal"))
-        self.root.after(0, lambda: self.stop_online_button.configure(state="disabled"))
+        self.root.after(0, lambda: self._set_online_button_state(True))
+        self.root.after(0, lambda: self.online_button.configure(state="disabled"))
+        self.root.after(0, lambda: self.stop_online_button.configure(state="normal"))
 
     def _start_online(self) -> None:
         if self.tunnel_process and self.tunnel_process.poll() is None:
@@ -906,6 +907,7 @@ class BotApp:
                 creationflags=creation_flags,
                 env=site_environment,
             )
+            self._wait_for_local_site()
             tunnel_name = self.config.get("CLOUDFLARE_TUNNEL_NAME", "").strip()
             if tunnel_name:
                 tunnel_command = ["cloudflared", "tunnel", "run", tunnel_name]
@@ -924,6 +926,8 @@ class BotApp:
                     "tunnel",
                     "--edge-ip-version",
                     "4",
+                    "--protocol",
+                    "http2",
                     "--url",
                     "http://127.0.0.1:4173",
                 ]
@@ -965,6 +969,23 @@ class BotApp:
                 return str(candidate)
         raise RuntimeError(
             "A pasta da ficha não foi encontrada. Reinstale o aplicativo para corrigir a estrutura."
+        )
+
+    def _wait_for_local_site(self) -> None:
+        for _ in range(10):
+            if self.site_process and self.site_process.poll() is not None:
+                raise RuntimeError("O servidor local da ficha foi encerrado durante a inicialização.")
+            try:
+                with urllib.request.urlopen(
+                    "http://127.0.0.1:4173/__noite_eterna_health",
+                    timeout=1,
+                ) as response:
+                    if 200 <= response.status < 400:
+                        return
+            except (OSError, urllib.error.URLError):
+                threading.Event().wait(1)
+        raise RuntimeError(
+            "O servidor local da ficha não respondeu em http://127.0.0.1:4173."
         )
 
     def _read_online_output(self, process: subprocess.Popen[str]) -> None:
@@ -1043,7 +1064,10 @@ class BotApp:
             "ERRO: a URL pública não respondeu à ficha"
             f"{detalhe}. O link não foi enviado. Gere um novo túnel e tente novamente."
         )
-        self._stop_online_processes()
+        self._append_log(
+            "O túnel continua ativo, mas a verificação pública demorou. "
+            "O link pode levar mais alguns segundos para responder."
+        )
         self.root.after(0, lambda: self.online_button.configure(state="normal"))
         self.root.after(0, lambda: self.stop_online_button.configure(state="disabled"))
 

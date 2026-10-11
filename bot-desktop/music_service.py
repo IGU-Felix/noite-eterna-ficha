@@ -144,6 +144,55 @@ class MusicBotService:
         self.loop = None
         self.thread = None
 
+    def publish_site_link(self, url: str) -> None:
+        """Publish the public ficha link in the configured Discord text channel."""
+        if not self.loop or not self.bot:
+            self.on_log("ERRO: o bot não está pronto para enviar o link da ficha.")
+            return
+        future = asyncio.run_coroutine_threadsafe(
+            self._publish_site_link(url),
+            self.loop,
+        )
+
+        def report(result: Any) -> None:
+            try:
+                result.result()
+            except (RuntimeError, ValueError, TypeError) as erro:
+                self.on_log(f"ERRO ao enviar o link da ficha: {erro}")
+
+        future.add_done_callback(report)
+
+    async def _publish_site_link(self, url: str) -> None:
+        guild_id = self.config.get("DISCORD_GUILD_ID", "").strip()
+        text_channel_id = self.config.get("DISCORD_TEXT_CHANNEL_ID", "").strip()
+        guild = self.bot.get_guild(int(guild_id)) if guild_id else None
+        if guild is None:
+            raise ValueError("Servidor Discord não encontrado para publicar o link.")
+
+        channel = None
+        if text_channel_id:
+            channel = guild.get_channel(int(text_channel_id))
+        if channel is None:
+            channel = guild.system_channel
+        if channel is None:
+            channel = next(
+                (
+                    item for item in guild.text_channels
+                    if guild.me is None or item.permissions_for(guild.me).send_messages
+                ),
+                None,
+            )
+        if channel is None:
+            raise ValueError("Nenhum canal de texto disponível para publicar o link.")
+
+        password = self.config.get("SITE_ACCESS_PASSWORD", "").strip()
+        await channel.send(
+            "A ficha Noite Eterna está online:\n"
+            f"{url}\n"
+            f"Senha: {password}"
+        )
+        self.on_log(f"Link da ficha enviado para #{channel.name}.")
+
     def _run_thread(self) -> None:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
