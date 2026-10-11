@@ -157,7 +157,7 @@ class MusicBotService:
             from discord.ext import commands
         except ImportError as erro:
             raise RuntimeError(
-                "Dependências ausentes. Execute install.bat ou pip install -r requirements.txt."
+                "Dependências ausentes. Reinstale o aplicativo auxiliar ou consulte o README."
             ) from erro
 
         intents = discord.Intents.none()

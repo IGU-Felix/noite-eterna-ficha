@@ -5,23 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node backend/discord/index.js",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@discordjs/voice": "^0.19.2",
-    "cors": "^2.8.6",
-    "discord.js": "^14.27.0",
-    "dotenv": "^18.0.5",
     "express": "^5.2.1",
-    "opusscript": "^0.0.8",
     "peerjs": "^1.5.5",
-    "play-dl": "^1.9.7",
-    "spotify-url-info": "^3.3.3",
     "vue": "^3.5.30",
-    "youtubei.js": "^18.1.0",
-    "yt-dlp-exec": "^1.0.2"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",

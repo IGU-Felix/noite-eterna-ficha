@@ -4,19 +4,24 @@ Aplicativo separado para conectar o bot de música ao Discord e expor a API loca
 
 ## Executar no Windows
 
-1. Execute `install.bat` pelo CMD ou dê duplo clique nele. Ele instala Python, FFmpeg, Cloudflare Tunnel e as dependências.
+1. Execute `Noite-Eterna-Instalador.exe` com duplo clique. Ele exibirá uma janela para escolher a pasta-base e criará dentro dela a pasta `Noite-Eterna-Ficha` antes de baixar os arquivos.
 2. Abra o atalho **Noite Eterna Bot** criado na área de trabalho.
 3. Informe o token do bot, salve e clique em **Iniciar bot**.
 
-Para disponibilizar a API para a ficha na Vercel, execute `start-tunnel.bat` pelo CMD ou dê duplo clique nele depois de iniciar o bot. O script exibirá a URL HTTPS temporária do Cloudflare Tunnel.
+A instalação publicada fica organizada assim:
 
-Os arquivos `.bat` chamam o PowerShell internamente com uma política temporária apenas para executar a instalação. Não é necessário abrir o PowerShell ou alterar a política do Windows.
-
-Se preferir executar diretamente pelo PowerShell:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```text
+Noite-Eterna-Ficha\
+├── noite-eterna-ficha\  código da ficha web
+├── app-auxiliar\        bot, Python, logs e cache
+├── Noite-Eterna.exe     iniciador do programa
+├── Noite-Eterna.ico     ícone
+└── Desinstalar-Noite-Eterna.exe
 ```
+
+O instalador `.exe` não depende de PowerShell, `install.bat` ou `install.ps1`.
+O túnel deve ser iniciado pelo aplicativo instalado, quando essa integração
+estiver configurada.
 
 O arquivo `.env` fica dentro desta pasta e não deve ser enviado ao repositório. O aplicativo usa `127.0.0.1` para aceitar comandos somente do computador do usuário.
 

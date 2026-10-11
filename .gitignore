@@ -26,3 +26,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+bot-desktop/installer/bin
+bot-desktop/installer/publish
+bot-desktop/__pycache__

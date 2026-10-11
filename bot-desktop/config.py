@@ -6,7 +6,10 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent
-ENV_PATH = BASE_DIR / ".env"
+DATA_DIR = Path(
+    os.environ.get("NOITE_ETERNA_DATA_DIR", BASE_DIR)
+).resolve()
+ENV_PATH = DATA_DIR / ".env"
 
 DEFAULT_CONFIG: Dict[str, str] = {
     "DISCORD_BOT_TOKEN": "",
@@ -52,6 +55,7 @@ def salvar_config(novos_valores: Mapping[str, str]) -> Tuple[bool, str]:
     """Salva os novos valores no arquivo .env local."""
     config_atual = carregar_config()
     config_atual.update(novos_valores)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     linhas = [
         "# ====================================================",
