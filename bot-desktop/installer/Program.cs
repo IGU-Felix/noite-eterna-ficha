@@ -330,29 +330,18 @@ internal static class Program
     private static void LaunchApplication()
         {
             var root = Path.GetDirectoryName(Environment.ProcessPath!)!;
-            var ficha = Path.Combine(root, "noite-eterna-ficha");
-            var host = Path.Combine(ficha, "server", "host.js");
-            var dist = Path.Combine(ficha, "dist", "index.html");
-            if (!File.Exists(host) || !File.Exists(dist))
+            var script = Path.Combine(root, "app-auxiliar", "bot-desktop", "start.vbs");
+            if (!File.Exists(script))
             {
-                MessageBox.Show(
-                    "A instalação da ficha está incompleta. Execute o instalador novamente.",
+                MessageBox.Show("A instalação está incompleta. Execute o instalador novamente.",
                     "Noite Eterna",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
             Process.Start(new ProcessStartInfo
             {
-                FileName = "node.exe",
-                Arguments = "\"server\\host.js\"",
-                WorkingDirectory = ficha,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "http://127.0.0.1:4173",
+                FileName = script,
+                WorkingDirectory = Path.GetDirectoryName(script),
                 UseShellExecute = true
             });
         }
