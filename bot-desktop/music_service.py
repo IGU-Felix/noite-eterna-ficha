@@ -98,9 +98,15 @@ class CrossfadeAudioSource(AudioSource):
 class MusicBotService:
     """Executa o bot Discord e a API HTTP no mesmo loop assíncrono."""
 
-    def __init__(self, config: dict[str, str], on_log: Any = None) -> None:
+    def __init__(
+        self,
+        config: dict[str, str],
+        on_log: Any = None,
+        on_ready: Any = None,
+    ) -> None:
         self.config = config
         self.on_log = on_log or logger.info
+        self.on_ready = on_ready
         self.loop: asyncio.AbstractEventLoop | None = None
         self.thread: threading.Thread | None = None
         self.bot: Any = None
@@ -201,6 +207,8 @@ class MusicBotService:
 
     async def _on_ready(self) -> None:
         self.on_log(f"Bot conectado como {self.bot.user}")
+        if self.on_ready:
+            self.on_ready(str(self.bot.user))
 
     def _authorized(self, request: Any) -> bool:
         expected = self.config.get("DISCORD_API_KEY", "").strip()
