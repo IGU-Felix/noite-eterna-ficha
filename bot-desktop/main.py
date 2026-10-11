@@ -878,7 +878,7 @@ class BotApp:
         threading.Thread(target=self._start_online_background, daemon=True).start()
 
     def _start_online_background(self) -> None:
-        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        root = self._find_ficha_root()
         try:
             build = subprocess.run(
                 ["npm.cmd", "run", "build"],
@@ -951,6 +951,21 @@ class BotApp:
             self._append_log(f"ERRO ao iniciar acesso online: {erro}")
             self.root.after(0, lambda: self._set_online_button_state(False))
             self.root.after(0, lambda: self.online_button.configure(state="normal"))
+
+    def _find_ficha_root(self) -> str:
+        """Find the web-ficha directory in source and installed layouts."""
+        bot_directory = Path(__file__).resolve().parent
+        candidates = (
+            bot_directory.parent.parent / "noite-eterna-ficha",
+            bot_directory.parent / "noite-eterna-ficha",
+            bot_directory.parent,
+        )
+        for candidate in candidates:
+            if (candidate / "package.json").is_file() and (candidate / "server" / "host.js").is_file():
+                return str(candidate)
+        raise RuntimeError(
+            "A pasta da ficha não foi encontrada. Reinstale o aplicativo para corrigir a estrutura."
+        )
 
     def _read_online_output(self, process: subprocess.Popen[str]) -> None:
         if process.stdout:
