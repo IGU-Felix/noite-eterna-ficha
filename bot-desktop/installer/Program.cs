@@ -51,7 +51,11 @@ internal static class Program
             if (folderDialog.ShowDialog() != DialogResult.OK)
                 return;
 
-            installDirectory = Path.Combine(folderDialog.SelectedPath, "Noite-Eterna-Ficha");
+            installDirectory = Path.GetFileName(
+                    folderDialog.SelectedPath.TrimEnd(Path.DirectorySeparatorChar))
+                .Equals("Noite-Eterna-Ficha", StringComparison.OrdinalIgnoreCase)
+                ? folderDialog.SelectedPath
+                : Path.Combine(folderDialog.SelectedPath, "Noite-Eterna-Ficha");
             Directory.CreateDirectory(temporaryDirectory);
             SetStatus($"Baixando os arquivos da ficha para:\n{installDirectory}");
 

@@ -959,11 +959,10 @@ class BotApp:
     def _find_ficha_root(self) -> str:
         """Find the web-ficha directory in source and installed layouts."""
         bot_directory = Path(__file__).resolve().parent
-        candidates = (
-            bot_directory.parent.parent / "noite-eterna-ficha",
-            bot_directory.parent / "noite-eterna-ficha",
-            bot_directory.parent,
-        )
+        candidates = [bot_directory.parent]
+        for ancestor in bot_directory.parents:
+            candidates.append(ancestor / "noite-eterna-ficha")
+            candidates.append(ancestor)
         for candidate in candidates:
             if (candidate / "package.json").is_file() and (candidate / "server" / "host.js").is_file():
                 return str(candidate)
