@@ -6,6 +6,19 @@ A ficha web fica nesta pasta. O bot de música e a configuração do Discord fic
 no aplicativo auxiliar, em `app-auxiliar\bot-desktop`. O token do bot nunca é
 armazenado no Vue ou no `localStorage`.
 
+### Desenvolvimento local
+
+Para testar a ficha e o bot juntos nesta cópia do projeto, execute
+`start-dev.bat`. O script abre a ficha e o bot em janelas separadas, sem
+reinstalar dependências a cada execução.
+
+Na primeira vez, prepare o ambiente Python do bot executando
+`bot-desktop\setup-dev.bat`. Esse passo cria `bot-desktop\.venv` e instala as
+dependências uma única vez. Depois, basta executar `start-dev.bat` novamente.
+
+O bot usa o arquivo `bot-desktop\.env` desta cópia e a ficha acessa a API local
+em `http://127.0.0.1:3001`.
+
 ### Ficha na Vercel com bot local
 
 Para controlar o bot no seu PC enquanto os amigos usam a ficha publicada, exponha somente a API local por um Cloudflare Tunnel:

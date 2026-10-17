@@ -719,14 +719,14 @@ function alternarPausa() {
 
 .playlist-atual-capa img {
   filter: saturate(1.35) contrast(1.08);
-  transform: scale(1.28);
+  transform: scale(1.3);
   transform-origin: center;
 }
 
 .playlist-musica-capa:not(.playlist-capa-vazia) {
   filter: saturate(1.28) contrast(1.06);
   object-fit: cover;
-  transform: scale(1.22);
+  transform: scale(1);
   transform-origin: center;
 }
 

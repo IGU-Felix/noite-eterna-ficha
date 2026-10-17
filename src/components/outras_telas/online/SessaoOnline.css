@@ -49,6 +49,23 @@
   justify-content: center;
 }
 
+.sessao-configurar-card {
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
+  margin-right: 4px;
+  background: transparent;
+  border: 1px solid #333;
+  color: #d9a441;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sessao-configurar-card:hover {
+  border-color: #d9a441;
+  background: #2a2112;
+}
+
 .sessao-fechar:hover {
   border-color: #a83232;
   color: #a83232;

@@ -3,10 +3,13 @@
 
     <div class="sessao-barra" @mousedown="iniciarArraste">
       <span class="sessao-titulo-barra">📡 Sessão Online</span>
+      <button v-if="ehMestre && sessaoEstado.conectado" class="sessao-configurar-card"
+        @mousedown.stop @click="cardAberto = true" title="Configurar card do Discord">▣</button>
       <button class="sessao-fechar" @mousedown.stop @click="$emit('fechar')" title="fechar">×</button>
     </div>
 
     <div class="sessao-corpo">
+      <CardDiscord v-if="cardAberto" @fechar="cardAberto = false" />
 
       <div v-if="sessaoEstado.erro" class="sessao-erro">{{ sessaoEstado.erro }}</div>
 

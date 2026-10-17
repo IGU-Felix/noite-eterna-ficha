@@ -9,9 +9,10 @@ import {
   definirFichaVinculada
 } from "../../../services/sessaoP2P.js"
 import PlaylistMusicas from "../../bot_musica_python/PlaylistMusicas.vue"
+import CardDiscord from "./CardDiscord.vue"
 
 export default {
-  components: { PlaylistMusicas },
+  components: { PlaylistMusicas, CardDiscord },
   props: {
     nomePersonagem: { type: String, default: "" },
     personagemDisponivel: { type: Boolean, default: false },
@@ -25,6 +26,7 @@ export default {
     const codigoParaEntrar = ref("")
     const vincularFicha = ref(false)
     const copiado = ref(false)
+    const cardAberto = ref(false)
 
     const ehMestre = computed(() => sessaoEstado.papel === "mestre")
     const ehJogador = computed(() => sessaoEstado.papel === "jogador")
@@ -111,6 +113,7 @@ export default {
     return {
       sessaoEstado,
       modo, nomeInput, codigoPersonalizado, codigoParaEntrar, vincularFicha, copiado,
+      cardAberto,
       ehMestre, ehJogador,
       irParaCriar, irParaEntrar, voltar,
       confirmarCriarSessao, confirmarEntrarSessao, sair, cancelarConexao, copiarCodigo,

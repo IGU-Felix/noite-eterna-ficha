@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import contextlib
 import hmac
+import io
 import logging
+import mimetypes
+import re
 import struct
 import threading
 import time
@@ -123,6 +128,13 @@ class MusicBotService:
         self.playback_versions: dict[str, int] = {}
         self.starting_playback: set[str] = set()
         self.ficha_presence = {"em": 0, "aberta": False}
+        self.current_site_url = ""
+        self.site_card: dict[str, str] = {
+            "titulo": "A ficha está disponível",
+            "descricao": "A ficha da sessão está pronta para ser acessada.",
+            "imagem": "",
+            "cor": "#6d4aa2",
+        }
 
     def start(self) -> None:
         if self.thread and self.thread.is_alive():
@@ -145,12 +157,26 @@ class MusicBotService:
         self.thread = None
 
     def publish_site_link(self, url: str) -> None:
-        """Publish the public ficha link in the configured Discord text channel."""
+        """Registra o link para o card e informa a URL apenas no aplicativo."""
+        self.current_site_url = url.strip()
+        self.on_log(f"Link público da ficha: {self.current_site_url}")
+
+    def set_site_card(self, card: dict[str, Any]) -> None:
+        """Atualiza o card usado na próxima publicação da ficha."""
+        allowed = ("titulo", "descricao", "imagem", "cor")
+        self.site_card = {
+            key: str(card.get(key) or "").strip()
+            for key in allowed
+        }
+        self.site_card["imagemNome"] = str(card.get("imagemNome") or "").strip()[:120]
+
+    def send_site_card(self) -> None:
+        """Envia o card configurado imediatamente para o canal do Discord."""
         if not self.loop or not self.bot:
-            self.on_log("ERRO: o bot não está pronto para enviar o link da ficha.")
+            self.on_log("ERRO: o bot não está pronto para enviar o card.")
             return
         future = asyncio.run_coroutine_threadsafe(
-            self._publish_site_link(url),
+            self._publish_site_link(self.current_site_url, include_link=True),
             self.loop,
         )
 
@@ -158,11 +184,15 @@ class MusicBotService:
             try:
                 result.result()
             except (RuntimeError, ValueError, TypeError) as erro:
-                self.on_log(f"ERRO ao enviar o link da ficha: {erro}")
+                self.on_log(f"ERRO ao enviar o card: {erro}")
 
         future.add_done_callback(report)
 
-    async def _publish_site_link(self, url: str) -> None:
+    async def _publish_site_link(
+        self, url: str, *, include_link: bool = True
+    ) -> None:
+        import discord
+
         guild_id = self.config.get("DISCORD_GUILD_ID", "").strip()
         text_channel_id = self.config.get("DISCORD_TEXT_CHANNEL_ID", "").strip()
         guild = self.bot.get_guild(int(guild_id)) if guild_id else None
@@ -186,12 +216,77 @@ class MusicBotService:
             raise ValueError("Nenhum canal de texto disponível para publicar o link.")
 
         password = self.config.get("SITE_ACCESS_PASSWORD", "").strip()
-        await channel.send(
-            "A ficha Noite Eterna está online:\n"
-            f"{url}\n"
-            f"Senha: {password}"
+        try:
+            color = int(self.site_card["cor"].lstrip("#"), 16)
+        except ValueError:
+            color = 0x6D4AA2
+        embed = discord.Embed(
+            title=self.site_card["titulo"] or "A ficha está disponível",
+            description=self._card_description(url),
+            color=color,
         )
-        self.on_log(f"Link da ficha enviado para #{channel.name}.")
+        embed.add_field(name="Senha", value=password or "Não configurada", inline=False)
+        arquivo_imagem = await self._download_card_image()
+        if arquivo_imagem is not None:
+            arquivo, nome_arquivo = arquivo_imagem
+            embed.set_image(url=f"attachment://{nome_arquivo}")
+            await channel.send(embed=embed, file=discord.File(arquivo, filename=nome_arquivo))
+        else:
+            await channel.send(embed=embed)
+        if include_link and url:
+            self.on_log(f"Card com link enviado para #{channel.name}.")
+        else:
+            self.on_log(f"Card enviado para #{channel.name}.")
+
+    def _card_description(self, url: str) -> str:
+        description = self.site_card["descricao"] or "A ficha da sessão está pronta."
+        if url:
+            return f"{description}\n\n[Acessar a ficha]({url})"
+        return description
+
+    async def _download_card_image(self) -> tuple[io.BytesIO, str] | None:
+        image_url = self.site_card["imagem"]
+        if image_url.startswith("data:image/"):
+            try:
+                header, encoded = image_url.split(",", 1)
+                conteudo = base64.b64decode(encoded, validate=True)
+                if len(conteudo) > 8 * 1024 * 1024:
+                    raise ValueError("a imagem excede o limite de 8 MB")
+                mime = header[5:].split(";", 1)[0]
+                extensao = mimetypes.guess_extension(mime) or ".png"
+                nome = re.sub(
+                    r"[^A-Za-z0-9._-]",
+                    "_",
+                    self.site_card.get("imagemNome") or f"noite-eterna-card{extensao}",
+                )
+                return io.BytesIO(conteudo), nome[:120]
+            except (ValueError, UnicodeError, binascii.Error) as erro:
+                self.on_log(f"AVISO: não foi possível ler a imagem enviada: {erro}")
+                return None
+        if not image_url.startswith(("http://", "https://")):
+            return None
+
+        try:
+            import aiohttp
+
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(image_url) as response:
+                    if response.status >= 400:
+                        raise ValueError(f"servidor respondeu HTTP {response.status}")
+                    content_type = response.headers.get("Content-Type", "").split(";")[0].lower()
+                    if not content_type.startswith("image/"):
+                        raise ValueError("a URL não retornou uma imagem")
+                    conteudo = await response.read()
+                    if len(conteudo) > 8 * 1024 * 1024:
+                        raise ValueError("a imagem excede o limite de 8 MB")
+
+            extensao = mimetypes.guess_extension(content_type) or ".png"
+            nome = f"noite-eterna-card{extensao}"
+            return io.BytesIO(conteudo), nome
+        except (aiohttp.ClientError, asyncio.TimeoutError, OSError, ValueError) as erro:
+            self.on_log(f"AVISO: não foi possível anexar a imagem do card: {erro}")
+            return None
 
     def _run_thread(self) -> None:
         self.loop = asyncio.new_event_loop()
@@ -238,13 +333,15 @@ class MusicBotService:
         )
         self.bot.event(self._on_ready)
 
-        app = web.Application()
+        app = web.Application(client_max_size=12 * 1024 * 1024)
         app.router.add_route("OPTIONS", "/api/{tail:.*}", self._preflight)
         app.router.add_get("/api/health", self._health)
         app.router.add_post("/api/ficha/presenca", self._presence)
         app.router.add_get("/api/discord/status", self._status)
         app.router.add_get("/api/discord/locations", self._locations)
         app.router.add_get("/api/discord/music/status", self._music_status)
+        app.router.add_post("/api/discord/card", self._card)
+        app.router.add_post("/api/discord/card/send", self._send_card)
         app.router.add_post("/api/discord/command", self._command)
         self.web_runner = web.AppRunner(app)
         await self.web_runner.setup()
@@ -359,6 +456,36 @@ class MusicBotService:
             return self._response({"erro": "API não autorizada."}, 401)
         guild_id = request.query.get("guildId") or self.config.get("DISCORD_GUILD_ID", "")
         return self._response(self._status_for_guild(guild_id))
+
+    async def _card(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        try:
+            data = await self._json(request)
+            card = {
+                "titulo": str(data.get("titulo") or ""),
+                "descricao": str(data.get("descricao") or ""),
+                "imagem": str(data.get("imagem") or ""),
+                "imagemNome": str(data.get("imagemNome") or ""),
+                "cor": str(data.get("cor") or "#6d4aa2"),
+            }
+            imagem = card["imagem"]
+            if imagem and not imagem.startswith(("http://", "https://", "data:image/")):
+                raise ValueError("A imagem precisa ser uma URL HTTP/HTTPS ou um arquivo enviado.")
+            if imagem.startswith("data:image/") and len(imagem) > 12 * 1024 * 1024:
+                raise ValueError("A imagem enviada excede o limite permitido.")
+            if not re.fullmatch(r"#[0-9a-fA-F]{6}", card["cor"]):
+                raise ValueError("A cor precisa estar no formato hexadecimal.")
+            self.set_site_card(card)
+            return self._response({"salvo": True, "card": self.site_card})
+        except ValueError as erro:
+            return self._response({"erro": str(erro)}, 400)
+
+    async def _send_card(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        self.send_site_card()
+        return self._response({"enviando": True})
 
     async def _command(self, request: Any) -> Any:
         if not self._authorized(request):
