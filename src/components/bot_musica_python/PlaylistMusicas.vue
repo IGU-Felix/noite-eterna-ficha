@@ -62,9 +62,7 @@
       </div>
     </div>
 
-    <button type="button" class="playlist-pastas-link" @click="pastasAbertas = !pastasAbertas">
-      [{{ pastasAbertas ? "Fechar pastas" : "Pastas" }}]
-    </button>
+
 
     <div v-if="pastasAbertas" class="playlist-gerenciador">
       <div class="playlist-gerenciador-cabecalho">
@@ -404,9 +402,16 @@ function removerPasta(id) {
     pastaAtualId.value = pastas[0]?.id || ""
     musicaAtualId.value = ""
   }
+
   permitirPlaylistVazia = pastas.length === 0
   persistirAgora()
 }
+
+function alternarPastas() {
+  pastasAbertas.value = !pastasAbertas.value
+}
+
+defineExpose({ alternarPastas })
 
 function adicionarMusica(pasta) {
   permitirPlaylistVazia = false
@@ -593,7 +598,7 @@ function alternarPausa() {
 
 <style scoped>
 .playlist-painel {
-  background: #151515;
+  background: #111111;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -654,21 +659,21 @@ function alternarPausa() {
 }
 
 .playlist-pasta {
-  background: #151515;
+  background: #111111;
   border: 1px solid #292929;
   padding: 9px;
 }
 
 .playlist-atual,
 .playlist-gerenciador {
-  background: #151515;
+  background: #111111;
   border: 1px solid #292929;
   padding: 12px;
 }
 
 .playlist-atual {
   display: flex;
-  background: #151515;
+  background: #111111;
   border: 0;
   gap: 12px;
   height: 132px;
@@ -740,7 +745,7 @@ function alternarPausa() {
 }
 
 .playlist-atual-conteudo {
-  background: #151515;
+  background: #111111;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -844,7 +849,7 @@ function alternarPausa() {
 
 .playlist-pastas-link {
   align-self: stretch;
-  background: #151515;
+  background: #111111;
   border: 0;
   color: #d9a441;
   cursor: pointer;

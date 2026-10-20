@@ -3,8 +3,18 @@
 
     <div class="sessao-barra" @mousedown="iniciarArraste">
       <span class="sessao-titulo-barra">📡 Sessão Online</span>
-      <button v-if="ehMestre && sessaoEstado.conectado" class="sessao-configurar-card"
-        @mousedown.stop @click="cardAberto = true" title="Configurar card do Discord">▣</button>
+      <div v-if="ehMestre && sessaoEstado.conectado" class="sessao-ferramentas-mestre" @mousedown.stop>
+        <button class="sessao-ferramenta-mestre" @click="alternarPastas"
+          title="Abrir ou fechar pastas de música" aria-label="Abrir ou fechar pastas de música">▤</button>
+        <button class="sessao-ferramenta-mestre" @click="resetarDescansoJogador()"
+          title="Resetar habilidades de todos os jogadores" aria-label="Resetar habilidades de todos os jogadores">↻</button>
+        <button class="sessao-ferramenta-mestre"
+          :class="{ 'sessao-ferramenta-pulsando': todosJogadoresRolaram }"
+          @click="enviarIniciativasDiscord"
+          title="Enviar ordem de iniciativa ao Discord" aria-label="Enviar ordem de iniciativa ao Discord">⚄</button>
+        <button class="sessao-ferramenta-mestre" @click="cardAberto = true"
+          title="Configurar card do Discord" aria-label="Configurar card do Discord">▣</button>
+      </div>
       <button class="sessao-fechar" @mousedown.stop @click="$emit('fechar')" title="fechar">×</button>
     </div>
 
@@ -74,25 +84,53 @@
           </div>
         </div>
 
-        <div class="sessao-jogadores-titulo">Jogadores conectados ({{ sessaoEstado.jogadores.length }})</div>
-        <div class="sessao-jogadores-lista">
-          <div v-for="j in sessaoEstado.jogadores" :key="j.id" class="sessao-jogador-item">
-            <span class="sessao-online-dot" :class="{ offline: !j.online }"></span>
-            <span class="sessao-jogador-nome">{{ j.nome }}</span>
-            <span v-if="j.papel === 'mestre'" class="sessao-jogador-tag">Mestre</span>
-            <span v-else-if="j.fichaNome" class="sessao-jogador-ficha">{{ j.fichaNome }}</span>
-            <button v-if="ehMestre && j.papel === 'jogador'" class="sessao-btn-reset"
-              @click="resetarDescansoJogador(j.id)" title="Resetar habilidades limitadas por descanso deste jogador">
-              Resetar descanso
-            </button>
-          </div>
+        <div class="sessao-iniciativa-painel">
+          <div class="sessao-jogadores-titulo">Jogadores conectados</div>
+          <p v-if="ehMestre" class="sessao-iniciativa-ajuda">
+            Arraste os participantes para resolver empates.
+          </p>
+          <p v-else class="sessao-iniciativa-ajuda">Ordem de iniciativa da sessão.</p>
+          <TransitionGroup v-if="ordemIniciativa.length" tag="div" name="sessao-iniciativa"
+            class="sessao-iniciativa-lista">
+            <div v-for="(participante, indice) in ordemIniciativa" :key="participante.id"
+              class="sessao-iniciativa-item"
+              :class="{ 'sessao-iniciativa-ameaca': participante.tipo === 'ameaca',
+                'sessao-iniciativa-arrastando': arrastandoIniciativa === participante.id }"
+              :draggable="ehMestre"
+              @dragstart="iniciarArrasteIniciativa(participante.id)"
+              @dragover.prevent
+              @drop.prevent="soltarIniciativa(participante.id)">
+              <span class="sessao-iniciativa-posicao">{{ indice + 1 }}</span>
+              <img v-if="participante.imagem" class="sessao-iniciativa-foto"
+                :src="participante.imagem" :alt="`Imagem de ${participante.personagemNome || participante.nome}`" />
+              <div v-else class="sessao-iniciativa-foto sessao-iniciativa-foto-vazia">⏾</div>
+              <div class="sessao-iniciativa-identidade">
+                <span class="sessao-iniciativa-jogador">
+                  {{ participante.tipo === "ameaca" ? "Ameaça" : participante.jogadorNome }}
+                </span>
+                <span class="sessao-iniciativa-nome">{{ participante.personagemNome || participante.nome }}</span>
+              </div>
+              <span class="sessao-iniciativa-valor">
+                {{ mostrarIniciativa(participante) }}
+              </span>
+              <button v-if="ehMestre && participante.tipo !== 'ameaca'" class="sessao-iniciativa-controle"
+                @click.stop="abrirFichaVinculada(participante.fichaId)"
+                title="Abrir ficha vinculada" aria-label="Abrir ficha vinculada">⟡</button>
+              <button v-if="ehMestre && participante.tipo !== 'ameaca'" class="sessao-iniciativa-controle"
+                @click.stop title="Configuração do jogador" aria-label="Configuração do jogador">⚙</button>
+              <button v-if="ehMestre && participante.tipo !== 'ameaca'" class="sessao-iniciativa-controle"
+                @click.stop="resetarDescansoJogador(participante.jogadorId)"
+                title="Resetar habilidades deste jogador" aria-label="Resetar habilidades deste jogador">↻</button>
+            </div>
+          </TransitionGroup>
+          <p v-else class="sessao-iniciativa-vazia">Nenhum participante disponível.</p>
         </div>
 
-        <button v-if="ehMestre" class="sessao-btn-reset-todos" @click="resetarDescansoJogador()">
-          Resetar descanso de todos
-        </button>
+        <div v-if="ehMestre && iniciativaDiscordStatus" class="sessao-iniciativa-status">
+          {{ iniciativaDiscordStatus }}
+        </div>
 
-        <PlaylistMusicas v-show="ehMestre" />
+        <PlaylistMusicas v-show="ehMestre" ref="playlistRef" />
 
         <button class="sessao-btn-sair" @click="sair">Sair da Sessão</button>
       </template>

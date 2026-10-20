@@ -11,6 +11,7 @@ export const sessaoEstado = reactive({
   nomeUsuario: localStorage.getItem("noite-eterna-usuario") || "Jogador",
   jogadores: [],
   fichasRemotas: {},
+  iniciativaCompartilhada: [],
   fichaVinculadaId: null,
   ultimoResetDescanso: null
 })
@@ -139,7 +140,8 @@ function configurarConexaoMestreComJogador(conn) {
     conn.send({
       tipo: "BOAS_VINDAS",
       codigo: sessaoEstado.codigoSessao,
-      jogadores: sessaoEstado.jogadores
+      jogadores: sessaoEstado.jogadores,
+      iniciativa: sessaoEstado.iniciativaCompartilhada
     })
   })
 
@@ -383,6 +385,7 @@ export function resetarDescanso(alvoPeerId = null) {
     tipo: "RESET_DESCANSO",
     comandoId: `${Date.now()}-${Math.random().toString(36).slice(2)}`
   }
+
   const destinatarios = alvoPeerId
     ? conexoes.filter(conn => conn.peer === alvoPeerId)
     : conexoes
@@ -393,6 +396,15 @@ export function resetarDescanso(alvoPeerId = null) {
   })
 }
 
+export function publicarIniciativa(participantes) {
+  if (sessaoEstado.papel !== "mestre") return
+  const iniciativa = Array.isArray(participantes)
+    ? participantes.map((item, ordem) => ({ ...item, ordem }))
+    : []
+  sessaoEstado.iniciativaCompartilhada = iniciativa
+  broadcastParaJogadores({ tipo: "INICIATIVA_ATUALIZADA", iniciativa })
+}
+
 function tratarMensagemNoJogador(msg) {
   if (!msg || typeof msg !== "object") return
 
@@ -401,6 +413,16 @@ function tratarMensagemNoJogador(msg) {
     case "LISTA_JOGADORES": {
       if (Array.isArray(msg.jogadores)) {
         sessaoEstado.jogadores = msg.jogadores
+      }
+      if (Array.isArray(msg.iniciativa)) {
+        sessaoEstado.iniciativaCompartilhada = msg.iniciativa
+      }
+      break
+    }
+
+    case "INICIATIVA_ATUALIZADA": {
+      if (Array.isArray(msg.iniciativa)) {
+        sessaoEstado.iniciativaCompartilhada = msg.iniciativa
       }
       break
     }
@@ -485,6 +507,7 @@ export function desconectarSessao(opcoes = {}) {
   sessaoEstado.jogadores = []
   sessaoEstado.erro = null
   sessaoEstado.fichaVinculadaId = null
+  sessaoEstado.iniciativaCompartilhada = []
   sessaoEstado.ultimoResetDescanso = null
   if (!opcoes.preservarSessao) limparSessaoParaRestaurar()
 }

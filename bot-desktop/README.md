@@ -37,4 +37,8 @@ O instalador não envia credenciais para a Vercel. O token do Discord permanece 
 
 ## Integração
 
-A API mantém os endpoints `/api/discord/status`, `/api/discord/locations`, `/api/discord/music/status` e `/api/discord/command` usados pela ficha. A autenticação aceita o valor de `DISCORD_API_KEY` no header `Authorization` ou `Bearer`. Como o serviço escuta somente em `127.0.0.1`, chamadas locais sem header também são aceitas para permitir a integração com uma ficha hospedada.
+A API mantém os endpoints `/api/discord/status`, `/api/discord/locations`, `/api/discord/music/status`, `/api/discord/command` e `/api/discord/initiative` usados pela ficha. A autenticação aceita o valor de `DISCORD_API_KEY` no header `Authorization` ou `Bearer`. Como o serviço escuta somente em `127.0.0.1`, chamadas locais sem header também são aceitas para permitir a integração com uma ficha hospedada.
+
+Na sessão online, o Mestre pode enviar a ordem de iniciativa ao canal de texto configurado. O bot ordena os resultados do maior para o menor e disponibiliza a última lista pelo comando `/iniciativa`. Quando houver empate, o Discord avisa o Mestre para pedir novas rolagens aos jogadores empatados; cada novo clique no valor da iniciativa substitui a rolagem anterior.
+
+Os comandos `/ini_add` e `/ini_troca` permitem ajustar a ordem diretamente no Discord. `/ini_add` sem argumentos lista os jogadores e ameaças sincronizados pela sessão; com participante e posição, insere ou reposiciona a entrada. `/ini_troca` sem argumentos lista a ordem atual; com dois nomes, troca as posições. Cada alteração apaga a mensagem anterior de iniciativa e publica uma nova.

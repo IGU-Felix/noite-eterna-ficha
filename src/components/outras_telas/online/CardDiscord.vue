@@ -20,15 +20,12 @@
             placeholder="Escreva uma mensagem para os jogadores." />
         </label>
         <label class="card-discord-label">
-          Imagem do card (arquivo local)
+          Imagem do card
           <input class="card-discord-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp"
             @change="selecionarImagem" />
           <small v-if="nomeImagem">{{ nomeImagem }}</small>
         </label>
-        <label class="card-discord-label">
-          Ou URL pública da imagem (opcional)
-          <input v-model="card.imagem" class="card-discord-input" type="url" placeholder="https://..." />
-        </label>
+
         <label class="card-discord-label">
           Cor do card
           <input v-model="card.cor" class="card-discord-cor" type="color" />
