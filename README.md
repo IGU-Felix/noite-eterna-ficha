@@ -1,54 +1,33 @@
-# Vue 3 + TypeScript + Vite
+# Noite Eterna
 
-## Ficha e aplicativo auxiliar
+**Noite Eterna** é um sistema de RPG criado por mim, Igor Félix da Silva, baseado na rolagem de dados D6 e ambientado em um mundo de escuridão completa. O principal objetivo do sistema é proporcionar liberdade aos jogadores, permitindo que criem seus personagens da maneira que desejarem e explorem diferentes possibilidades dentro desse universo sombrio.
 
-A ficha web fica nesta pasta. O bot de música e a configuração do Discord ficam
-no aplicativo auxiliar, em `app-auxiliar\bot-desktop`. O token do bot nunca é
-armazenado no Vue ou no `localStorage`.
+Para facilitar a criação e o gerenciamento das fichas de personagem, além de auxiliar na organização das sessões, desenvolvi uma ficha online, disponível gratuitamente em:
 
-### Desenvolvimento local
+**[Noite Eterna — Ficha Online](https://noite-eterna-ficha.vercel.app/)**
 
-Para testar a ficha e o bot juntos nesta cópia do projeto, execute
-`start-dev.bat`. O script abre a ficha e o bot em janelas separadas, sem
-reinstalar dependências a cada execução.
+Entretanto, a versão online ainda não oferece a experiência completa que planejo para o sistema. Estou trabalhando em melhorias e novos recursos, incluindo uma versão local da ficha, que permitirá aos jogadores e mestres aproveitar todas as funcionalidades planejadas.
 
-Na primeira vez, prepare o ambiente Python do bot executando
-`bot-desktop\setup-dev.bat`. Esse passo cria `bot-desktop\.venv` e instala as
-dependências uma única vez. Depois, basta executar `start-dev.bat` novamente.
+Além disso, também estou desenvolvendo a versão em PDF do livro de regras. Atualmente, o conteúdo está disponível apenas em formato de texto no meu Obsidian, e o objetivo é transformá-lo em um livro organizado e acessível, facilitando a consulta das regras durante as sessões.
 
-O bot usa o arquivo `bot-desktop\.env` desta cópia e a ficha acessa a API local
-em `http://127.0.0.1:3001`.
+## O que é a ficha local?
 
-### Ficha na Vercel com bot local
+A **ficha local** foi desenvolvida para ampliar a experiência de jogar Noite Eterna, oferecendo ferramentas adicionais que tornam as sessões mais práticas, dinâmicas e imersivas.
 
-Para controlar o bot no seu PC enquanto os amigos usam a ficha publicada, exponha somente a API local por um Cloudflare Tunnel:
+Entre seus principais recursos, estão:
 
-```powershell
-cloudflared tunnel --url http://127.0.0.1:3001
-```
+- **Controle de iniciativa:** acompanhe a ordem dos turnos diretamente pela ficha, facilitando o gerenciamento dos combates durante as sessões.
+- **Bot de música integrado:** reproduza músicas para criar a atmosfera ideal para cada momento da aventura, aumentando a imersão dos jogadores.
+- **Controle pelo mestre:** gerencie a reprodução das músicas diretamente pela ficha online, permitindo controlar a ambientação sonora de acordo com os acontecimentos da sessão.
 
-No projeto publicado na Vercel, configure estas variáveis:
+A proposta é reunir ferramentas essenciais em um único ambiente, permitindo que o mestre se concentre na narrativa e que os jogadores mergulhem ainda mais fundo no universo de Noite Eterna.
 
-```env
-VITE_BOT_API_URL=https://sua-url-do-tunnel.trycloudflare.com
-VITE_BOT_API_KEY=mesmo-valor-de-DISCORD_API_KEY
-```
+## Como acessar a ficha local?
 
-No `app-auxiliar/bot-desktop/.env`, use uma chave forte e informe a origem exata da ficha:
+A versão local estará disponível para download diretamente pelo site hospedado na Vercel assim que sua integração estiver concluída.
 
-```env
-DISCORD_API_KEY=mesmo-valor-de-VITE_BOT_API_KEY
-FRONTEND_ORIGIN=https://seu-projeto.vercel.app
-```
+**Por enquanto, já é possível tentar utilizar a versão local baixando os arquivos diretamente pelo GitHub!**
 
-O bot precisa estar iniciado no seu PC antes de abrir a playlist. A URL temporária do `cloudflared --url` muda quando o túnel é reiniciado; para uma URL fixa, crie um túnel nomeado no painel da Cloudflare.
+Em breve, a intenção é tornar esse processo mais simples e acessível, permitindo que qualquer pessoa consiga instalar e utilizar a ficha sem dificuldades.
 
-A instalação local usa subpastas organizadas: `app` contém o código, `dados`
-contém configurações locais, `logs` contém registros e `cache` contém arquivos
-temporários.
-
-O bot registra `/play`, `/loop`, `/skip` e `/stop` em todos os servidores onde estiver instalado. A playlist lista os servidores e canais de voz disponíveis, e o endpoint `POST /api/discord/command` recebe uma ação musical, como `{ "acao": "play", "link": "https://...", "guildId": "...", "voiceChannelId": "..." }`.
-
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+O desenvolvimento de Noite Eterna continua em andamento, tanto na ficha quanto no livro de regras. A ideia é construir uma experiência cada vez mais completa para todos que desejam explorar esse mundo de escuridão.
