@@ -12,11 +12,13 @@
 
     <SessaoOnline v-if="sessaoAberta" :nome-personagem="nomePersonagemAtual"
       :personagem-disponivel="personagemDisponivel" :ficha-vinculada-id="primeiroPersonagemId"
-      @fechar="sessaoAberta = false" />
+      :participantes-iniciativa="participantesIniciativa"
+      @fechar="sessaoAberta = false" @abrir-ficha="abrirFichaSessao" />
 
     <FichaFlutuante v-if="todasJanelas.some(janela => !janela.minimizada) && !seletorAberto" :fichas="todasJanelas"
       :ativa-id="janelaAtiva" :janela-em-frente-id="janelaEmFrente" :importacao-pendente="importacaoPendente"
       @selecionar="selecionarJanela" @nome-atualizado="atualizarNome" @imagem-atualizada="atualizarImagem"
+      @dados-atualizados="atualizarDadosFicha"
       @importacao-concluida="limparImportacao" @nova-ficha="abrirSeletor" @minimizar="minimizarJanela"
       @restaurada="restaurarJanela" @fechar="fecharJanela" @topo="registrarJanelaEmFrente" />
 
@@ -47,6 +49,8 @@ const mapaAberto = ref(false)
 const mapaInternoAberto = ref(false)
 const janelaAtiva = ref(null)
 const janelaEmFrente = ref(null)
+let timeoutSincronizacaoIniciativa = null
+let ultimaListaIniciativa = ""
 const todasJanelas = computed(() => [
   ...personagensAbertos.value.map(janela => ({ ...janela, tipo: "personagem" })),
   ...ameacasAbertas.value.map(janela => ({ ...janela, tipo: "ameaca" }))
@@ -78,6 +82,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   clearInterval(intervaloPresencaFicha)
+  clearTimeout(timeoutSincronizacaoIniciativa)
   window.removeEventListener("pageshow", restaurarSessaoAoVoltar)
   document.removeEventListener("visibilitychange", restaurarSessaoAoVoltar)
 })
@@ -90,6 +95,48 @@ const nomePersonagemAtual = computed(() => {
 
 const personagemDisponivel = computed(() => personagensAbertos.value.length > 0)
 const primeiroPersonagemId = computed(() => personagensAbertos.value[0]?.id || null)
+const participantesIniciativa = computed(() => {
+  if (sessaoEstado.papel === "jogador" && sessaoEstado.iniciativaCompartilhada.length) {
+    return sessaoEstado.iniciativaCompartilhada
+  }
+  const jogadores = sessaoEstado.jogadores
+    .filter(jogador => jogador.papel === "jogador" && jogador.online)
+    .map(jogador => {
+      const ficha = jogador.fichaId ? sessaoEstado.fichasRemotas[jogador.fichaId] : null
+      const dados = ficha?.dados
+      return {
+        id: `jogador-${jogador.id}`,
+        nome: ficha?.nome || jogador.fichaNome || jogador.nome || "Jogador",
+        jogadorId: jogador.id,
+        jogadorNome: jogador.nome || "Jogador",
+        personagemNome: ficha?.nome || jogador.fichaNome || "Sem ficha",
+        fichaId: jogador.fichaId,
+        imagem: ficha?.imagem || jogador.fichaImagem || null,
+        vidaAtual: dados?.vidaAtual ?? null,
+        vidaMax: dados?.vidaMax ?? null,
+        iniciativaRolada: obterDadoIniciativa(dados),
+        tipo: ficha?.tipo || "personagem",
+        iniciativa: obterIniciativa(dados)
+      }
+    })
+
+  const ameacas = todasJanelas.value
+    .filter(ficha => ficha.tipo === "ameaca" && !ficha.remota)
+    .map(ficha => {
+      const dados = fichasSessao.value.find(item => item.id === ficha.id)?.dados
+      return {
+        id: `ameaca-${ficha.id}`,
+        nome: ficha.nome || "Ameaça",
+        personagemNome: ficha.nome || "Ameaça",
+        imagem: ficha.imagem || null,
+        tipo: "ameaca",
+        iniciativaRolada: obterDadoIniciativa(dados),
+        iniciativa: obterIniciativa(dados)
+      }
+    })
+
+  return [...jogadores, ...ameacas]
+})
 
 function abrirMapaInterno() {
   mapaAberto.value = false
@@ -198,6 +245,89 @@ function atualizarNome(id, nome) {
   if (ficha) ficha.nome = nome || "Sem nome"
   sincronizarComMestreSeVinculada(id)
 }
+
+function atualizarDadosFicha(id, dados) {
+  const ficha = fichasSessao.value.find(item => item.id === id)
+  if (ficha) ficha.dados = dados
+  sincronizarParticipantesComBot()
+}
+
+function obterIniciativa(dados) {
+  const dado = obterDadoIniciativa(dados)
+  if (!Number.isInteger(dado)) return null
+  const atributos = Array.isArray(dados?.atributos) ? dados.atributos : []
+  const valor = sigla => Number(atributos.find(item => item?.nome === sigla)?.valor) || 0
+  return valor("PRE") + valor("MEN") + dado
+}
+
+function obterDadoIniciativa(dados) {
+  const dado = Number(dados?.iniciativaRolada)
+  return Number.isInteger(dado) ? dado : null
+}
+
+function sincronizarParticipantesComBot() {
+  if (sessaoEstado.papel !== "mestre" || !sessaoEstado.conectado) return
+  clearTimeout(timeoutSincronizacaoIniciativa)
+  timeoutSincronizacaoIniciativa = setTimeout(async () => {
+    const participantes = sessaoEstado.jogadores
+      .filter(jogador => jogador.papel === "jogador" && jogador.online)
+      .map(jogador => {
+        const ficha = jogador.fichaId ? sessaoEstado.fichasRemotas[jogador.fichaId] : null
+        return {
+          id: `jogador-${jogador.id}`,
+          nome: ficha?.nome || jogador.fichaNome || jogador.nome || "Jogador",
+          tipo: ficha?.tipo || "personagem",
+          iniciativa: obterIniciativa(ficha?.dados)
+        }
+      })
+
+    todasJanelas.value
+      .filter(ficha => ficha.tipo === "ameaca" && !ficha.remota)
+      .forEach(ficha => {
+        const dados = fichasSessao.value.find(item => item.id === ficha.id)?.dados
+        participantes.push({
+          id: `ameaca-${ficha.id}`,
+          nome: ficha.nome || "Ameaça",
+          tipo: "ameaca",
+          iniciativa: obterIniciativa(dados)
+        })
+      })
+
+    const serializado = JSON.stringify(participantes)
+    if (serializado === ultimaListaIniciativa) return
+    ultimaListaIniciativa = serializado
+    const usandoServidorLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    const baseConfigurada = (import.meta.env.VITE_BOT_API_URL || "").replace(/\/+$/, "")
+    const base = baseConfigurada || (usandoServidorLocal ? "http://127.0.0.1:3001" : "")
+    const headers = { "Content-Type": "application/json" }
+    const chave = import.meta.env.VITE_BOT_API_KEY || ""
+    if (chave) headers.Authorization = `Bearer ${chave}`
+
+    try {
+      const resposta = await fetch(`${base}/api/discord/initiative/roster`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ participantes })
+      })
+      const dados = await resposta.json().catch(() => ({}))
+      if (!resposta.ok) throw new Error(dados.erro || "O bot recusou a lista de participantes.")
+    } catch (erro) {
+      console.warn("Não foi possível sincronizar participantes com o bot:", erro)
+    }
+  }, 300)
+}
+
+watch(
+  () => [
+    sessaoEstado.conectado,
+    sessaoEstado.papel,
+    sessaoEstado.jogadores,
+    sessaoEstado.fichasRemotas,
+    todasJanelas.value.map(ficha => `${ficha.id}:${ficha.nome}:${ficha.tipo}`)
+  ],
+  sincronizarParticipantesComBot,
+  { deep: true, immediate: true }
+)
 
 function atualizarImagem(id, imagem) {
   const janela = encontrarJanela(id)

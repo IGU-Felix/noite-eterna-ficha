@@ -95,11 +95,19 @@ export default {
     const nivel = ref(1)
     const defesa = ref(10)
     const pVan = ref(0)
+    const iniciativaRolada = ref(null)
 
     const iniciativa = computed(() => {
       const base = valorAtributo("PRE") + valorAtributo("MEN")
-      return `${base} + 1d6`
+      return iniciativaRolada.value === null
+        ? `${base} + 1d6`
+        : `${base} + ${iniciativaRolada.value} = ${base + iniciativaRolada.value}`
     })
+
+    function rolarIniciativa() {
+      if (props.somenteLeitura) return
+      iniciativaRolada.value = Math.floor(Math.random() * 6) + 1
+    }
 
     // mesma tabela de requisito de acerto usada na ficha de personagem
     const tabelaAcertos = [
@@ -272,7 +280,7 @@ function alternarCarga(bloco, i) {
       imagemAmeaca, inputFile, abrirUpload, carregarImagem,
       vidaAtual, vidaMax, vidaPercent, alterarVida,
       atributos, atualizarAtributo, valorAtributo,
-      nivel, defesa, pVan, iniciativa,
+      nivel, defesa, pVan, iniciativa, iniciativaRolada, rolarIniciativa,
       tabelaAcertos, linhaAcertoAtiva,
       pericias, adicionarPericia, removerPericia, atualizarPericia,
       cargasAtual_1, cargasMax_1, tipoCarga_1,

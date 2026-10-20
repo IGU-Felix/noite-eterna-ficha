@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import contextlib
 import hmac
+import io
 import logging
+import mimetypes
+import re
 import struct
 import threading
 import time
@@ -123,6 +128,16 @@ class MusicBotService:
         self.playback_versions: dict[str, int] = {}
         self.starting_playback: set[str] = set()
         self.ficha_presence = {"em": 0, "aberta": False}
+        self.current_site_url = ""
+        self.site_card: dict[str, str] = {
+            "titulo": "A ficha está disponível",
+            "descricao": "A ficha da sessão está pronta para ser acessada.",
+            "imagem": "",
+            "cor": "#6d4aa2",
+        }
+        self.last_initiatives: dict[str, list[dict[str, Any]]] = {}
+        self.initiative_rosters: dict[str, list[dict[str, Any]]] = {}
+        self.last_initiative_messages: dict[str, Any] = {}
 
     def start(self) -> None:
         if self.thread and self.thread.is_alive():
@@ -145,12 +160,26 @@ class MusicBotService:
         self.thread = None
 
     def publish_site_link(self, url: str) -> None:
-        """Publish the public ficha link in the configured Discord text channel."""
+        """Registra o link para o card e informa a URL apenas no aplicativo."""
+        self.current_site_url = url.strip()
+        self.on_log(f"Link público da ficha: {self.current_site_url}")
+
+    def set_site_card(self, card: dict[str, Any]) -> None:
+        """Atualiza o card usado na próxima publicação da ficha."""
+        allowed = ("titulo", "descricao", "imagem", "cor")
+        self.site_card = {
+            key: str(card.get(key) or "").strip()
+            for key in allowed
+        }
+        self.site_card["imagemNome"] = str(card.get("imagemNome") or "").strip()[:120]
+
+    def send_site_card(self) -> None:
+        """Envia o card configurado imediatamente para o canal do Discord."""
         if not self.loop or not self.bot:
-            self.on_log("ERRO: o bot não está pronto para enviar o link da ficha.")
+            self.on_log("ERRO: o bot não está pronto para enviar o card.")
             return
         future = asyncio.run_coroutine_threadsafe(
-            self._publish_site_link(url),
+            self._publish_site_link(self.current_site_url, include_link=True),
             self.loop,
         )
 
@@ -158,11 +187,15 @@ class MusicBotService:
             try:
                 result.result()
             except (RuntimeError, ValueError, TypeError) as erro:
-                self.on_log(f"ERRO ao enviar o link da ficha: {erro}")
+                self.on_log(f"ERRO ao enviar o card: {erro}")
 
         future.add_done_callback(report)
 
-    async def _publish_site_link(self, url: str) -> None:
+    async def _publish_site_link(
+        self, url: str, *, include_link: bool = True
+    ) -> None:
+        import discord
+
         guild_id = self.config.get("DISCORD_GUILD_ID", "").strip()
         text_channel_id = self.config.get("DISCORD_TEXT_CHANNEL_ID", "").strip()
         guild = self.bot.get_guild(int(guild_id)) if guild_id else None
@@ -186,12 +219,77 @@ class MusicBotService:
             raise ValueError("Nenhum canal de texto disponível para publicar o link.")
 
         password = self.config.get("SITE_ACCESS_PASSWORD", "").strip()
-        await channel.send(
-            "A ficha Noite Eterna está online:\n"
-            f"{url}\n"
-            f"Senha: {password}"
+        try:
+            color = int(self.site_card["cor"].lstrip("#"), 16)
+        except ValueError:
+            color = 0x6D4AA2
+        embed = discord.Embed(
+            title=self.site_card["titulo"] or "A ficha está disponível",
+            description=self._card_description(url),
+            color=color,
         )
-        self.on_log(f"Link da ficha enviado para #{channel.name}.")
+        embed.add_field(name="Senha", value=password or "Não configurada", inline=False)
+        arquivo_imagem = await self._download_card_image()
+        if arquivo_imagem is not None:
+            arquivo, nome_arquivo = arquivo_imagem
+            embed.set_image(url=f"attachment://{nome_arquivo}")
+            await channel.send(embed=embed, file=discord.File(arquivo, filename=nome_arquivo))
+        else:
+            await channel.send(embed=embed)
+        if include_link and url:
+            self.on_log(f"Card com link enviado para #{channel.name}.")
+        else:
+            self.on_log(f"Card enviado para #{channel.name}.")
+
+    def _card_description(self, url: str) -> str:
+        description = self.site_card["descricao"] or "A ficha da sessão está pronta."
+        if url:
+            return f"{description}\n\n[Acessar a ficha]({url})"
+        return description
+
+    async def _download_card_image(self) -> tuple[io.BytesIO, str] | None:
+        image_url = self.site_card["imagem"]
+        if image_url.startswith("data:image/"):
+            try:
+                header, encoded = image_url.split(",", 1)
+                conteudo = base64.b64decode(encoded, validate=True)
+                if len(conteudo) > 8 * 1024 * 1024:
+                    raise ValueError("a imagem excede o limite de 8 MB")
+                mime = header[5:].split(";", 1)[0]
+                extensao = mimetypes.guess_extension(mime) or ".png"
+                nome = re.sub(
+                    r"[^A-Za-z0-9._-]",
+                    "_",
+                    self.site_card.get("imagemNome") or f"noite-eterna-card{extensao}",
+                )
+                return io.BytesIO(conteudo), nome[:120]
+            except (ValueError, UnicodeError, binascii.Error) as erro:
+                self.on_log(f"AVISO: não foi possível ler a imagem enviada: {erro}")
+                return None
+        if not image_url.startswith(("http://", "https://")):
+            return None
+
+        try:
+            import aiohttp
+
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(image_url) as response:
+                    if response.status >= 400:
+                        raise ValueError(f"servidor respondeu HTTP {response.status}")
+                    content_type = response.headers.get("Content-Type", "").split(";")[0].lower()
+                    if not content_type.startswith("image/"):
+                        raise ValueError("a URL não retornou uma imagem")
+                    conteudo = await response.read()
+                    if len(conteudo) > 8 * 1024 * 1024:
+                        raise ValueError("a imagem excede o limite de 8 MB")
+
+            extensao = mimetypes.guess_extension(content_type) or ".png"
+            nome = f"noite-eterna-card{extensao}"
+            return io.BytesIO(conteudo), nome
+        except (aiohttp.ClientError, asyncio.TimeoutError, OSError, ValueError) as erro:
+            self.on_log(f"AVISO: não foi possível anexar a imagem do card: {erro}")
+            return None
 
     def _run_thread(self) -> None:
         self.loop = asyncio.new_event_loop()
@@ -221,7 +319,19 @@ class MusicBotService:
 
         class Bot(commands.Bot):
             async def setup_hook(bot_self: Any) -> None:
-                await bot_self.tree.sync()
+                guild_id = self.config.get("DISCORD_GUILD_ID", "").strip()
+                if guild_id:
+                    guild = discord.Object(id=int(guild_id))
+                    bot_self.tree.copy_global_to(guild=guild)
+                    comandos = await bot_self.tree.sync(guild=guild)
+                    self.on_log(
+                        f"{len(comandos)} comandos sincronizados no servidor {guild_id}."
+                    )
+                else:
+                    comandos = await bot_self.tree.sync()
+                    self.on_log(
+                        f"{len(comandos)} comandos sincronizados globalmente."
+                    )
 
         self.bot = Bot(command_prefix="!", intents=intents)
         self.bot.tree.command(name="play", description="Toca uma música")(
@@ -236,15 +346,28 @@ class MusicBotService:
         self.bot.tree.command(name="stop", description="Para a música")(
             self._slash_stop
         )
+        self.bot.tree.command(name="iniciativa", description="Envia a ordem de iniciativa")(
+            self._slash_initiative
+        )
+        self.bot.tree.command(name="ini_add", description="Adiciona um participante à iniciativa")(
+            self._slash_ini_add
+        )
+        self.bot.tree.command(name="ini_troca", description="Troca dois participantes na iniciativa")(
+            self._slash_ini_troca
+        )
         self.bot.event(self._on_ready)
 
-        app = web.Application()
+        app = web.Application(client_max_size=12 * 1024 * 1024)
         app.router.add_route("OPTIONS", "/api/{tail:.*}", self._preflight)
         app.router.add_get("/api/health", self._health)
         app.router.add_post("/api/ficha/presenca", self._presence)
         app.router.add_get("/api/discord/status", self._status)
         app.router.add_get("/api/discord/locations", self._locations)
         app.router.add_get("/api/discord/music/status", self._music_status)
+        app.router.add_post("/api/discord/card", self._card)
+        app.router.add_post("/api/discord/card/send", self._send_card)
+        app.router.add_post("/api/discord/initiative", self._initiative)
+        app.router.add_post("/api/discord/initiative/roster", self._initiative_roster)
         app.router.add_post("/api/discord/command", self._command)
         self.web_runner = web.AppRunner(app)
         await self.web_runner.setup()
@@ -359,6 +482,80 @@ class MusicBotService:
             return self._response({"erro": "API não autorizada."}, 401)
         guild_id = request.query.get("guildId") or self.config.get("DISCORD_GUILD_ID", "")
         return self._response(self._status_for_guild(guild_id))
+
+    async def _card(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        try:
+            data = await self._json(request)
+            card = {
+                "titulo": str(data.get("titulo") or ""),
+                "descricao": str(data.get("descricao") or ""),
+                "imagem": str(data.get("imagem") or ""),
+                "imagemNome": str(data.get("imagemNome") or ""),
+                "cor": str(data.get("cor") or "#6d4aa2"),
+            }
+            imagem = card["imagem"]
+            if imagem and not imagem.startswith(("http://", "https://", "data:image/")):
+                raise ValueError("A imagem precisa ser uma URL HTTP/HTTPS ou um arquivo enviado.")
+            if imagem.startswith("data:image/") and len(imagem) > 12 * 1024 * 1024:
+                raise ValueError("A imagem enviada excede o limite permitido.")
+            if not re.fullmatch(r"#[0-9a-fA-F]{6}", card["cor"]):
+                raise ValueError("A cor precisa estar no formato hexadecimal.")
+            self.set_site_card(card)
+            return self._response({"salvo": True, "card": self.site_card})
+        except ValueError as erro:
+            return self._response({"erro": str(erro)}, 400)
+
+    async def _send_card(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        self.send_site_card()
+        return self._response({"enviando": True})
+
+    async def _initiative(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        try:
+            data = await self._json(request)
+            jogadores = data.get("jogadores")
+            if not isinstance(jogadores, list) or not jogadores:
+                raise ValueError("Informe ao menos uma iniciativa.")
+            resultado = await self._send_initiatives(
+                jogadores,
+                str(data.get("guildId") or ""),
+                preservar_ordem=data.get("preservarOrdem") is True,
+            )
+            return self._response({"enviado": True, **resultado})
+        except (ValueError, RuntimeError) as erro:
+            return self._response({"erro": str(erro)}, 400)
+
+    async def _initiative_roster(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        try:
+            data = await self._json(request)
+            participantes = data.get("participantes")
+            if not isinstance(participantes, list):
+                raise ValueError("Informe a lista de participantes.")
+            guild = self._guild(str(data.get("guildId") or ""))
+            roster = []
+            for participante in participantes:
+                if not isinstance(participante, dict):
+                    raise ValueError("Cada participante precisa ser um objeto.")
+                nome = str(participante.get("nome") or "").strip()
+                if not nome:
+                    raise ValueError("Todo participante precisa ter um nome.")
+                iniciativa = participante.get("iniciativa")
+                roster.append({
+                    "nome": nome[:100],
+                    "tipo": str(participante.get("tipo") or "personagem"),
+                    "iniciativa": iniciativa if isinstance(iniciativa, int) else None,
+                })
+            self.initiative_rosters[str(guild.id)] = roster
+            return self._response({"salvo": True, "participantes": len(roster)})
+        except (ValueError, RuntimeError) as erro:
+            return self._response({"erro": str(erro)}, 400)
 
     async def _command(self, request: Any) -> Any:
         if not self._authorized(request):
@@ -631,6 +828,201 @@ class MusicBotService:
     async def _slash_stop(self, interaction: Any) -> None:
         await self.execute_action("stop", guild_id=str(interaction.guild_id))
         await interaction.response.send_message("Música parada.")
+
+    async def _slash_initiative(self, interaction: Any) -> None:
+        guild_key = str(interaction.guild_id)
+        jogadores = self.last_initiatives.get(guild_key)
+        if not jogadores:
+            await interaction.response.send_message(
+                "Nenhuma iniciativa foi coletada. Use o botão da sessão online primeiro."
+            )
+            return
+        await interaction.response.send_message(
+            self._format_initiatives(jogadores)
+        )
+
+    async def _slash_ini_add(
+        self,
+        interaction: Any,
+        participante: str | None = None,
+        posicao: int | None = None,
+    ) -> None:
+        guild_key = str(interaction.guild_id)
+        roster = self.initiative_rosters.get(guild_key, [])
+        if not roster:
+            await interaction.response.send_message(
+                "A lista de participantes ainda não foi enviada pela sessão online."
+            )
+            return
+        if not participante or posicao is None:
+            await interaction.response.send_message(
+                self._format_roster(roster)
+                + "\nUse `/ini_add participante posição` para adicionar ou posicionar alguém."
+            )
+            return
+        if posicao < 1:
+            await interaction.response.send_message("A posição precisa ser maior que zero.")
+            return
+
+        encontrado = self._find_named(roster, participante)
+        if encontrado is None:
+            await interaction.response.send_message(
+                f"Participante não encontrado: {participante}."
+            )
+            return
+        atual = self.last_initiatives.get(guild_key, [])
+        entrada = next(
+            (item for item in atual if item["nome"].casefold() == encontrado["nome"].casefold()),
+            {"nome": encontrado["nome"], "iniciativa": encontrado["iniciativa"]},
+        )
+        nova_lista = [
+            item for item in atual
+            if item["nome"].casefold() != encontrado["nome"].casefold()
+        ]
+        nova_lista.insert(min(posicao - 1, len(nova_lista)), entrada)
+        await self._publish_initiatives(interaction.guild_id, nova_lista)
+        await interaction.response.send_message(
+            f"{encontrado['nome']} foi colocado na posição {posicao}."
+        )
+
+    async def _slash_ini_troca(
+        self,
+        interaction: Any,
+        primeiro: str | None = None,
+        segundo: str | None = None,
+    ) -> None:
+        guild_key = str(interaction.guild_id)
+        atual = self.last_initiatives.get(guild_key, [])
+        if not primeiro or not segundo:
+            if not atual:
+                await interaction.response.send_message(
+                    "Nenhuma iniciativa foi publicada ainda."
+                )
+                return
+            await interaction.response.send_message(
+                self._format_initiatives(atual)
+                + "\nUse `/ini_troca primeiro segundo` para trocar duas posições."
+            )
+            return
+
+        primeiro_item = self._find_named(atual, primeiro)
+        segundo_item = self._find_named(atual, segundo)
+        if primeiro_item is None or segundo_item is None:
+            await interaction.response.send_message(
+                "Os dois participantes precisam estar na lista de iniciativa."
+            )
+            return
+        primeiro_indice = atual.index(primeiro_item)
+        segundo_indice = atual.index(segundo_item)
+        atual[primeiro_indice], atual[segundo_indice] = (
+            atual[segundo_indice],
+            atual[primeiro_indice],
+        )
+        await self._publish_initiatives(interaction.guild_id, atual)
+        await interaction.response.send_message(
+            f"Posições trocadas: {primeiro_item['nome']} e {segundo_item['nome']}."
+        )
+
+    async def _send_initiatives(
+        self,
+        jogadores: list[Any],
+        guild_id: str = "",
+        *,
+        preservar_ordem: bool = False,
+    ) -> dict[str, Any]:
+        guild = self._guild(guild_id)
+        normalizados: list[dict[str, Any]] = []
+        for jogador in jogadores:
+            if not isinstance(jogador, dict):
+                raise ValueError("Cada jogador precisa ser um objeto.")
+            nome = str(jogador.get("nome") or "").strip()
+            iniciativa = jogador.get("iniciativa")
+            if not nome:
+                raise ValueError("Todo jogador precisa ter um nome.")
+            if not isinstance(iniciativa, int) or isinstance(iniciativa, bool):
+                raise ValueError(f"A iniciativa de {nome} é inválida.")
+            normalizados.append({
+                "nome": nome[:100],
+                "iniciativa": iniciativa,
+                "tipo": str(jogador.get("tipo") or "personagem"),
+            })
+
+        if not preservar_ordem:
+            normalizados.sort(key=lambda jogador: jogador["iniciativa"], reverse=True)
+        self.initiative_rosters[str(guild.id)] = [
+            {
+                "nome": jogador["nome"],
+                "tipo": jogador["tipo"],
+                "iniciativa": jogador["iniciativa"],
+            }
+            for jogador in normalizados
+        ]
+        await self._publish_initiatives(guild.id, normalizados)
+        valores = [jogador["iniciativa"] for jogador in normalizados]
+        empates = len(valores) != len(set(valores))
+        return {"jogadores": len(normalizados), "empates": empates}
+
+    async def _publish_initiatives(
+        self, guild_id: Any, jogadores: list[dict[str, Any]]
+    ) -> None:
+        guild = self._guild(str(guild_id))
+        guild_key = str(guild.id)
+        channel = guild.get_channel(int(self.config["DISCORD_TEXT_CHANNEL_ID"])) \
+            if self.config.get("DISCORD_TEXT_CHANNEL_ID") else None
+        if channel is None:
+            channel = guild.system_channel
+        if channel is None:
+            channel = next(
+                (
+                    item for item in guild.text_channels
+                    if guild.me is None or item.permissions_for(guild.me).send_messages
+                ),
+                None,
+            )
+        if channel is None:
+            raise ValueError("Nenhum canal de texto disponível para enviar a iniciativa.")
+        mensagem_anterior = self.last_initiative_messages.pop(guild_key, None)
+        if mensagem_anterior is not None:
+            try:
+                await mensagem_anterior.delete()
+            except Exception as erro:
+                self.on_log(f"AVISO: não foi possível apagar a iniciativa anterior: {erro}")
+        mensagem = await channel.send(self._format_initiatives(jogadores))
+        self.last_initiative_messages[guild_key] = mensagem
+        self.last_initiatives[guild_key] = jogadores
+
+    @staticmethod
+    def _find_named(
+        participantes: list[dict[str, Any]], nome: str
+    ) -> dict[str, Any] | None:
+        procurado = nome.strip().casefold()
+        return next(
+            (item for item in participantes if item["nome"].casefold() == procurado),
+            None,
+        )
+
+    @staticmethod
+    def _format_roster(participantes: list[dict[str, Any]]) -> str:
+        linhas = ["**Participantes disponíveis**"]
+        for participante in participantes:
+            marcador = "ameaça" if participante.get("tipo") == "ameaca" else "jogador"
+            linhas.append(f"- **{participante['nome']}** ({marcador})")
+        return "\n".join(linhas)
+
+    @staticmethod
+    def _format_initiatives(jogadores: list[dict[str, Any]]) -> str:
+        linhas = ["**Ordem de iniciativa**"]
+        for posicao, jogador in enumerate(jogadores, 1):
+            tipo = "Ameaça" if jogador.get("tipo") == "ameaca" else "Jogador"
+            linhas.append(
+                f"{posicao}. **{jogador['nome']}** ({tipo}) — {jogador['iniciativa']}"
+            )
+        valores = [jogador["iniciativa"] for jogador in jogadores]
+        if len(valores) != len(set(valores)):
+            linhas.append(
+                "\n⚠️ Empate detectado. O Mestre deve pedir novas rolagens aos empatados."
+            )
+        return "\n".join(linhas)
 
     async def _shutdown(self) -> None:
         for task in self.playback_tasks.values():

@@ -121,9 +121,12 @@
                 <span class="stat-label">Nível</span>
                 <input class="stat-valor" v-model.number="nivel" />
               </div>
-              <div class="stat-box" title="Calculado: PRE + MEN, mais 1d6 na hora de rolar">
+              <div class="stat-box" title="Clique no valor para rolar 1d6 e somar PRE + MEN">
                 <span class="stat-label">Iniciativa</span>
-                <span class="stat-valor-calc">{{ iniciativa }}</span>
+                <span class="stat-valor-calc stat-valor-rolavel" role="button" tabindex="0"
+                  @click="rolarIniciativa"
+                  @keyup.enter="rolarIniciativa"
+                  @keyup.space.prevent="rolarIniciativa">{{ iniciativa }}</span>
               </div>
               <div class="stat-box stat-box-defesa">
                 <span class="stat-label">Defesa</span>

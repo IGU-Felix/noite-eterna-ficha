@@ -333,11 +333,19 @@ export default {
     // livro: começa com 3 Pontos de Vantagem e recebe mais 5 a cada 5 níveis.
     const nivel = ref(1)
     const armadura = ref(0)
+    const iniciativaRolada = ref(null)
 
     const iniciativa = computed(() => {
       const base = valorAtributo("PRE") + valorAtributo("MEN")
-      return `${base} + 1d6`
+      return iniciativaRolada.value === null
+        ? `${base} + 1d6`
+        : `${base} + ${iniciativaRolada.value} = ${base + iniciativaRolada.value}`
     })
+
+    function rolarIniciativa() {
+      if (props.somenteLeitura) return
+      iniciativaRolada.value = Math.floor(Math.random() * 6) + 1
+    }
 
     const defesa = computed(() => {
       const base = 5 + valorAtributo("ROB")
@@ -1141,6 +1149,8 @@ export default {
 
       nivel,
       iniciativa,
+      iniciativaRolada,
+      rolarIniciativa,
       defesa,
       armadura,
       pVan,

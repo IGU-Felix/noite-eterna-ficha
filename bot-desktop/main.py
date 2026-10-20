@@ -1044,7 +1044,7 @@ class BotApp:
                     ultimo_status = response.status
                     if 200 <= response.status < 400:
                         self._append_log(
-                            "Ficha pública confirmada; enviando o link ao Discord..."
+                            "Ficha pública confirmada; link disponível no aplicativo."
                         )
                         if self.service:
                             self.service.publish_site_link(url)
@@ -1061,7 +1061,7 @@ class BotApp:
         detalhe = f" (último status HTTP: {ultimo_status})" if ultimo_status else ""
         self._append_log(
             "ERRO: a URL pública não respondeu à ficha"
-            f"{detalhe}. O link não foi enviado. Gere um novo túnel e tente novamente."
+            f"{detalhe}. O link não foi confirmado. Gere um novo túnel e tente novamente."
         )
         self._append_log(
             "O túnel continua ativo, mas a verificação pública demorou. "

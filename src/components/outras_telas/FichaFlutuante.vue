@@ -70,7 +70,7 @@ const imagemPersonagem = computed(() =>
   fichaRef.value?.imagemStatus || fichaRef.value?.imagemAmeaca || null
 )
 
-const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "imagem-atualizada", "importacao-concluida", "nova-ficha", "topo"])
+const emit = defineEmits(["fechar", "minimizada", "restaurada", "selecionar", "minimizar", "nome-atualizado", "imagem-atualizada", "dados-atualizados", "importacao-concluida", "nova-ficha", "topo"])
 
 const componenteFicha = computed(() => {
   if (fichaAtiva.value?.remota) return FichaRemotaVisualizacao
@@ -166,6 +166,7 @@ watch(() => {
   return fichaRef.value?.obterSnapshot?.() || null
 }, (snapshot, oldSnapshot) => {
   if (!snapshot) return
+  emit("dados-atualizados", props.ativaId, snapshot)
   sincronizarFichaCompleta(!oldSnapshot)
 }, { deep: true, immediate: true })
 

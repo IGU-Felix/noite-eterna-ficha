@@ -722,6 +722,16 @@ button {
   color: #d9a441;
 }
 
+.stat-valor-rolavel {
+  cursor: pointer;
+}
+
+.stat-valor-rolavel:hover,
+.stat-valor-rolavel:focus {
+  color: #fff;
+  outline: none;
+}
+
 .stat-sub {
   display: block;
   text-align: center;
