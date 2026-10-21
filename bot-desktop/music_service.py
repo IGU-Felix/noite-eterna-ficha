@@ -115,6 +115,7 @@ class MusicBotService:
         self.loop: asyncio.AbstractEventLoop | None = None
         self.thread: threading.Thread | None = None
         self.bot: Any = None
+        self.reconnect_task: asyncio.Task[Any] | None = None
         self.web_runner: Any = None
         self.connections: dict[str, Any] = {}
         self.current_urls: dict[str, str] = {}
@@ -384,6 +385,7 @@ class MusicBotService:
         app.router.add_get("/api/health", self._health)
         app.router.add_post("/api/ficha/presenca", self._presence)
         app.router.add_get("/api/discord/status", self._status)
+        app.router.add_post("/api/discord/reconnect", self._reconnect)
         app.router.add_get("/api/discord/locations", self._locations)
         app.router.add_get("/api/discord/music/status", self._music_status)
         app.router.add_post("/api/discord/card", self._card)
@@ -480,6 +482,24 @@ class MusicBotService:
             "bot": str(self.bot.user) if self.bot and self.bot.user else None,
             "servidores": len(self.bot.guilds) if self.bot else 0,
         })
+
+    async def _reconnect(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        if not self.bot:
+            return self._response({"erro": "O bot ainda não foi iniciado."}, 503)
+        if self.reconnect_task and not self.reconnect_task.done():
+            return self._response({"reconectando": True})
+        self.reconnect_task = asyncio.create_task(self._reconnect_discord())
+        return self._response({"reconectando": True})
+
+    async def _reconnect_discord(self) -> None:
+        try:
+            self.on_log("Solicitação de reconexão recebida pela ficha.")
+            await self.bot.close()
+            await self.bot.start(self.config["DISCORD_BOT_TOKEN"])
+        except (RuntimeError, OSError) as erro:
+            self.on_log(f"ERRO ao reconectar o bot: {erro}")
 
     async def _locations(self, request: Any) -> Any:
         if not self._authorized(request):

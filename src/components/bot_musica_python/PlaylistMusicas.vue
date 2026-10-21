@@ -15,6 +15,14 @@
           <option v-for="canal in servidorSelecionado?.canaisVoz || []" :key="canal.id" :value="canal.id">{{ canal.nome }}</option>
         </select>
       </label>
+      <button
+        type="button"
+        class="playlist-btn playlist-btn-reconectar"
+        :disabled="reconectandoBot"
+        @click="tentarConectarBot"
+      >
+        {{ reconectandoBot ? "Conectando..." : "Tentar conectar bot" }}
+      </button>
     </div>
 
     <div
@@ -131,6 +139,7 @@ const mensagem = ref("")
 const mensagemSaindo = ref(false)
 const enviando = ref(false)
 const servidores = ref([])
+const reconectandoBot = ref(false)
 const pastasAbertas = ref(false)
 const pastaAbertaId = ref(null)
 const pastaAtualId = ref(localStorage.getItem("noite-eterna-playlist-pasta-atual") || "")
@@ -275,6 +284,22 @@ async function carregarLocais() {
       setTimeout(carregarLocais, 1500)
     }
     mostrarMensagem(erro.message || "Não foi possível carregar os canais de voz.")
+  }
+}
+
+async function tentarConectarBot() {
+  if (reconectandoBot.value) return
+  reconectandoBot.value = true
+  try {
+    const resposta = await requisitarApi("/discord/reconnect", { method: "POST" })
+    const dados = await resposta.json().catch(() => ({}))
+    if (!resposta.ok) throw new Error(dados.erro || "Não foi possível solicitar a conexão do bot.")
+    mostrarMensagem("Pedido de conexão enviado ao bot.")
+    setTimeout(carregarLocais, 1500)
+  } catch (erro) {
+    mostrarMensagem(erro.message || "Não foi possível conectar ao bot.")
+  } finally {
+    reconectandoBot.value = false
   }
 }
 
@@ -906,7 +931,7 @@ function alternarPausa() {
 
 .playlist-destino {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr auto;
   gap: 6px;
 }
 
@@ -932,6 +957,11 @@ function alternarPausa() {
 
 .playlist-destino select {
   min-width: 0;
+}
+
+.playlist-btn-reconectar {
+  align-self: end;
+  min-height: 31px;
 }
 
 .playlist-pasta-nome {
