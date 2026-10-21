@@ -213,6 +213,9 @@ class BotApp:
         self.stop_online_button, self._stop_online_button_item = self._create_action_button(
             420, 180, "[ PARAR FICHA ]", self._stop_online
         )
+        self.reconnect_button, self._reconnect_button_item = self._create_action_button(
+            180, 180, "[ RECONECTAR ]", self._reconnect
+        )
         self.settings_button, self._settings_button_item = self._create_action_button(
             515, 180, "[ CONFIG ]", self._show_config
         )
@@ -220,6 +223,7 @@ class BotApp:
         self.stop_button.configure(font=(self.font_family, 8, "bold"), width=15, padx=0, pady=0)
         self.online_button.configure(font=(self.font_family, 8, "bold"), width=15, padx=0, pady=0)
         self.stop_online_button.configure(font=(self.font_family, 8, "bold"), width=15, padx=0, pady=0)
+        self.reconnect_button.configure(font=(self.font_family, 8, "bold"), width=14, padx=0, pady=0)
         self.settings_button.configure(font=(self.font_family, 8, "bold"), width=11, padx=0, pady=0)
         bot_running = bool(self.service and self.service.thread and self.service.thread.is_alive())
         online_running = bool(self.tunnel_process and self.tunnel_process.poll() is None)
@@ -836,6 +840,18 @@ class BotApp:
             threading.Thread(target=self._stop_background, daemon=True).start()
         self.status.set("Parando...")
 
+    def _reconnect(self) -> None:
+        if self.service and self.service.thread and self.service.thread.is_alive():
+            self.status.set("Reconectando...")
+            threading.Thread(target=self._reconnect_background, daemon=True).start()
+            return
+        self._start()
+
+    def _reconnect_background(self) -> None:
+        if self.service:
+            self.service.stop()
+        self.root.after(0, self._start)
+
     def _stop_background(self) -> None:
         self._stop_online_processes()
         if self.service:
@@ -845,9 +861,6 @@ class BotApp:
         self.root.after(0, lambda: self._set_online_button_state(False))
         self.root.after(0, lambda: self.start_button.configure(state="normal"))
         self.root.after(0, lambda: self.stop_button.configure(state="disabled"))
-        self.root.after(0, lambda: self._set_online_button_state(True))
-        self.root.after(0, lambda: self.online_button.configure(state="disabled"))
-        self.root.after(0, lambda: self.stop_online_button.configure(state="normal"))
 
     def _start_online(self) -> None:
         if self.tunnel_process and self.tunnel_process.poll() is None:

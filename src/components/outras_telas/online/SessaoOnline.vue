@@ -21,7 +21,16 @@
     <div class="sessao-corpo">
       <CardDiscord v-if="cardAberto" @fechar="cardAberto = false" />
 
-      <div v-if="sessaoEstado.erro" class="sessao-erro">{{ sessaoEstado.erro }}</div>
+      <div v-if="sessaoEstado.erro" class="sessao-erro">
+        <span>{{ sessaoEstado.erro }}</span>
+        <button
+          v-if="!sessaoEstado.conectado && !sessaoEstado.conectando"
+          class="sessao-btn-reconectar"
+          @click="tentarConectarNovamente"
+        >
+          Tentar conectar
+        </button>
+      </div>
 
       <!-- MENU INICIAL -->
       <template v-if="!sessaoEstado.conectado && !sessaoEstado.conectando && modo === 'menu'">

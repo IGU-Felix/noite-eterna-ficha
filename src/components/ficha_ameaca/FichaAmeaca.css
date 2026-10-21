@@ -48,6 +48,17 @@
 
 .ameaca-atributos-titulo {
   margin-top: 10px;
+  width: 100%;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ameaca-atributos-titulo:hover {
+  color: #d6b36a;
 }
 
 .ameaca-grid-atributos {
@@ -79,8 +90,11 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 0;
+  align-self: stretch;
+  height: auto;
+  min-height: max-content;
   min-width: 0;
+  width: 100%;
 }
 
 .ameaca-col-pericias {
@@ -125,15 +139,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-height: 500px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
   margin-bottom: 5px;
-}
-
-.ameaca-pericias-lista::-webkit-scrollbar {
-  display: none;
 }
 
 .ameaca-pericia-nome-input {
@@ -166,16 +172,71 @@
 }
 
 .ameaca-corpo .combate-painel {
-  flex: 1;
-  min-height: 0;
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto !important;
+  min-height: max-content !important;
+  align-self: start;
+  overflow: visible;
 }
 
 .ameaca-corpo .combate-lista {
-  max-height: 190px;
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto !important;
+  min-height: max-content !important;
+  margin-bottom: 8px;
+  overflow: visible;
+}
+
+.ameaca-corpo .ataque-item {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto !important;
+  min-height: max-content !important;
+  margin-bottom: 8px;
+  overflow: visible;
+}
+
+.ameaca-corpo .ataque-item:last-child {
+  margin-bottom: 0;
+}
+
+.ameaca-corpo .ataque-editor {
+  height: auto;
+  min-height: max-content;
+  overflow: visible;
+}
+
+.ameaca-corpo .ataque-resumo {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: max-content;
+}
+
+.ameaca-corpo .combate-painel > .btn-add {
+  flex: 0 0 auto;
+  margin-top: 8px;
 }
 
 .ameaca-corpo .status-lista {
-  max-height: 360px;
+  overflow: visible;
+}
+
+.ameaca-corpo .inventario-painel {
+  flex: none;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+.ameaca-corpo .inventario-lista {
+  height: auto;
+  min-height: 0;
 }
 
 .ameaca .select-carga {

@@ -62,7 +62,20 @@ const API_LOCAL = "http://127.0.0.1:3001"
 const API_CONFIGURADA = (import.meta.env.VITE_BOT_API_URL || "").replace(/\/+$/, "")
 const CHAVE_API_BOT = import.meta.env.VITE_BOT_API_KEY || ""
 const padrao = { titulo: "A ficha está disponível", descricao: "A ficha da sessão está pronta para ser acessada.", imagem: "", imagemNome: "", cor: "#6d4aa2" }
-const salvo = JSON.parse(localStorage.getItem(CHAVE) || "null")
+let salvo = null
+try {
+  salvo = JSON.parse(localStorage.getItem(CHAVE) || "null")
+} catch {
+  localStorage.removeItem(CHAVE)
+}
+if (salvo?.imagem?.startsWith?.("data:image/")) {
+  salvo = { ...salvo, imagem: "" }
+  try {
+    localStorage.setItem(CHAVE, JSON.stringify(salvo))
+  } catch {
+    localStorage.removeItem(CHAVE)
+  }
+}
 const card = reactive({ ...padrao, ...(salvo && typeof salvo === "object" ? salvo : {}) })
 const salvando = ref(false)
 const enviando = ref(false)
@@ -120,7 +133,18 @@ async function salvar(enviarAgora = false) {
   mensagem.value = ""
   const dados = { ...card }
   try {
-    localStorage.setItem(CHAVE, JSON.stringify(dados))
+    const dadosLocais = {
+      titulo: dados.titulo,
+      descricao: dados.descricao,
+      imagemNome: dados.imagemNome,
+      cor: dados.cor,
+      imagem: /^https?:\/\//i.test(dados.imagem) ? dados.imagem : ""
+    }
+    try {
+      localStorage.setItem(CHAVE, JSON.stringify(dadosLocais))
+    } catch {
+      localStorage.removeItem(CHAVE)
+    }
     const { base, headers } = obterRequisicao()
     const resposta = await fetch(`${base}/api/discord/card`, {
       method: "POST",
