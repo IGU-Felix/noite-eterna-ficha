@@ -29,14 +29,38 @@ const CHAVE_SESSAO = "noite-eterna-sessao"
 
 function salvarSessaoParaRestaurar(dados = {}) {
   try {
-    localStorage.setItem(CHAVE_SESSAO, JSON.stringify({
+    const sessao = {
       papel: sessaoEstado.papel,
       codigoSessao: sessaoEstado.codigoSessao,
       nomeUsuario: sessaoEstado.nomeUsuario,
       fichaVinculadaId: sessaoEstado.fichaVinculadaId,
       ...dados
-    }))
+    }
+    localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao))
   } catch (e) {
+    if (e?.name === "QuotaExceededError") {
+      try {
+        const cardSalvo = JSON.parse(
+          localStorage.getItem("noite-eterna-card-discord") || "null"
+        )
+        if (cardSalvo?.imagem?.startsWith?.("data:image/")) {
+          cardSalvo.imagem = ""
+          localStorage.setItem(
+            "noite-eterna-card-discord",
+            JSON.stringify(cardSalvo)
+          )
+        }
+        localStorage.removeItem(CHAVE_SESSAO)
+        localStorage.setItem(CHAVE_SESSAO, JSON.stringify({
+          papel: sessaoEstado.papel,
+          codigoSessao: sessaoEstado.codigoSessao,
+          nomeUsuario: sessaoEstado.nomeUsuario
+        }))
+        return
+      } catch {
+        // A sessão continua ativa em memória mesmo sem restauração automática.
+      }
+    }
     console.warn("Não foi possível salvar a sessão online", e)
   }
 }
@@ -92,7 +116,6 @@ export async function criarSessao(nomeMestre, codigoPersonalizado = "") {
     peer.on("open", (id) => {
       sessaoEstado.conectado = true
       sessaoEstado.conectando = false
-      salvarSessaoParaRestaurar()
       salvarSessaoParaRestaurar()
       sessaoEstado.jogadores = [
         {

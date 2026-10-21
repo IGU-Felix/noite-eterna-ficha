@@ -152,12 +152,17 @@ class MusicBotService:
         if not self.loop:
             return
         future = asyncio.run_coroutine_threadsafe(self._shutdown(), self.loop)
-        future.result(timeout=10)
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        if self.thread:
-            self.thread.join(timeout=10)
-        self.loop = None
-        self.thread = None
+        try:
+            future.result(timeout=15)
+        except (RuntimeError, TimeoutError) as erro:
+            self.on_log(f"AVISO ao encerrar o bot: {erro}")
+        finally:
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            if self.thread:
+                self.thread.join(timeout=15)
+            self.loop = None
+            self.thread = None
+            self.bot = None
 
     def publish_site_link(self, url: str) -> None:
         """Registra o link para o card e informa a URL apenas no aplicativo."""
@@ -357,7 +362,24 @@ class MusicBotService:
         )
         self.bot.event(self._on_ready)
 
-        app = web.Application(client_max_size=12 * 1024 * 1024)
+        @web.middleware
+        async def cors_middleware(request: Any, handler: Any) -> Any:
+            response = await handler(request)
+            origin = request.headers.get("Origin", "")
+            configured = self.config.get("FRONTEND_ORIGIN", "*").strip()
+            allowed = configured == "*" or origin in {
+                item.strip() for item in configured.split(",") if item.strip()
+            }
+            if allowed:
+                response.headers["Access-Control-Allow-Origin"] = origin or "*"
+                response.headers["Vary"] = "Origin"
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+            return response
+
+        app = web.Application(
+            client_max_size=12 * 1024 * 1024,
+            middlewares=[cors_middleware],
+        )
         app.router.add_route("OPTIONS", "/api/{tail:.*}", self._preflight)
         app.router.add_get("/api/health", self._health)
         app.router.add_post("/api/ficha/presenca", self._presence)
@@ -560,6 +582,8 @@ class MusicBotService:
     async def _command(self, request: Any) -> Any:
         if not self._authorized(request):
             return self._response({"erro": "API não autorizada."}, 401)
+        import discord
+
         try:
             data = await self._json(request)
             action = str(data.get("acao") or self._infer_action(data.get("comando")))
@@ -570,7 +594,7 @@ class MusicBotService:
                 str(data.get("voiceChannelId") or ""),
             )
             return self._response({"executado": True, **result})
-        except (ValueError, RuntimeError) as erro:
+        except (ValueError, RuntimeError, TimeoutError, discord.DiscordException) as erro:
             return self._response({"erro": str(erro)}, 400)
 
     @staticmethod
@@ -602,13 +626,19 @@ class MusicBotService:
         if action == "move":
             channel = self._voice_channel(guild, voice_channel_id)
             guild_key = str(guild.id)
-            connection = self.connections.get(guild_key)
+            await self._disconnect_other_guild_connections(guild_key)
+            connection = self.connections.get(guild_key) or getattr(guild, "voice_client", None)
             if not connection or not connection.is_connected():
-                self.connections[guild_key] = await channel.connect()
-            elif connection.channel.id != channel.id:
+                if connection:
+                    await self._disconnect_connection(guild_key, connection)
+                self.connections[guild_key] = await asyncio.wait_for(
+                    channel.connect(timeout=15, reconnect=True), timeout=20
+                )
+            elif not connection.channel or connection.channel.id != channel.id:
                 if connection.is_playing():
                     connection.stop()
-                await connection.move_to(channel)
+                await asyncio.wait_for(connection.move_to(channel), timeout=15)
+            self.connections[guild_key] = connection
             self.on_log(f"Bot conectado ao canal {channel.name}.")
             return {"acao": "move", "canal": channel.name}
         if action == "play":
@@ -620,7 +650,6 @@ class MusicBotService:
             await self._cancel_playback(guild_key)
             version = self.playback_versions.get(guild_key, 0) + 1
             self.playback_versions[guild_key] = version
-            connection = self.connections.get(guild_key)
             self.current_urls[guild_key] = link
             self.current_durations.pop(guild_key, None)
             self.playback_started_at.pop(guild_key, None)
@@ -639,7 +668,9 @@ class MusicBotService:
             }
         if action == "pause":
             guild_key = str(guild.id)
-            connection = self.connections.get(guild_key)
+            connection = self.connections.get(guild_key) or getattr(
+                guild, "voice_client", None
+            )
             if not connection or not connection.is_playing():
                 raise ValueError("Não há música tocando para pausar.")
             duration = self.current_durations.get(guild_key, 0)
@@ -685,7 +716,7 @@ class MusicBotService:
             connection = self.connections.pop(guild_key, None)
             if connection:
                 connection.stop()
-                await connection.disconnect()
+                await self._disconnect_connection(guild_key, connection)
             self.current_urls.pop(guild_key, None)
             self.current_durations.pop(guild_key, None)
             self.playback_started_at.pop(guild_key, None)
@@ -696,11 +727,33 @@ class MusicBotService:
             return {"acao": "stop", "parou": True}
         raise ValueError("Ação musical desconhecida.")
 
+    async def _disconnect_other_guild_connections(self, selected_guild_key: str) -> None:
+        """Mantém o bot em apenas um canal de voz ao trocar de servidor."""
+        for guild_key, connection in list(self.connections.items()):
+            if guild_key == selected_guild_key:
+                continue
+            await self._cancel_playback(guild_key)
+            self.playback_versions[guild_key] = self.playback_versions.get(guild_key, 0) + 1
+            await self._disconnect_connection(guild_key, connection)
+            source = self.active_sources.pop(guild_key, None)
+            if source:
+                source.cleanup()
+            self.current_urls.pop(guild_key, None)
+            self.current_durations.pop(guild_key, None)
+            self.playback_started_at.pop(guild_key, None)
+            self.paused_elapsed.pop(guild_key, None)
+            self.paused_playback.discard(guild_key)
+            self.starting_playback.discard(guild_key)
+            self.loop_enabled.discard(guild_key)
+
     @staticmethod
     def _voice_channel(guild: Any, channel_id: str) -> Any:
         if not channel_id:
             raise ValueError("Informe o canal de voz da sessão.")
-        channel = guild.get_channel(int(channel_id))
+        try:
+            channel = guild.get_channel(int(channel_id))
+        except (TypeError, ValueError) as erro:
+            raise ValueError("O ID do canal de voz é inválido.") from erro
         if not channel or not hasattr(channel, "connect"):
             raise ValueError("Canal de voz não encontrado.")
         return channel
@@ -713,6 +766,14 @@ class MusicBotService:
         with contextlib.suppress(asyncio.CancelledError):
             await task
 
+    async def _disconnect_connection(self, guild_key: str, connection: Any) -> None:
+        if self.connections.get(guild_key) is connection:
+            self.connections.pop(guild_key, None)
+        with contextlib.suppress(Exception):
+            connection.stop()
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(connection.disconnect(force=True), timeout=5)
+
     async def _start_playback(
         self, guild_key: str, channel: Any, url: str, version: int
     ) -> None:
@@ -720,15 +781,19 @@ class MusicBotService:
         try:
             connection = self.connections.get(guild_key)
             if not connection or not connection.is_connected():
-                connection = await channel.connect()
+                if connection:
+                    await self._disconnect_connection(guild_key, connection)
+                connection = await asyncio.wait_for(
+                    channel.connect(timeout=15, reconnect=True), timeout=20
+                )
                 self.connections[guild_key] = connection
-            elif connection.channel and connection.channel.id != channel.id:
+            elif not connection.channel or connection.channel.id != channel.id:
                 if connection.is_paused() and not isinstance(
                     self.active_sources.get(guild_key), CrossfadeAudioSource
                 ):
                     connection.stop()
                 self.on_log(f"Movendo o bot para o canal {channel.name}.")
-                await connection.move_to(channel)
+                await asyncio.wait_for(connection.move_to(channel), timeout=15)
             if self.playback_versions.get(guild_key) != version:
                 return
             duration = await self._play(connection, url, guild_key, version)
@@ -741,6 +806,9 @@ class MusicBotService:
             raise
         except Exception as erro:
             self.on_log(f"ERRO ao reproduzir música: {erro}")
+            connection = self.connections.pop(guild_key, None)
+            if connection:
+                await self._disconnect_connection(guild_key, connection)
             if self.playback_tasks.get(guild_key) is task:
                 self.current_urls.pop(guild_key, None)
         finally:
@@ -1025,14 +1093,26 @@ class MusicBotService:
         return "\n".join(linhas)
 
     async def _shutdown(self) -> None:
-        for task in self.playback_tasks.values():
+        tasks = list(self.playback_tasks.values())
+        for task in tasks:
             if not task.done():
                 task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self.playback_tasks.clear()
         for connection in list(self.connections.values()):
-            await connection.disconnect()
+            guild_key = next(
+                (
+                    key for key, item in self.connections.items()
+                    if item is connection
+                ),
+                "",
+            )
+            await self._disconnect_connection(guild_key, connection)
         self.connections.clear()
         if self.web_runner:
-            await self.web_runner.cleanup()
+            with contextlib.suppress(Exception):
+                await self.web_runner.cleanup()
         if self.bot and not self.bot.is_closed():
-            await self.bot.close()
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(self.bot.close(), timeout=5)

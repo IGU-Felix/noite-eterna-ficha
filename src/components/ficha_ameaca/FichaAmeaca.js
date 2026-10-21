@@ -72,6 +72,26 @@ export default {
       { nome: "SOR", valor: "X" }
     ])
 
+    const atributosTestaveis = ["ROB", "POD", "PRE", "MEN", "CAR"]
+
+    function gerarAtributosAleatorios() {
+      if (props.somenteLeitura) return
+
+      const quantidadePontos = 6 + Math.floor(Math.max(1, Number(nivel.value) || 1) / 5)
+      const valores = Object.fromEntries(atributosTestaveis.map(sigla => [sigla, 0]))
+
+      for (let ponto = 0; ponto < quantidadePontos; ponto++) {
+        const sigla = atributosTestaveis[Math.floor(Math.random() * atributosTestaveis.length)]
+        valores[sigla]++
+      }
+
+      atributos.value.forEach(attr => {
+        if (Object.prototype.hasOwnProperty.call(valores, attr.nome)) {
+          attr.valor = valores[attr.nome]
+        }
+      })
+    }
+
     function atualizarAtributo(attr, valor) {
       if (attr.nome === "SOR" && (valor === "" || valor === "X")) {
         attr.valor = "X"
@@ -163,8 +183,8 @@ export default {
     const tipoCarga_2 = ref("Fúria")
 
 const cargasBlocos = reactive([
-  { tipo: "Fúria", atual: 0, max: 3 },
-  { tipo: "Fúria", atual: 0, max: 3 }
+  { tipo: "...", atual: 0, max: 3 },
+  { tipo: "...", atual: 0, max: 3 }
 ])
 
 function alternarCarga(bloco, i) {
@@ -215,7 +235,8 @@ function alternarCarga(bloco, i) {
     }
 
     function abrirRolagemPericia(pericia) {
-      rolagemConfig.dados = Math.max(1, Number(pericia.valor) || 1)
+      const atributo = String(pericia.atributo || "").split("/")[0].trim()
+      rolagemConfig.dados = Math.max(1, valorAtributo(atributo) || 1)
       rolagemConfig.modificador = Number(pericia.mod) || 0
       rolagemConfig.titulo = `Teste de ${pericia.nome || "Perícia"}`
       rolagemConfig.periciaNome = pericia.nome || ""
@@ -230,9 +251,10 @@ function alternarCarga(bloco, i) {
       const pericia = pericias.value.find(p => p.nome === nomePericia)
       const quantidade = Math.max(1, Number(item.qtdDados) || 1)
       const tipoDado = Math.max(2, Number(item.tipoDado) || 6)
-      const dadosTeste = item.atributo
-        ? Math.max(1, valorAtributo(item.atributo))
-        : Math.max(1, Number(pericia?.valor) || 1)
+      const atributoTeste = abaAtiva.value === "Magias"
+        ? String(pericia?.atributo || "MEN").split("/")[0].trim()
+        : String(item.atributo || "POD").split("/")[0].trim()
+      const dadosTeste = Math.max(1, valorAtributo(atributoTeste) || 1)
       const modificador = Number(pericia?.mod) || 0
 
       rolagemConfig.dados = dadosTeste
@@ -287,6 +309,7 @@ function alternarCarga(bloco, i) {
       cargasAtual_2, cargasMax_2, tipoCarga_2, cargasBlocos, alternarCarga,
       status, adicionarStatus, removerStatus, salvarStatus, editarStatus,
       abas, abaAtiva, itens, adicionarItem, removerItem, salvarItem, editarItem, toggleExpandido,
+      atributosTestaveis, gerarAtributosAleatorios,
       dadosOptions, rolagemAberta, disparadorRolagem, rolagemConfig, resultadoDano, fecharRolagem,
       abrirRolagemPericia, abrirRolagemItem,
       classeVida, inventario, cargaMaxima, cargaAtualInventario, adicionarItemInventario, removerItemInventario

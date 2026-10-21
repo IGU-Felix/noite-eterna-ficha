@@ -1,5 +1,10 @@
 <template>
-  <div class="janela-flutuante" :class="{ 'tela-cheia': modo === 'tela-cheia', minimizada: fichaAtiva?.minimizada }"
+  <div class="janela-flutuante"
+    :class="{
+      'tela-cheia': modo === 'tela-cheia',
+      minimizada: fichaAtiva?.minimizada,
+      'ficha-ameaca-window': fichaAtiva?.tipo === 'ameaca'
+    }"
     :style="[estiloJanela, { zIndex: zIndexAtiva }]" @mousedown.capture="ativarJanelaNoTopo">
     <div class="janela-barra" @mousedown="iniciarArraste">
       <span class="janela-titulo">❖ {{ tituloBase }} ({{ nomePersonagem }})</span>
@@ -188,10 +193,11 @@ const assistenteAberto = ref(false)
 const pos = ref({ x: 60, y: 40 })
 const tamanho = ref({ w: 1440, h: 980 })
 const direcoesResize = ["n", "s", "e", "w", "ne", "nw", "se", "sw"]
+const ehJanelaAmeaca = computed(() => fichaAtiva.value?.tipo === "ameaca")
 
 function tamanhoPadrao(tipo) {
   return tipo === "ameaca"
-    ? { w: 840, h: 850 }
+    ? { w: 920, h: 850 }
     : { w: 1440, h: 980 }
 }
 
@@ -211,12 +217,13 @@ const estiloJanela = computed(() => {
       height: "70px"
     }
   }
-  return {
+  const estilo = {
     left: pos.value.x + "px",
     top: pos.value.y + "px",
-    width: tamanho.value.w + "px",
-    height: tamanho.value.h + "px"
+    width: tamanho.value.w + "px"
   }
+  if (!ehJanelaAmeaca.value) estilo.height = tamanho.value.h + "px"
+  return estilo
 })
 
 function minimizar() {
@@ -491,6 +498,18 @@ defineExpose({
 
 .janela-corpo {
   flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.janela-flutuante.ficha-ameaca-window {
+  position: fixed;
+  height: auto !important;
+  max-height: calc(100vh - 80px);
+}
+
+.janela-flutuante.ficha-ameaca-window .janela-corpo {
+  flex: 1 1 auto;
   overflow: auto;
   min-height: 0;
 }

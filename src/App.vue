@@ -63,9 +63,15 @@ function restaurarSessaoAoVoltar() {
 let intervaloPresencaFicha = null
 
 function enviarPresencaFicha() {
-  fetch("/api/ficha/presenca", {
+  const usandoServidorLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  const apiBase = (import.meta.env.VITE_BOT_API_URL || "").replace(/\/+$/, "")
+    || (usandoServidorLocal ? "http://127.0.0.1:3001" : "")
+  const headers = { "Content-Type": "application/json" }
+  const chaveApi = import.meta.env.VITE_BOT_API_KEY || ""
+  if (chaveApi) headers.Authorization = `Bearer ${chaveApi}`
+  fetch(`${apiBase}/api/ficha/presenca`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       aberta: todasJanelas.value.some(janela => !janela.minimizada)
     })

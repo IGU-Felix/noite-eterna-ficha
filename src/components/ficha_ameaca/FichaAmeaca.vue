@@ -72,9 +72,11 @@
                     </div>
 
                     <!-- ATRIBUTOS (agora dentro da coluna de info, ao lado do retrato) -->
-                    <div class="titulo-secao ameaca-atributos-titulo">
+                    <button class="titulo-secao ameaca-atributos-titulo" type="button"
+                        @click="gerarAtributosAleatorios"
+                        title="Gerar atributos aleatórios conforme o nível">
                         <span class="icone-secao">⊗</span> Atributos
-                    </div>
+                    </button>
                     <div class="grid-atributos ameaca-grid-atributos">
                         <div v-for="attr in atributos" :key="attr.nome" class="box">
                             <input type="text" :value="attr.valor === '?' ? '' : attr.valor"
@@ -146,6 +148,15 @@
                                         <div class="ataque-caixa ataque-caixa-tipo">
                                             <span class="ataque-caixa-label">Modificador</span>
                                             <input class="ataque-select" type="number" v-model.number="item.modificador" />
+                                        </div>
+                                    </div>
+                                    <div v-if="abaAtiva !== 'Habilidades'" class="ataque-form-linha">
+                                        <div class="ataque-caixa">
+                                            <span class="ataque-caixa-label">Atributo do teste</span>
+                                            <select class="ataque-select" v-model="item.atributo">
+                                                <option v-for="atributo in atributosTestaveis" :key="atributo"
+                                                    :value="atributo">{{ atributo }}</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <textarea class="ataque-efeito" v-model="item.detalhe"

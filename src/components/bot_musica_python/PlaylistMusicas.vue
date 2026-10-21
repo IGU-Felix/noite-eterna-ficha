@@ -248,7 +248,9 @@ async function requisitarApi(caminho, opcoes = {}) {
     }
   }
 
-  throw ultimoErro || new Error("A API local do bot não está disponível.")
+  throw ultimoErro || new Error(
+    "A API local do bot não está disponível. Confirme se o bot está iniciado."
+  )
 }
 
 async function carregarLocais() {
@@ -292,6 +294,9 @@ function selecionarServidor() {
   const canais = servidorSelecionado.value?.canaisVoz || []
   if (!canais.some(canal => String(canal.id) === String(canalVozId.value))) {
     canalVozId.value = canais.length === 1 ? String(canais[0].id) : ""
+  }
+  if (servidorId.value && canalVozId.value) {
+    enviarComando("", "move")
   }
 }
 
@@ -576,7 +581,9 @@ async function enviarComando(link = "", acao = "play") {
     mostrarMensagem(resultado.iniciando ? "Música sendo carregada..." : "Comando enviado ao Discord.")
     await carregarStatus()
   } catch (erro) {
-    mostrarMensagem(erro.message || "Não foi possível enviar o comando.")
+    mostrarMensagem(
+      erro.message || "Não foi possível conectar ao bot. Verifique se o aplicativo está aberto."
+    )
   } finally {
     enviando.value = false
   }

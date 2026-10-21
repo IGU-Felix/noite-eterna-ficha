@@ -168,6 +168,28 @@ export default {
       if (fichaAtual) definirFichaVinculada(fichaAtual.id)
     }
 
+    async function tentarConectarNovamente() {
+      const codigo = sessaoEstado.codigoSessao || codigoParaEntrar.value
+      if (!codigo) {
+        modo.value = "entrar"
+        return
+      }
+
+      const fichaAtual = sessaoEstado.papel === "jogador"
+        && props.nomePersonagem
+        && props.fichaVinculadaId
+        ? { id: props.fichaVinculadaId, tipo: "personagem", nome: props.nomePersonagem }
+        : null
+
+      if (sessaoEstado.papel === "mestre") {
+        await criarSessao(nomeInput.value, codigo)
+      } else {
+        codigoParaEntrar.value = codigo
+        await entrarSessao(nomeInput.value, codigo, fichaAtual)
+        if (fichaAtual) definirFichaVinculada(fichaAtual.id)
+      }
+    }
+
     function sair() {
       desconectarSessao()
       modo.value = "menu"
