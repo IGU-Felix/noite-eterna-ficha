@@ -25,6 +25,13 @@ if (!fs.existsSync(path.join(distDirectory, "index.html"))) {
 
 const app = express()
 app.use(express.urlencoded({ extended: false }))
+app.use((request, response, next) => {
+  if (!request.path.startsWith("/api/database/")) {
+    next()
+    return
+  }
+  express.json({ limit: "12mb" })(request, response, next)
+})
 
 function temAcesso(request) {
   if (!siteAccessPassword) return false
@@ -309,6 +316,62 @@ app.use((request, response, next) => {
     return
   }
   response.status(401).send(paginaDeAcesso())
+})
+
+const databaseDirectory = path.join(rootDirectory, "bot-desktop", "banco de dados")
+
+function databaseFilePath(relativePath) {
+  if (
+    typeof relativePath !== "string"
+    || !relativePath
+    || path.isAbsolute(relativePath)
+    || path.extname(relativePath).toLowerCase() !== ".json"
+  ) {
+    throw new Error("Caminho de banco inválido.")
+  }
+  const resolved = path.resolve(databaseDirectory, relativePath)
+  const root = path.resolve(databaseDirectory) + path.sep
+  if (!resolved.startsWith(root)) throw new Error("Caminho de banco inválido.")
+  return resolved
+}
+
+app.get("/api/database/import", (_request, response) => {
+  try {
+    fs.mkdirSync(databaseDirectory, { recursive: true })
+    const arquivos = []
+    const visitar = pasta => {
+      for (const entrada of fs.readdirSync(pasta, { withFileTypes: true })) {
+        const caminho = path.join(pasta, entrada.name)
+        if (entrada.isDirectory()) {
+          visitar(caminho)
+        } else if (entrada.isFile() && path.extname(entrada.name).toLowerCase() === ".json") {
+          try {
+            arquivos.push({
+              caminho: path.relative(databaseDirectory, caminho).split(path.sep).join("/"),
+              dados: JSON.parse(fs.readFileSync(caminho, "utf8"))
+            })
+          } catch (error) {
+            console.warn(`Não foi possível ler ${caminho}:`, error.message)
+          }
+        }
+      }
+    }
+    visitar(databaseDirectory)
+    response.json({ raiz: databaseDirectory, arquivos })
+  } catch (error) {
+    response.status(500).json({ erro: `Não foi possível ler o banco local: ${error.message}` })
+  }
+})
+
+app.post("/api/database/save", (request, response) => {
+  try {
+    const destino = databaseFilePath(request.body?.caminho)
+    fs.mkdirSync(path.dirname(destino), { recursive: true })
+    fs.writeFileSync(destino, JSON.stringify(request.body?.dados, null, 2), "utf8")
+    response.json({ salvo: true, caminho: path.relative(databaseDirectory, destino).split(path.sep).join("/") })
+  } catch (error) {
+    response.status(400).json({ erro: error.message })
+  }
 })
 
 app.use((request, response, next) => {

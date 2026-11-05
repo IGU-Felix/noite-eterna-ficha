@@ -6,7 +6,8 @@
     <MapaEditor v-if="mapaInternoAberto" @fechar="mapaInternoAberto = false" />
 
     <SeletorFichas v-if="seletorAberto" :fichas="fichasSessao" :tipo-inicial="tipoSeletor"
-      @fechar="seletorAberto = false" @abrir="abrirFichaSessao" @criar="criarFicha" @importar="importarFicha" />
+      @fechar="seletorAberto = false" @abrir="abrirFichaSessao" @criar="criarFicha" @importar="importarFicha"
+      @importar-banco="importarBancoLocal" />
 
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
 
@@ -56,6 +57,78 @@ const todasJanelas = computed(() => [
   ...ameacasAbertas.value.map(janela => ({ ...janela, tipo: "ameaca" }))
 ])
 
+const API_LOCAL = "http://127.0.0.1:3001"
+
+function baseApiLocal() {
+  const usandoServidorLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  return (import.meta.env.VITE_BOT_API_URL || "").replace(/\/+$/, "")
+    || (usandoServidorLocal ? API_LOCAL : "")
+}
+
+function baseApiBancoLocal() {
+  // O host local e o túnel Cloudflare encaminham /api para o bot local.
+  // Em ambos os casos, uma URL relativa mantém a chamada no mesmo host da ficha.
+  if (window.location.port === "4173" || window.location.hostname !== "localhost"
+    && window.location.hostname !== "127.0.0.1") {
+    return ""
+  }
+  return baseApiLocal()
+}
+
+function salvarBancoLocal(caminho, dados) {
+  const base = baseApiBancoLocal()
+  const endpoint = `${base}/api/database/save`
+  const headers = { "Content-Type": "application/json" }
+  const chave = import.meta.env.VITE_BOT_API_KEY || ""
+  if (chave) headers.Authorization = `Bearer ${chave}`
+  fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ caminho, dados })
+  }).catch(erro => console.warn("Não foi possível salvar no banco local:", erro))
+}
+
+async function importarBancoLocal(silencioso = false) {
+  const base = baseApiBancoLocal()
+  try {
+    const resposta = await fetch(`${base}/api/database/import`)
+    const resultado = await resposta.json()
+    if (!resposta.ok) throw new Error(resultado.erro || "Não foi possível importar o banco local.")
+    let importadas = 0
+    for (const arquivo of resultado.arquivos || []) {
+      const caminho = String(arquivo.caminho || "").replace(/\\/g, "/")
+      const dados = arquivo.dados
+      if (!dados || typeof dados !== "object") continue
+      const tipo = caminho.includes("/ameacas/") ? "ameaca"
+        : caminho.includes("/personagens/") ? "personagem" : null
+      if (!tipo || dados.formato !== "noite-eterna-ficha" || !dados.dados) continue
+      const id = `banco-${caminho.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "")}`
+      const ficha = {
+        id,
+        tipo,
+        nome: dados.dados.nome || "Sem nome",
+        imagem: dados.dados.imagemAmeaca || dados.dados.imagemStatus || null,
+        minimizada: true
+      }
+      const lista = tipo === "ameaca" ? ameacasAbertas : personagensAbertos
+      if (!lista.value.some(item => item.id === id)) {
+        lista.value.push(ficha)
+        fichasSessao.value.push({ ...ficha })
+      }
+      const chave = `ficha-${id}`
+      localStorage.setItem(chave, JSON.stringify(dados.dados))
+      document.cookie = `${encodeURIComponent(`${chave}-ref`)}=localStorage; max-age=31536000; path=/; SameSite=Lax`
+      importadas += 1
+    }
+    const arquivos = resultado.arquivos || []
+    localStorage.setItem("noite-eterna-banco-importado", JSON.stringify(arquivos))
+    window.dispatchEvent(new CustomEvent("banco-dados-importado", { detail: arquivos }))
+    if (!silencioso) window.alert(`Banco local importado: ${importadas} ficha(s).`)
+  } catch (erro) {
+    if (!silencioso) window.alert(erro.message || "Não foi possível importar o banco local.")
+  }
+}
+
 function restaurarSessaoAoVoltar() {
   restaurarSessao()
 }
@@ -80,6 +153,7 @@ function enviarPresencaFicha() {
 
 onMounted(() => {
   restaurarSessaoAoVoltar()
+  importarBancoLocal(true).catch(() => {})
   enviarPresencaFicha()
   intervaloPresencaFicha = setInterval(enviarPresencaFicha, 30_000)
   window.addEventListener("pageshow", restaurarSessaoAoVoltar)
@@ -255,6 +329,14 @@ function atualizarNome(id, nome) {
 function atualizarDadosFicha(id, dados) {
   const ficha = fichasSessao.value.find(item => item.id === id)
   if (ficha) ficha.dados = dados
+  const tipo = encontrarJanela(id)?.tipo || ficha?.tipo || "personagem"
+  salvarBancoLocal(`fichas/${tipo === "ameaca" ? "ameacas" : "personagens"}/${id}.json`, {
+    formato: "noite-eterna-ficha",
+    versao: 1,
+    tipo,
+    exportadoEm: new Date().toISOString(),
+    dados
+  })
   sincronizarParticipantesComBot()
 }
 

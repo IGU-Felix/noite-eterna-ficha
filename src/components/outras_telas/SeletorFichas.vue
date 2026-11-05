@@ -12,7 +12,10 @@
             <span class="seletor-legenda">Sessão atual</span>
             <h1>Fichas</h1>
           </div>
-          <button class="seletor-importar" @click="abrirImportacao">Importar JSON</button>
+          <div class="seletor-importacoes">
+            <button class="seletor-importar" @click="abrirImportacao">Importar JSON</button>
+            <button class="seletor-importar" @click="emit('importar-banco')">Importar banco local</button>
+          </div>
           <input ref="inputImportacao" type="file" accept="application/json,.json" hidden
             @change="importarFicha" />
         </div>
@@ -190,6 +193,13 @@ async function importarFicha(event) {
   justify-content: space-between;
   padding-bottom: 12px;
   border-bottom: 1px solid #2a2a2a;
+}
+
+.seletor-importacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
 }
 
 .seletor-legenda {

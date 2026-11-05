@@ -27,10 +27,10 @@
 
     <div
       class="playlist-atual"
-      :style="{ '--playlist-acento': musicaAtual?.acento || '#d9a441' }"
+      :style="{ '--playlist-acento': musicaExibida?.acento || '#d9a441' }"
     >
       <div class="playlist-atual-capa">
-        <img v-if="musicaAtual?.imagem" :src="musicaAtual.imagem" :alt="`Capa de ${musicaAtual.nome}`" />
+        <img v-if="musicaExibida?.imagem" :src="musicaExibida.imagem" :alt="`Capa de ${musicaExibida.nome}`" />
         <div v-else class="playlist-capa-vazia">♪</div>
       </div>
       <div
@@ -40,8 +40,8 @@
         <div class="playlist-atual-cabecalho">
           <div>
             <span class="playlist-kicker">Noite Real da Música</span>
-            <strong>{{ musicaAtual?.nome || "Nenhuma música selecionada" }}</strong>
-            <small>[{{ pastaAtual?.nome || "Pastas" }}]</small>
+            <strong>{{ musicaExibida?.nome || "Nenhuma música selecionada" }}</strong>
+            <small>[{{ pastaExibida?.nome || "Pastas" }}]</small>
           </div>
           <span class="playlist-fechar">×</span>
         </div>
@@ -50,12 +50,19 @@
             type="button"
             class="playlist-btn playlist-btn-controle"
             @click="alternarPausa"
-            :disabled="!musicaAtual?.link || enviando"
+            :disabled="!musicaExibida?.link || enviando"
             :aria-label="playlistTocando ? 'Pausar música' : 'Continuar música'"
           >
             <img :src="playlistTocando ? pauseIcon : playIcon" alt="" />
           </button>
-          <button type="button" class="playlist-btn playlist-btn-controle" @click="enviarComando(musicaAtual?.link, 'play')" :disabled="!musicaAtual?.link || enviando" aria-label="Repetir música">
+          <button
+            type="button"
+            class="playlist-btn playlist-btn-controle playlist-btn-loop"
+            :class="{ 'playlist-loop-ativo': loopAtivo }"
+            @click="alternarLoop"
+            :disabled="!musicaExibida?.link || enviando"
+            :aria-label="loopAtivo ? 'Desativar loop' : 'Ativar loop'"
+          >
             <img :src="loopIcon" alt="" />
           </button>
           <div
@@ -103,9 +110,16 @@
             </div>
             <div class="playlist-musica-acoes">
               <button type="button" class="playlist-btn playlist-btn-controle" @click.stop="selecionarMusica(pasta, musica)" :disabled="!musica.link || enviando" aria-label="Reproduzir música">
-                <img :src="musicaAtual?.id === musica.id && playlistTocando ? pauseIcon : playIcon" alt="" />
+                <img :src="musicaTocando?.id === musica.id && playlistTocando ? pauseIcon : playIcon" alt="" />
               </button>
-              <button type="button" class="playlist-btn playlist-btn-controle" @click.stop="selecionarMusica(pasta, musica)" :disabled="!musica.link || enviando" aria-label="Repetir música">
+              <button
+                type="button"
+                class="playlist-btn playlist-btn-controle playlist-btn-loop"
+                :class="{ 'playlist-loop-ativo': musicaTocando?.id === musica.id && loopAtivo }"
+                @click.stop="alternarLoopMusica(pasta, musica)"
+                :disabled="!musica.link || enviando"
+                aria-label="Ativar loop da música"
+              >
                 <img :src="loopIcon" alt="" />
               </button>
               <div class="playlist-progresso"><span></span></div>
@@ -146,7 +160,8 @@ const pastaAtualId = ref(localStorage.getItem("noite-eterna-playlist-pasta-atual
 const musicaAtualId = ref(localStorage.getItem("noite-eterna-playlist-musica-atual") || "")
 const servidorId = ref(localStorage.getItem("noite-eterna-playlist-servidor") || "")
 const canalVozId = ref(localStorage.getItem("noite-eterna-playlist-canal-voz") || "")
-const progresso = ref({ decorrido: 0, duracao: 0, reproduzindo: false, pausada: false })
+const progresso = ref({ atual: "", decorrido: 0, duracao: 0, reproduzindo: false, pausada: false })
+const loopAtivo = ref(false)
 const brilhoAtivo = ref(false)
 let intervaloStatus = null
 let timeoutMensagem = null
@@ -210,6 +225,16 @@ const musicaAtual = computed(() => {
   if (!pasta) return null
   return pasta.musicas.find(musica => musica.id === musicaAtualId.value) || pasta.musicas[0] || null
 })
+const musicaTocando = computed(() => {
+  const link = progresso.value.atual
+  if (!link) return null
+  return pastas.flatMap(pasta => pasta.musicas).find(musica => musica.link === link) || null
+})
+const musicaExibida = computed(() => musicaTocando.value || musicaAtual.value)
+const pastaExibida = computed(() => (
+  pastas.find(pasta => pasta.musicas.some(musica => musica.id === musicaExibida.value?.id))
+  || pastaAtual.value
+))
 const playlistTocando = computed(() => progresso.value.reproduzindo === true)
 
 watch(pastas, () => {
@@ -224,7 +249,15 @@ watch(canalVozId, valor => localStorage.setItem("noite-eterna-playlist-canal-voz
 
 onMounted(() => {
   carregarLocais()
+  window.addEventListener("banco-dados-importado", importarMusicasDoBanco)
+  try {
+    const arquivos = JSON.parse(localStorage.getItem("noite-eterna-banco-importado") || "[]")
+    importarMusicasDoBanco({ detail: arquivos })
+  } catch {
+    // O banco será importado novamente quando o mestre clicar no botão.
+  }
   normalizarSelecao()
+  setTimeout(persistirAgora, 0)
   carregarStatus()
   intervaloStatus = setInterval(carregarStatus, 1000)
   window.addEventListener("pagehide", persistirAgora)
@@ -235,8 +268,38 @@ onUnmounted(() => {
   clearTimeout(timeoutMensagem)
   clearTimeout(timeoutMensagemSaida)
   window.removeEventListener("pagehide", persistirAgora)
+  window.removeEventListener("banco-dados-importado", importarMusicasDoBanco)
   persistirAgora()
 })
+
+function importarMusicasDoBanco(evento) {
+  const arquivos = evento.detail || []
+  const importadas = arquivos
+    .filter(arquivo => String(arquivo.caminho || "").replace(/\\/g, "/").startsWith("musicas/"))
+    .flatMap(arquivo => {
+      const dados = arquivo.dados
+      if (Array.isArray(dados)) return dados
+      return Array.isArray(dados?.pastas) ? dados.pastas : []
+    })
+  if (!importadas.length) return
+  const existentes = new Set(pastas.map(pasta => pasta.id))
+  importadas.forEach((pasta, indice) => {
+    const copia = {
+      id: pasta.id || `banco-pasta-${indice}-${gerarId()}`,
+      nome: pasta.nome || "Pasta importada",
+      musicas: Array.isArray(pasta.musicas) ? pasta.musicas.map(musica => ({
+        id: musica.id || gerarId(),
+        nome: musica.nome || "Sem nome",
+        link: musica.link || "",
+        imagem: musica.imagem || "",
+        acento: musica.acento || ""
+      })) : []
+    }
+    if (!existentes.has(copia.id)) pastas.push(copia)
+  })
+  normalizarSelecao()
+  persistirAgora()
+}
 
 async function requisitarApi(caminho, opcoes = {}) {
   const usandoServidorLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname)
@@ -339,11 +402,13 @@ async function carregarStatus() {
     if (!resposta.ok) return
     const dados = await resposta.json()
     progresso.value = {
+      atual: typeof dados.atual === "string" ? dados.atual : "",
       decorrido: Number(dados.decorrido) || 0,
       duracao: Number(dados.duracao) || 0,
       reproduzindo: dados.reproduzindo === true,
       pausada: dados.pausada === true
     }
+    loopAtivo.value = dados.loop === true
     if (dados.reproduzindo === true) {
       brilhoAtivo.value = true
       ultimoPlaySolicitado = 0
@@ -408,10 +473,31 @@ function persistirAgora() {
     if (localStorage.getItem(CHAVE) !== conteudo) {
       throw new Error("O navegador não confirmou o salvamento da playlist.")
     }
+    salvarPlaylistNoBanco(dados)
     permitirPlaylistVazia = false
   } catch (erro) {
     console.error("Não foi possível salvar a playlist localmente:", erro)
     mostrarMensagem("Não foi possível salvar a playlist neste navegador.")
+  }
+
+  function salvarPlaylistNoBanco(dados) {
+    const usandoServidorLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    const base = API_CONFIGURADA || (usandoServidorLocal ? API_LOCAL : "")
+    const headers = { "Content-Type": "application/json" }
+    if (CHAVE_API_BOT) headers.Authorization = `Bearer ${CHAVE_API_BOT}`
+    fetch(`${base}/api/database/save`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        caminho: "musicas/playlist.json",
+        dados: { formato: "noite-eterna-playlist", versao: 1, pastas: dados }
+      })
+    }).then(async resposta => {
+      if (!resposta.ok) {
+        const resultado = await resposta.json().catch(() => ({}))
+        throw new Error(resultado.erro || `Servidor respondeu HTTP ${resposta.status}.`)
+      }
+    }).catch(erro => console.warn("Não foi possível salvar a playlist no banco local:", erro))
   }
 }
 
@@ -471,6 +557,17 @@ async function selecionarMusica(pasta, musica) {
   musicaAtualId.value = musica.id
   await atualizarCapa(musica)
   await enviarComando(musica.link, "play")
+}
+
+async function alternarLoop() {
+  await enviarComando("", "loop")
+}
+
+async function alternarLoopMusica(pasta, musica) {
+  if (musicaAtual.value?.id !== musica.id) {
+    await selecionarMusica(pasta, musica)
+  }
+  await alternarLoop()
 }
 
 function extrairYoutubeId(link) {
@@ -578,6 +675,7 @@ async function enviarComando(link = "", acao = "play") {
   if ((acao === "play" && !link) || enviando.value) return
   enviando.value = true
   if (acao === "play") {
+    loopAtivo.value = false
     brilhoAtivo.value = true
     ultimoPlaySolicitado = Date.now()
     progresso.value.reproduzindo = true
@@ -603,6 +701,9 @@ async function enviarComando(link = "", acao = "play") {
     const resultado = await resposta.json().catch(() => ({}))
     if (!resposta.ok) throw new Error(resultado.erro || "Não foi possível enviar o comando.")
     if (acao === "stop") brilhoAtivo.value = false
+    if (acao === "loop" && typeof resultado.loop === "boolean") {
+      loopAtivo.value = resultado.loop
+    }
     mostrarMensagem(resultado.iniciando ? "Música sendo carregada..." : "Comando enviado ao Discord.")
     await carregarStatus()
   } catch (erro) {
@@ -624,7 +725,7 @@ function alternarPausa() {
     enviarComando("", "resume")
     return
   }
-  enviarComando(musicaAtual.value?.link || "", "play")
+  enviarComando(musicaExibida.value?.link || "", "play")
 }
 </script>
 
@@ -855,6 +956,17 @@ function alternarPausa() {
   height: 34px;
   pointer-events: none;
   width: 34px;
+}
+
+.playlist-btn-loop {
+  border-radius: 50%;
+  transition: box-shadow .25s ease, border-color .25s ease, filter .25s ease;
+}
+
+.playlist-loop-ativo {
+  border-color: var(--playlist-acento);
+  box-shadow: 0 0 8px 2px var(--playlist-acento), 0 0 18px 4px color-mix(in srgb, var(--playlist-acento) 55%, transparent);
+  filter: brightness(1.25);
 }
 
 .playlist-progresso {

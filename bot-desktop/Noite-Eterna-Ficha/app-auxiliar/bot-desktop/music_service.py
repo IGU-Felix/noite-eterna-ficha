@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import hmac
+import json
 import logging
+from pathlib import Path
 import struct
 import threading
 import time
@@ -21,6 +23,7 @@ except ImportError:
 
 logger = logging.getLogger("noite-eterna-bot")
 TRANSITION_SECONDS = 4.0
+DATABASE_DIR = Path(__file__).resolve().parent / "banco de dados"
 
 
 class CrossfadeAudioSource(AudioSource):
@@ -262,6 +265,8 @@ class MusicBotService:
         app.router.add_get("/api/health", self._health)
         app.router.add_post("/api/ficha/presenca", self._presence)
         app.router.add_get("/api/discord/status", self._status)
+        app.router.add_get("/api/database/import", self._import_database)
+        app.router.add_post("/api/database/save", self._save_database_file)
         app.router.add_post("/api/discord/reconnect", self._reconnect)
         app.router.add_get("/api/discord/locations", self._locations)
         app.router.add_get("/api/discord/music/status", self._music_status)
@@ -328,6 +333,45 @@ class MusicBotService:
     async def _health(self, request: Any) -> Any:
         del request
         return self._response({"aplicativo": True, "conectado": bool(self.bot and self.bot.is_ready())})
+
+    async def _import_database(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        try:
+            DATABASE_DIR.mkdir(parents=True, exist_ok=True)
+            arquivos = []
+            for caminho in sorted(DATABASE_DIR.rglob("*.json")):
+                try:
+                    dados = json.loads(caminho.read_text(encoding="utf-8"))
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError) as erro:
+                    self.on_log(f"AVISO: ignorando {caminho.name}: {erro}")
+                    continue
+                arquivos.append({
+                    "caminho": caminho.relative_to(DATABASE_DIR).as_posix(),
+                    "dados": dados,
+                })
+            return self._response({"raiz": str(DATABASE_DIR), "arquivos": arquivos})
+        except OSError as erro:
+            return self._response({"erro": f"Não foi possível ler o banco local: {erro}"}, 500)
+
+    async def _save_database_file(self, request: Any) -> Any:
+        if not self._authorized(request):
+            return self._response({"erro": "API não autorizada."}, 401)
+        try:
+            data = await self._json(request)
+            relative = Path(str(data.get("caminho") or ""))
+            if not relative.parts or relative.is_absolute() or ".." in relative.parts or relative.suffix.lower() != ".json":
+                raise ValueError("Caminho de banco inválido.")
+            destino = (DATABASE_DIR / relative).resolve()
+            if DATABASE_DIR.resolve() not in destino.parents:
+                raise ValueError("Caminho de banco inválido.")
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            destino.write_text(json.dumps(data.get("dados"), ensure_ascii=False, indent=2), encoding="utf-8")
+            return self._response({"salvo": True, "caminho": relative.as_posix()})
+        except ValueError as erro:
+            return self._response({"erro": str(erro)}, 400)
+        except (OSError, TypeError) as erro:
+            return self._response({"erro": f"Não foi possível salvar o banco local: {erro}"}, 500)
 
     async def _presence(self, request: Any) -> Any:
         if not self._authorized(request):
@@ -466,6 +510,8 @@ class MusicBotService:
             channel_id = voice_channel_id or self.config.get("DISCORD_VOICE_CHANNEL_ID", "")
             channel = self._voice_channel(guild, channel_id)
             guild_key = str(guild.id)
+            if self.current_urls.get(guild_key) not in {None, link}:
+                self.loop_enabled.discard(guild_key)
             await self._cancel_playback(guild_key)
             version = self.playback_versions.get(guild_key, 0) + 1
             self.playback_versions[guild_key] = version
@@ -669,6 +715,11 @@ class MusicBotService:
         def report_player_error(error: Exception | None) -> None:
             if error is None:
                 self.on_log("Reprodução finalizada.")
+                self.loop.call_soon_threadsafe(
+                    lambda: asyncio.create_task(
+                        self._repeat_finished_track(guild_key, version)
+                    )
+                )
                 return
             self.on_log(f"ERRO no áudio/FFmpeg: {error}")
 
@@ -685,6 +736,27 @@ class MusicBotService:
         self.active_sources[guild_key] = mixer
         connection.play(mixer, after=report_player_error)
         return duration
+
+    async def _repeat_finished_track(self, guild_key: str, version: int) -> None:
+        if (
+            guild_key not in self.loop_enabled
+            or self.playback_versions.get(guild_key) != version
+        ):
+            return
+        url = self.current_urls.get(guild_key)
+        connection = self.connections.get(guild_key)
+        channel = getattr(connection, "channel", None) if connection else None
+        if not url or not channel:
+            return
+        try:
+            await self.execute_action(
+                "play",
+                url,
+                guild_key,
+                str(channel.id),
+            )
+        except (ValueError, RuntimeError, asyncio.TimeoutError) as erro:
+            self.on_log(f"ERRO ao repetir música: {erro}")
 
     def _status_for_guild(self, guild_id: str) -> dict[str, Any]:
         key = guild_id or self.config.get("DISCORD_GUILD_ID", "")
