@@ -40,8 +40,8 @@ export default {
   emits: ["fechar"],
   setup(props) {
     const quantidadeDados = ref(props.dadosIniciais)
-    const modificadorInicial = props.modificadorInicial
-    const modificadorTotal = ref(props.modificadorInicial)
+    let modificadorInicial = Math.max(0, Number(props.modificadorInicial) || 0)
+    const modificadorTotal = ref(modificadorInicial)
     const audio = new Audio("/sounds/dice_roll_sound.mp3")
     audio.volume = 0.45
     const painelId = `rolagem-${Math.random().toString(36).slice(2)}`
@@ -55,6 +55,23 @@ export default {
     const resultadoDanoVisivel = ref(false)
     const acoesExpandidas = ref(false)
     const modificadorUsadoNaRolagem = ref(false)
+
+    watch(modificadorTotal, novoValor => {
+      const valorNormalizado = Math.max(0, Number(novoValor) || 0)
+      if (valorNormalizado !== novoValor) {
+        modificadorTotal.value = valorNormalizado
+        return
+      }
+
+      const modificadorGasto = dados.reduce((total, dado) => total + dado.ajustes, 0)
+      modificadorRestante.value = Math.max(0, valorNormalizado - modificadorGasto)
+    })
+
+    watch(() => props.modificadorInicial, novoValor => {
+      modificadorInicial = Math.max(0, Number(novoValor) || 0)
+      modificadorTotal.value = modificadorInicial
+      modificadorRestante.value = modificadorInicial
+    })
 
     function ativarPainelNoTopo() {
       const payload = { id: painelId, tipo: "rolagem" }
@@ -78,6 +95,7 @@ export default {
       if (props.resultadoDano?.rolar) props.resultadoDano.rolar()
 
       audio.currentTime = 0
+      audio.play().catch(() => { })
       rerrolagensDisponiveis.value = 0
       mudancas6Disponiveis.value = 0
       mudancasValorDisponiveis.value = 0
@@ -126,6 +144,25 @@ export default {
           }, 420)
         }
       }, 55)
+    }
+
+    function inicializarDados() {
+      const novosDados = []
+      for (let i = 0; i < quantidadeDados.value; i++) {
+        novosDados.push({
+          id: gerarId(),
+          natural: 1,
+          naturalOriginal: 1,
+          atual: 1,
+          exibicao: 1,
+          ajustes: 0,
+          forcado: false,
+          rerrolado: false,
+          rolandoIndividual: false
+        })
+      }
+      dados.splice(0, dados.length, ...novosDados)
+      jaRolou.value = true
     }
 
     function adicionarDado() {
@@ -300,10 +337,8 @@ function escolherValor(dado) {
           rerrolagensDisponiveis.value--
         }
         rerolarDado(dado)
+        return
       }
-      if (rerrolagensDisponiveis.value <= 0) return
-      rerrolagensDisponiveis.value--
-      rerolarDado(dado)
     }
 
     function executarMudar6(dado) {
@@ -369,7 +404,6 @@ function escolherValor(dado) {
 
           if (h.modificadorHabilidade) {
             modificadorTotal.value = Math.max(0, modificadorTotal.value - h.modificadorHabilidade)
-            modificadorRestante.value = Math.max(0, modificadorRestante.value - h.modificadorHabilidade)
           }
           return
         }
@@ -408,7 +442,6 @@ function escolherValor(dado) {
             } else {
               modificadorTotal.value += h.modificadorHabilidade
             }
-            modificadorRestante.value = modificadorTotal.value
           }
         }
 
@@ -486,28 +519,17 @@ function escolherValor(dado) {
           window.removeEventListener("mouseup", pararArraste)
         }
 
+        inicializarDados()
+
+        watch(() => props.disparadorRolagem, () => {
+          modificadorUsadoNaRolagem.value = false
+          rolar()
+        }, { immediate: true })
+
         onMounted(() => {
           if (typeof window !== "undefined") {
             window.addEventListener("janela-ativa-global", tratarJanelaAtivaGlobal)
           }
-
-          // Inicializa os dados sem rolar (mostra na tela)
-          const novosDados = []
-          for (let i = 0; i < quantidadeDados.value; i++) {
-            novosDados.push({
-              id: gerarId(),
-              natural: 1,
-              naturalOriginal: 1,
-              atual: 1,
-              exibicao: 1,
-              ajustes: 0,
-              forcado: false,
-              rerrolado: false,
-              rolandoIndividual: false
-            })
-          }
-          dados.splice(0, dados.length, ...novosDados)
-          jaRolou.value = true
 
           // Observa mudanças no atributo
           watch(() => props.valorAtributo(), () => {
@@ -518,16 +540,6 @@ function escolherValor(dado) {
             }
           })
 
-          // Observa trigger de rolagem novamente
-          watch(() => props.disparadorRolagem, () => {
-            if (jaRolou.value) {
-              // Reseta o flag quando rolar novamente
-              modificadorUsadoNaRolagem.value = false
-              rolar()
-            }
-          })
-
-          if (props.autoRolar) rolar()
         })
 
         onBeforeUnmount(() => {

@@ -678,8 +678,9 @@ export default {
       rolagemConfig.modificador = obterModificadorPericia(p)
       rolagemConfig.titulo = `Teste de ${p.nome}`
       rolagemConfig.periciaNome = p.nome
-      rolagemConfig.autoRolar = false
+      rolagemConfig.autoRolar = true
       resultadoDano.value = null
+      disparadorRolagem.value += 1
       rolagemAberta.value = true
     }
 
@@ -776,13 +777,7 @@ export default {
     }
 
     function abrirOuRolarPericia(p) {
-      if (rolagemAberta.value && rolagemConfig.periciaNome === p.nome) {
-        // Mesma perícia já aberta, rola novamente
-        disparadorRolagem.value += 1
-      } else {
-        // Abre normalmente
-        abrirRolagemPericia(p)
-      }
+      abrirRolagemPericia(p)
     }
 
     // ===== AÇÕES DE COMBATE (marcadas ao usar uma habilidade, ou manualmente) =====
