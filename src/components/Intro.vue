@@ -14,25 +14,28 @@
         <div class="intro-conteudo">
             <img class="intro-logo" src="/ne-logo-white.png" alt="Noite Eterna" />
 
-            <div class="intro-rodape">
-                <div class="intro-icones">
-                    <button class="intro-icone" title="Mundo"> <!-- @click.stop="abrirMapa" -->
-                        <img src="/buttons/map-btn.svg" alt="Mundo" />
-                    </button>
-                    <button class="intro-icone" title="Ameaças" @click.stop="abrirAmeaca">
-                        <img src="/buttons/threat-bnt.svg" alt="Ameaças" />
-                    </button>
-                    <button class="intro-icone" title="Ficha" @click.stop="entrar">
-                        <img src="/buttons/character-btn.svg" alt="Ficha" />
-                    </button>
-                    <button class="intro-icone" title="Livro de Regras" @click.stop="$emit('consultar')">
-                        <img src="/buttons/book-btn.svg" alt="Livro" />
-                    </button>
-                    <button class="intro-icone" title="Sessão Online" @click.stop="abrirSessao">
-                        <img src="/buttons/dm-bnt.svg" alt="Sessão Online" />
-                    </button>
+            <Teleport to="body">
+                <div class="intro-rodape">
+                    <div class="intro-icones">
+                        <button class="intro-icone" title="Mundo"> <!-- @click.stop="abrirMapa" -->
+                            <img src="/buttons/map-btn.svg" alt="Mundo" />
+                        </button>
+                        <button class="intro-icone" title="Ameaças" @click.stop="abrirAmeaca">
+                            <img src="/buttons/threat-bnt.svg" alt="Ameaças" />
+                        </button>
+                        <button class="intro-icone" title="Ficha" @click.stop="entrar">
+                            <img src="/buttons/character-btn.svg" alt="Ficha" />
+                        </button>
+                        <button class="intro-icone" title="Anotações do mestre"
+                            @click.stop="$emit('abrir-anotacoes')">
+                            <img src="/buttons/book-btn.svg" alt="Livro" />
+                        </button>
+                        <button class="intro-icone" title="Sessão Online" @click.stop="abrirSessao">
+                            <img src="/buttons/dm-bnt.svg" alt="Sessão Online" />
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </Teleport>
         </div>
 
     </div>
@@ -41,7 +44,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 
-const emit = defineEmits(["entrar", "abrir-ameaca", "consultar", "abrir-sessao", "abrir-mapa"])
+const emit = defineEmits(["entrar", "abrir-ameaca", "consultar", "abrir-sessao", "abrir-mapa", "abrir-anotacoes"])
 const mostrarDica = ref(false)
 
 function abrirMapa() {
@@ -210,11 +213,16 @@ onMounted(() => {
 
 /* ===== RODAPÉ ===== */
 .intro-rodape {
-    margin-top: auto;
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    z-index: 1000;
+    transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
+    pointer-events: auto;
 }
 
 .intro-marca {
@@ -245,6 +253,7 @@ onMounted(() => {
     justify-content: center;
     transition: transform 0.2s ease, filter 0.2s ease;
     animation: fade-in-bottom 4s ease-in-out;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 254, 0.342));
 }
 
 .intro-icone img {
@@ -257,7 +266,9 @@ onMounted(() => {
 
 .intro-icone:hover {
     transform: translateY(-3px);
+    filter: drop-shadow(0 0 5px rgba(255, 255, 254, 0.712));
 }
+
 
 .intro-icone:hover img {
     filter: brightness(1.3) drop-shadow(0 0 8px rgba(22, 22, 22, 0.5));

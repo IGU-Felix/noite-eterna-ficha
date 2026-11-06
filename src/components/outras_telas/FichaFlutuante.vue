@@ -3,7 +3,8 @@
     :class="{
       'tela-cheia': modo === 'tela-cheia',
       minimizada: fichaAtiva?.minimizada,
-      'ficha-ameaca-window': fichaAtiva?.tipo === 'ameaca'
+      'ficha-ameaca-window': fichaAtiva?.tipo === 'ameaca',
+      'com-painel-lateral': painelLateralAberto
     }"
     :style="[estiloJanela, { zIndex: zIndexAtiva }]" @mousedown.capture="ativarJanelaNoTopo">
     <div class="janela-barra" @mousedown="iniciarArraste">
@@ -62,7 +63,8 @@ const props = defineProps({
   fichas: { type: Array, default: () => [] },
   ativaId: { type: [String, Number], default: null },
   janelaEmFrenteId: { type: [String, Number, null], default: null },
-  importacaoPendente: { type: Object, default: null }
+  importacaoPendente: { type: Object, default: null },
+  painelLateralAberto: { type: Boolean, default: false }
 })
 
 const fichas = computed(() => props.fichas)
@@ -370,6 +372,11 @@ defineExpose({
   max-width: calc(100vw - 80px);
   max-height: calc(100vh - 80px);
   box-sizing: border-box;
+}
+
+.janela-flutuante.com-painel-lateral {
+  min-width: min(480px, calc(100vw - min(620px, 42vw) - 20px));
+  max-width: calc(100vw - min(620px, 42vw) - 20px);
 }
 
 .janela-flutuante.tela-cheia {

@@ -158,6 +158,9 @@ export default {
 
     async function confirmarCriarSessao() {
       await criarSessao(nomeInput.value, codigoPersonalizado.value)
+      if (sessaoEstado.papel === "mestre") {
+        setTimeout(() => playlistRef.value?.importarTudoDoBanco?.(), 0)
+      }
     }
 
     async function confirmarEntrarSessao() {

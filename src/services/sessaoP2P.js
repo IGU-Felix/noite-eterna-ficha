@@ -12,6 +12,7 @@ export const sessaoEstado = reactive({
   jogadores: [],
   fichasRemotas: {},
   iniciativaCompartilhada: [],
+  anotacoesCompartilhadas: [],
   fichaVinculadaId: null,
   ultimoResetDescanso: null
 })
@@ -164,7 +165,8 @@ function configurarConexaoMestreComJogador(conn) {
       tipo: "BOAS_VINDAS",
       codigo: sessaoEstado.codigoSessao,
       jogadores: sessaoEstado.jogadores,
-      iniciativa: sessaoEstado.iniciativaCompartilhada
+      iniciativa: sessaoEstado.iniciativaCompartilhada,
+      anotacoes: sessaoEstado.anotacoesCompartilhadas
     })
   })
 
@@ -252,6 +254,20 @@ function tratarMensagemNoMestre(conn, msg) {
           tipo: "LISTA_JOGADORES",
           jogadores: sessaoEstado.jogadores
         })
+      }
+      break
+    }
+
+    case "ANOTACOES_ATUALIZAR": {
+      if (Array.isArray(msg.anotacoes)) {
+        sessaoEstado.anotacoesCompartilhadas = msg.anotacoes
+        broadcastParaJogadores({
+          tipo: "ANOTACOES_ATUALIZADAS",
+          anotacoes: sessaoEstado.anotacoesCompartilhadas
+        })
+        window.dispatchEvent(new CustomEvent("sessao-anotacoes-atualizadas", {
+          detail: sessaoEstado.anotacoesCompartilhadas
+        }))
       }
       break
     }
@@ -440,12 +456,28 @@ function tratarMensagemNoJogador(msg) {
       if (Array.isArray(msg.iniciativa)) {
         sessaoEstado.iniciativaCompartilhada = msg.iniciativa
       }
+      if (Array.isArray(msg.anotacoes)) {
+        sessaoEstado.anotacoesCompartilhadas = msg.anotacoes
+        window.dispatchEvent(new CustomEvent("sessao-anotacoes-atualizadas", {
+          detail: sessaoEstado.anotacoesCompartilhadas
+        }))
+      }
       break
     }
 
     case "INICIATIVA_ATUALIZADA": {
       if (Array.isArray(msg.iniciativa)) {
         sessaoEstado.iniciativaCompartilhada = msg.iniciativa
+      }
+      break
+    }
+
+    case "ANOTACOES_ATUALIZADAS": {
+      if (Array.isArray(msg.anotacoes)) {
+        sessaoEstado.anotacoesCompartilhadas = msg.anotacoes
+        window.dispatchEvent(new CustomEvent("sessao-anotacoes-atualizadas", {
+          detail: sessaoEstado.anotacoesCompartilhadas
+        }))
       }
       break
     }
@@ -505,6 +537,23 @@ export function enviarSyncFichaParaMestre(ficha) {
       }
     })
   }
+}
+
+export function publicarAnotacoesCampanha(anotacoes) {
+  if (sessaoEstado.papel !== "mestre" || !Array.isArray(anotacoes)) return
+  sessaoEstado.anotacoesCompartilhadas = anotacoes
+  broadcastParaJogadores({
+    tipo: "ANOTACOES_ATUALIZADAS",
+    anotacoes
+  })
+}
+
+export function enviarAnotacoesParaMestre(anotacoes) {
+  if (sessaoEstado.papel !== "jogador" || !connMestre?.open || !Array.isArray(anotacoes)) return
+  connMestre.send({
+    tipo: "ANOTACOES_ATUALIZAR",
+    anotacoes
+  })
 }
 
 // Desconectar tudo

@@ -374,6 +374,16 @@ app.post("/api/database/save", (request, response) => {
   }
 })
 
+app.post("/api/database/delete", (request, response) => {
+  try {
+    const destino = databaseFilePath(request.body?.caminho)
+    if (fs.existsSync(destino)) fs.rmSync(destino)
+    response.json({ removido: true })
+  } catch (error) {
+    response.status(400).json({ erro: error.message })
+  }
+})
+
 app.use((request, response, next) => {
   if (!request.path.startsWith("/api")) {
     next()

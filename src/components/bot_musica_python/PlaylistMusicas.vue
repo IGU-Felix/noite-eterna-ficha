@@ -85,6 +85,8 @@
         <div class="playlist-cabecalho-acoes">
           <button type="button" class="playlist-btn playlist-btn-principal" @click.stop="adicionarPasta">+ Pasta</button>
           <button type="button" class="playlist-btn playlist-btn-principal" @click.stop="adicionarMusicaPrincipal">+ Música</button>
+          <button type="button" class="playlist-btn playlist-btn-principal" @click.stop="baixarPlaylistJson">Baixar JSON</button>
+          <button type="button" class="playlist-btn playlist-btn-principal" @click.stop="importarTudoDoBanco">Importar JSON</button>
         </div>
       </div>
 
@@ -299,6 +301,44 @@ function importarMusicasDoBanco(evento) {
   })
   normalizarSelecao()
   persistirAgora()
+}
+
+async function importarTudoDoBanco() {
+  try {
+    const resposta = await requisitarApi("/database/import")
+    const dados = await resposta.json()
+    if (!resposta.ok) throw new Error(dados.erro || "Não foi possível importar o banco de músicas.")
+    importarMusicasDoBanco({ detail: dados.arquivos || [] })
+    mostrarMensagem("Músicas importadas do banco local.")
+  } catch (erro) {
+    console.error("Não foi possível importar o banco de músicas:", erro)
+    mostrarMensagem(erro.message || "Não foi possível importar o banco de músicas.")
+  }
+}
+
+function baixarPlaylistJson() {
+  const dados = pastas.map(pasta => ({
+    id: pasta.id,
+    nome: pasta.nome,
+    musicas: pasta.musicas.map(musica => ({
+      id: musica.id,
+      nome: musica.nome,
+      link: musica.link,
+      imagem: musica.imagem,
+      acento: musica.acento
+    }))
+  }))
+  const conteudo = JSON.stringify({
+    formato: "noite-eterna-playlist",
+    versao: 1,
+    pastas: dados
+  }, null, 2)
+  const url = URL.createObjectURL(new Blob([conteudo], { type: "application/json" }))
+  const link = document.createElement("a")
+  link.href = url
+  link.download = "playlist.json"
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 async function requisitarApi(caminho, opcoes = {}) {
@@ -527,7 +567,7 @@ function alternarPastas() {
   pastasAbertas.value = !pastasAbertas.value
 }
 
-defineExpose({ alternarPastas })
+defineExpose({ alternarPastas, importarTudoDoBanco })
 
 function adicionarMusica(pasta) {
   permitirPlaylistVazia = false

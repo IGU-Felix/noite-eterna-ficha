@@ -1,7 +1,8 @@
 <template>
   <div class="app-root">
     <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente"
-      @abrir-sessao="sessaoAberta = true" @abrir-mapa="mapaAberto = true" />
+      @abrir-sessao="sessaoAberta = true" @abrir-mapa="mapaAberto = true"
+      @abrir-anotacoes="anotacoesAbertas = true" />
     <MapaMundi v-if="mapaAberto" @fechar="mapaAberto = false" @abrir-interno="abrirMapaInterno" />
     <MapaEditor v-if="mapaInternoAberto" @fechar="mapaInternoAberto = false" />
 
@@ -10,6 +11,10 @@
       @importar-banco="importarBancoLocal" />
 
     <Assistente v-if="assistenteAberto" @fechar="assistenteAberto = false" />
+    <AnotacoesMestre v-if="anotacoesAbertas" :documentos="documentosMestre"
+      :nome-usuario="sessaoEstado.nomeUsuario" :sessao-conectada="sessaoEstado.conectado"
+      @fechar="anotacoesAbertas = false" @atualizar="atualizarAnotacao"
+      @importar-banco="importarBancoLocal(false)" />
 
     <SessaoOnline v-if="sessaoAberta" :nome-personagem="nomePersonagemAtual"
       :personagem-disponivel="personagemDisponivel" :ficha-vinculada-id="primeiroPersonagemId"
@@ -17,6 +22,7 @@
       @fechar="sessaoAberta = false" @abrir-ficha="abrirFichaSessao" />
 
     <FichaFlutuante v-if="todasJanelas.some(janela => !janela.minimizada) && !seletorAberto" :fichas="todasJanelas"
+      :painel-lateral-aberto="anotacoesAbertas"
       :ativa-id="janelaAtiva" :janela-em-frente-id="janelaEmFrente" :importacao-pendente="importacaoPendente"
       @selecionar="selecionarJanela" @nome-atualizado="atualizarNome" @imagem-atualizada="atualizarImagem"
       @dados-atualizados="atualizarDadosFicha"
@@ -30,13 +36,20 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import Intro from "./components/Intro.vue"
 import Assistente from "./components/outras_telas/Assistente.vue"
+import AnotacoesMestre from "./components/outras_telas/AnotacoesMestre.vue"
 import FichaFlutuante from "./components/outras_telas/FichaFlutuante.vue"
 import SeletorFichas from "./components/outras_telas/SeletorFichas.vue"
 import SessaoOnline from "./components/outras_telas/online/SessaoOnline.vue"
 import MapaMundi from "./components/mapa/MapaMundi.vue"
 import MapaEditor from "./components/mapa/MapaEditor.vue"
 import { watch } from "vue"
-import { sessaoEstado, enviarSyncFichaParaMestre, restaurarSessao } from "./services/sessaoP2P.js"
+import {
+  sessaoEstado,
+  enviarSyncFichaParaMestre,
+  restaurarSessao,
+  publicarAnotacoesCampanha,
+  enviarAnotacoesParaMestre
+} from "./services/sessaoP2P.js"
 
 const personagensAbertos = ref([])
 const ameacasAbertas = ref([])
@@ -48,6 +61,8 @@ const assistenteAberto = ref(false)
 const sessaoAberta = ref(false)
 const mapaAberto = ref(false)
 const mapaInternoAberto = ref(false)
+const anotacoesAbertas = ref(false)
+const documentosMestre = ref([])
 const janelaAtiva = ref(null)
 const janelaEmFrente = ref(null)
 let timeoutSincronizacaoIniciativa = null
@@ -101,6 +116,15 @@ async function importarBancoLocal(silencioso = false) {
       if (!dados || typeof dados !== "object") continue
       const tipo = caminho.includes("/ameacas/") ? "ameaca"
         : caminho.includes("/personagens/") ? "personagem" : null
+      if ((caminho.startsWith("anotacoes/") || caminho.includes("/anotacoes/"))
+        && dados.formato === "noite-eterna-anotacao"
+        && dados.dados && typeof dados.dados === "object") {
+        if (!documentosMestre.value.some(documento => documento.id === dados.dados.id)) {
+          documentosMestre.value.push({ ...dados.dados })
+        }
+        importadas += 1
+        continue
+      }
       if (!tipo || dados.formato !== "noite-eterna-ficha" || !dados.dados) continue
       const id = `banco-${caminho.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "")}`
       const ficha = {
@@ -123,10 +147,118 @@ async function importarBancoLocal(silencioso = false) {
     const arquivos = resultado.arquivos || []
     localStorage.setItem("noite-eterna-banco-importado", JSON.stringify(arquivos))
     window.dispatchEvent(new CustomEvent("banco-dados-importado", { detail: arquivos }))
-    if (!silencioso) window.alert(`Banco local importado: ${importadas} ficha(s).`)
+    if (!silencioso) window.alert(`Banco local importado: ${importadas} item(ns).`)
   } catch (erro) {
     if (!silencioso) window.alert(erro.message || "Não foi possível importar o banco local.")
   }
+
+  function atualizarAnotacao(anotacao) {
+    if (!anotacao?.id) return
+    if (anotacao.removido) {
+      documentosMestre.value = documentosMestre.value.filter(documento => documento.id !== anotacao.id)
+      if (sessaoEstado.papel !== "jogador") removerBancoLocal(`anotacoes/${anotacao.id}.json`)
+      sincronizarAnotacoesCampanha()
+      return
+    }
+    const existente = documentosMestre.value.find(documento => documento.id === anotacao.id)
+    if (existente) Object.assign(existente, anotacao)
+    else documentosMestre.value.push({ ...anotacao })
+    sincronizarAnotacoesCampanha()
+  }
+
+  function receberAnotacoesCampanha(evento) {
+    if (!Array.isArray(evento.detail)) return
+    if (sessaoEstado.papel === "mestre") {
+      const idsAtuais = new Set(evento.detail.map(documento => documento.id))
+      documentosMestre.value
+        .filter(documento => !idsAtuais.has(documento.id))
+        .forEach(documento => removerBancoLocal(`anotacoes/${documento.id}.json`))
+    }
+    documentosMestre.value = evento.detail.map(documento => ({ ...documento }))
+  }
+
+  function sincronizarAnotacoesCampanha() {
+    const documentos = documentosMestre.value.map(documento => ({ ...documento }))
+    if (sessaoEstado.papel === "mestre") {
+      documentos.forEach(documento => salvarBancoLocal(`anotacoes/${documento.id}.json`, {
+        formato: "noite-eterna-anotacao",
+        versao: 1,
+        exportadoEm: new Date().toISOString(),
+        dados: documento
+      }))
+      publicarAnotacoesCampanha(documentos)
+    } else if (sessaoEstado.papel === "jogador") {
+      enviarAnotacoesParaMestre(documentos)
+    } else {
+      const anotacao = documentos[documentos.length - 1]
+      if (anotacao) salvarBancoLocal(`anotacoes/${anotacao.id}.json`, {
+        formato: "noite-eterna-anotacao",
+        versao: 1,
+        exportadoEm: new Date().toISOString(),
+        dados: anotacao
+      })
+    }
+  }
+
+  watch(
+    () => [sessaoEstado.conectado, sessaoEstado.papel],
+    ([conectado, papel]) => {
+      if (!conectado) return
+      if (papel === "mestre") publicarAnotacoesCampanha(documentosMestre.value)
+      if (papel === "jogador" && sessaoEstado.anotacoesCompartilhadas.length) {
+        receberAnotacoesCampanha({ detail: sessaoEstado.anotacoesCompartilhadas })
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(documentosMestre, documentos => {
+    if (sessaoEstado.conectado && sessaoEstado.papel === "mestre") {
+      publicarAnotacoesCampanha(documentos)
+    }
+  }, { deep: true })
+
+  function removerBancoLocal(caminho) {
+    const base = baseApiBancoLocal()
+    const headers = {}
+    const chave = import.meta.env.VITE_BOT_API_KEY || ""
+    if (chave) headers.Authorization = `Bearer ${chave}`
+    fetch(`${base}/api/database/delete`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ caminho })
+    }).catch(erro => console.warn("Não foi possível remover a anotação do banco local:", erro))
+  }
+}
+
+function atualizarAnotacao(anotacao) {
+  if (!anotacao?.id) return
+  if (anotacao.removido) {
+    documentosMestre.value = documentosMestre.value.filter(documento => documento.id !== anotacao.id)
+    removerBancoLocal(`anotacoes/${anotacao.id}.json`)
+    return
+  }
+  const existente = documentosMestre.value.find(documento => documento.id === anotacao.id)
+  if (existente) Object.assign(existente, anotacao)
+  else documentosMestre.value.push({ ...anotacao })
+  salvarBancoLocal(`anotacoes/${anotacao.id}.json`, {
+    formato: "noite-eterna-anotacao",
+    versao: 1,
+    exportadoEm: new Date().toISOString(),
+    dados: anotacao
+  })
+}
+
+function removerBancoLocal(caminho) {
+  const base = baseApiBancoLocal()
+  const headers = {}
+  const chave = import.meta.env.VITE_BOT_API_KEY || ""
+  if (chave) headers.Authorization = `Bearer ${chave}`
+  fetch(`${base}/api/database/delete`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ caminho })
+  }).catch(erro => console.warn("Não foi possível remover a anotação do banco local:", erro))
 }
 
 function restaurarSessaoAoVoltar() {
@@ -158,6 +290,7 @@ onMounted(() => {
   intervaloPresencaFicha = setInterval(enviarPresencaFicha, 30_000)
   window.addEventListener("pageshow", restaurarSessaoAoVoltar)
   document.addEventListener("visibilitychange", restaurarSessaoAoVoltar)
+  window.addEventListener("sessao-anotacoes-atualizadas", receberAnotacoesCampanha)
 })
 
 onBeforeUnmount(() => {
@@ -165,6 +298,7 @@ onBeforeUnmount(() => {
   clearTimeout(timeoutSincronizacaoIniciativa)
   window.removeEventListener("pageshow", restaurarSessaoAoVoltar)
   document.removeEventListener("visibilitychange", restaurarSessaoAoVoltar)
+  window.removeEventListener("sessao-anotacoes-atualizadas", receberAnotacoesCampanha)
 })
 const nomePersonagemAtual = computed(() => {
   const ativa = todasJanelas.value.find(janela => janela.id === janelaAtiva.value)
