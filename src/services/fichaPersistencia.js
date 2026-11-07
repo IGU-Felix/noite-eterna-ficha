@@ -32,9 +32,27 @@ export function criarSnapshot(estado) {
 export function aplicarSnapshot(estado, dados) {
   if (!dados || typeof dados !== "object") return
 
+  const valorNumericoValido = valor =>
+    valor !== null && valor !== undefined && valor !== "" && Number.isFinite(Number(valor))
+
+  const mesclarLista = (atual, salvo) => salvo.map((item, indice) => {
+    const itemAtual = atual[indice]
+    if (!item || typeof item !== "object" || !itemAtual || typeof itemAtual !== "object") {
+      return item
+    }
+
+    return Object.fromEntries(Object.entries(item).map(([chave, valor]) => {
+      const valorAtual = itemAtual[chave]
+      if (typeof valorAtual === "number" && !valorNumericoValido(valor)) {
+        return [chave, valorAtual]
+      }
+      return [chave, valor]
+    }))
+  })
+
   // Campos estruturais prioritários para calcular limites antes de aplicar valores customizados
   const prioridades = [
-    "racaSelecionada", "classeSelecionada", "subclasseSelecionada", "nivel", "atributos",
+    "racaSelecionada", "origemSelecionada", "classeSelecionada", "subclasseSelecionada", "nivel", "atributos",
     "tipoSelecionado_1", "tipoSelecionado_2", "tipoSelecionado_3"
   ]
   const chaves = [
@@ -65,12 +83,19 @@ export function aplicarSnapshot(estado, dados) {
           const periciasPersonalizadas = valorSalvo.filter(pericia => !nomesAtuais.has(pericia.nome))
           estadoAtual.value = [...periciasAtuais, ...periciasPersonalizadas]
         } else {
-          estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
+          estadoAtual.value = mesclarLista(estadoAtual.value, JSON.parse(JSON.stringify(valorSalvo)))
         }
       } else if (estadoAtual.value && typeof estadoAtual.value === "object" && valorSalvo && typeof valorSalvo === "object") {
         estadoAtual.value = JSON.parse(JSON.stringify(valorSalvo))
       } else {
-        estadoAtual.value = valorSalvo
+        if (typeof estadoAtual.value === "number" && !valorNumericoValido(valorSalvo)) return
+        if (nome === "nivel") {
+          estadoAtual.value = Math.max(1, Math.floor(Number(valorSalvo)))
+        } else if (typeof estadoAtual.value === "number") {
+          estadoAtual.value = Number(valorSalvo)
+        } else {
+          estadoAtual.value = valorSalvo
+        }
       }
     } else if (Array.isArray(estadoAtual) && Array.isArray(valorSalvo)) {
       estadoAtual.splice(0, estadoAtual.length, ...JSON.parse(JSON.stringify(valorSalvo)))
@@ -85,12 +110,6 @@ export function aplicarSnapshot(estado, dados) {
     }
   })
 
-  if ("vidaAtual" in dados && estado.vidaAtual && isRef(estado.vidaAtual)) {
-    estado.vidaAtual.value = dados.vidaAtual
-  }
-  if ("manaAtual" in dados && estado.manaAtual && isRef(estado.manaAtual)) {
-    estado.manaAtual.value = dados.manaAtual
-  }
 }
 
 function lerCookie(chave) {
@@ -147,12 +166,15 @@ export function configurarPersistencia(chave, estado, ativo = true) {
   const campos = Object.entries(estado).filter(([nome, valor]) =>
     !camposIgnorados.has(nome) && typeof valor !== "function" && !isReadonly(valor)
   )
+  let carregamentoConcluido = false
 
   function snapshot() {
     return criarSnapshot(estado)
   }
 
   function salvar() {
+    if (!carregamentoConcluido) return
+
     try {
       const valor = JSON.stringify(snapshot())
       try {
@@ -189,6 +211,8 @@ export function configurarPersistencia(chave, estado, ativo = true) {
       aplicarSnapshot(estado, salvo)
     } catch (erro) {
       console.warn("Não foi possível carregar a ficha:", erro)
+    } finally {
+      carregamentoConcluido = true
     }
   }
 
@@ -234,4 +258,3 @@ export async function importarFichaJson(estado, arquivo, tipoEsperado) {
 
   aplicarSnapshot(estado, importado.dados)
 }
-

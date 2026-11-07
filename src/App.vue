@@ -1,8 +1,8 @@
 <template>
   <div class="app-root">
     <Intro @entrar="abrirPersonagem" @abrir-ameaca="abrirAmeaca" @consultar="abrirAssistente"
-      @abrir-sessao="sessaoAberta = true" @abrir-mapa="mapaAberto = true"
-      @abrir-anotacoes="anotacoesAbertas = true" />
+      @abrir-sessao="alternarSessao" @abrir-mapa="alternarMapa"
+      @abrir-anotacoes="alternarAnotacoes" />
     <MapaMundi v-if="mapaAberto" @fechar="mapaAberto = false" @abrir-interno="abrirMapaInterno" />
     <MapaEditor v-if="mapaInternoAberto" @fechar="mapaInternoAberto = false" />
 
@@ -357,7 +357,19 @@ function abrirMapaInterno() {
   mapaInternoAberto.value = true
 }
 
+function alternarMapa() {
+  if (mapaInternoAberto.value) {
+    mapaInternoAberto.value = false
+    return
+  }
+  mapaAberto.value = !mapaAberto.value
+}
+
 function abrirPersonagem() {
+  if (seletorAberto.value && tipoSeletor.value === "personagem") {
+    seletorAberto.value = false
+    return
+  }
   abrirSeletor("personagem")
 }
 
@@ -370,6 +382,10 @@ function criarPersonagem() {
 }
 
 function abrirAmeaca() {
+  if (seletorAberto.value && tipoSeletor.value === "ameaca") {
+    seletorAberto.value = false
+    return
+  }
   abrirSeletor("ameaca")
 }
 
@@ -588,7 +604,15 @@ function selecionarOutraJanela(idFechada) {
 }
 
 function abrirAssistente() {
-  assistenteAberto.value = true
+  assistenteAberto.value = !assistenteAberto.value
+}
+
+function alternarSessao() {
+  sessaoAberta.value = !sessaoAberta.value
+}
+
+function alternarAnotacoes() {
+  anotacoesAbertas.value = !anotacoesAbertas.value
 }
 
 function limparImportacao(id) {

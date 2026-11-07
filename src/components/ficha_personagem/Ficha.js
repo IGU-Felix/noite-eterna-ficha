@@ -332,6 +332,16 @@ export default {
     // livro: "Defesa = Base + ⌊Nível / 2⌋ + Armadura" onde "Base = 5 + ROB"
     // livro: começa com 3 Pontos de Vantagem e recebe mais 5 a cada 5 níveis.
     const nivel = ref(1)
+    const nivelEditavel = computed({
+      get: () => {
+        const valor = Number(nivel.value)
+        return Number.isFinite(valor) && valor >= 1 ? Math.floor(valor) : 1
+      },
+      set: valor => {
+        const numero = Number(valor)
+        nivel.value = Number.isFinite(numero) && numero >= 1 ? Math.floor(numero) : 1
+      }
+    })
     const armadura = ref(0)
     const iniciativaRolada = ref(null)
 
@@ -374,12 +384,23 @@ export default {
     let ultimoMarcoPVan = Math.floor((Number(nivel.value) || 0) / 5)
 
     watch(nivel, (novoNivel) => {
-      const marcoAtual = Math.floor((Number(novoNivel) || 0) / 5)
+      const nivelNormalizado = Math.max(1, Math.floor(Number(novoNivel) || 1))
+      if (nivelNormalizado !== novoNivel) {
+        nivel.value = nivelNormalizado
+        return
+      }
+
+      const marcoAtual = Math.floor(nivelNormalizado / 5)
       if (marcoAtual > ultimoMarcoPVan) {
         pVan.value += (marcoAtual - ultimoMarcoPVan) * 5
       }
       ultimoMarcoPVan = marcoAtual
-    })
+    }, { immediate: true })
+
+    watch([vidaAtual, manaAtual], ([vida, mana]) => {
+      if (!Number.isFinite(Number(vida))) vidaAtual.value = 10
+      if (!Number.isFinite(Number(mana))) manaAtual.value = 10
+    }, { immediate: true })
 
     // ===== ATRIBUTOS =====
     const atributos = ref([
@@ -1143,6 +1164,7 @@ export default {
       carregarImagem,
 
       nivel,
+      nivelEditavel,
       iniciativa,
       iniciativaRolada,
       rolarIniciativa,

@@ -682,14 +682,25 @@ button {
 }
 
 .stat-valor {
+  display: block;
   width: 100%;
+  height: 18px;
+  padding: 0;
   background: transparent;
   border: none;
   color: #fff;
   text-align: center;
   font-size: 13px;
+  line-height: 18px;
   font-weight: bold;
   outline: none;
+  -moz-appearance: textfield;
+}
+
+.stat-valor::-webkit-outer-spin-button,
+.stat-valor::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .stat-valor-pvan {

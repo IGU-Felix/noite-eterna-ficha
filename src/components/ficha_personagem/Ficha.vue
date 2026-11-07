@@ -28,21 +28,21 @@
             <div class="linha-raca-classe">
               <select v-model="racaSelecionada" class="select-rcs"
                 :title="racas.find(r => r.nome === racaSelecionada)?.resumo || ''">
-                <option value="" disabled>Raça</option>
+                <option value="">Raça</option>
                 <option v-for="r in racas" :key="r.nome" :value="r.nome">{{ r.nome }}</option>
               </select>
               <select v-model="origemSelecionada" class="select-rcs"
                 :title="origemAtiva?.resumo || ''">
-                <option value="" disabled>Origem</option>
+                <option value="">Origem</option>
                 <option v-for="origem in origens" :key="origem.id" :value="origem.nome">{{ origem.nome }}</option>
               </select>
               <select v-model="classeSelecionada" class="select-rcs"
                 :title="classeInfo ? 'Dado de Vida: ' + classeInfo.dadoVida : ''">
-                <option value="" disabled>Classe</option>
+                <option value="">Classe</option>
                 <option v-for="c in classes" :key="c.nome" :value="c.nome">{{ c.nome }}</option>
               </select>
               <select v-model="subclasseSelecionada" class="select-rcs" :disabled="!subclassesDisponiveis.length">
-                <option value="" disabled>{{ subclassesDisponiveis.length ? 'Subclasse' : '—' }}</option>
+                <option value="">{{ subclassesDisponiveis.length ? 'Subclasse' : '—' }}</option>
                 <option v-for="s in subclassesDisponiveis" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
@@ -119,7 +119,7 @@
             <div class="stats-grid">
               <div class="stat-box">
                 <span class="stat-label">Nível</span>
-                <input class="stat-valor" v-model.number="nivel" />
+                <input class="stat-valor" type="number" min="1" step="1" v-model="nivelEditavel" />
               </div>
               <div class="stat-box" title="Clique no valor para rolar 1d6 e somar PRE + MEN">
                 <span class="stat-label">Iniciativa</span>
